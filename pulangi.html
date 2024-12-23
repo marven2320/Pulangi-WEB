@@ -12,24 +12,44 @@
 	
 	<style>
 	
-	.col-lg-9,.col-sm-4,.col-lg-3,.row{
+	.col-lg-9,.col-sm-3,.row{
+		padding:1px 1px 0px 1px;
+		margin:0px;
+		height:100%;
+		margin-bottom:-18px;
+	}
+	.col-lg-3{
 		padding:0px;
 		margin:0px;
 		height:100%;
 	}
 	#chart_div{
-	align:center;
+	margin-left:40px;
 	//background-color:red;
 	}
 	#chart_div2{
-	align:center;
+	margin-left:40px;
 	//background-color:red;
 	}
 	#chart_div3{
-	align:center;
+	margin-left:40px;
 	//background-color:red;
 	}
-	
+	.led-box {
+		height: 30px;
+		width: 25%;
+		margin-top: -5px;
+		float: left;
+	}
+	.led-green {
+	  margin: 0;
+	  width: 24px;
+	  height: 24px;
+	  background-color: #ABFF00;
+	  border-radius: 50%;
+	  box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 7px 1px, inset #304701 0 -1px 9px, #89FF00 0 2px 12px;
+	}
+		
 	</style>
 	
 	<script>
@@ -48,7 +68,7 @@
 			]);
 
 			var options = {
-			  width: 240, height: 240,
+			  width: 200, height: 200,
 			  redFrom: 90, redTo: 100,
 			  yellowFrom:75, yellowTo: 90,
 			  minorTicks: 5
@@ -80,10 +100,10 @@
 <body>
 
 <div class="container-fluid">
-  <div class="row">
+
     
-    <div class="col-lg-9">
-	<div class="panel panel-default" padding-left:0px;>
+   
+	<div class="panel panel-default";>
 					<div class="panel-heading">
 					
 					<ul class="nav nav-pills">
@@ -93,21 +113,21 @@
 						<li><a href="#">Connection Status</a></li>
 					</ul>
 					</div>
-						<div class="panel-body">
+						<div class="panel-body" style="padding:1px 1px 0px 1px;">
 
       <div class="row">
-		<div class="col-sm-4">
+		<div class="col-sm-3">
 		<div class="panel panel-default" >
 		
 			<div class="panel-heading"><a><b>UNIT 1</b></a></div>
-			<div class="panel-body" style="align:center;">
+			<div class="panel-body" >
 			
 				<div class="container-fluid" id="chart_div"></div>
 			
 				
 			<div class="container">
 			  <div class="row">
-				<div class="col-sm-2" style=" text-align: left;">
+				<div class="col-sm-2" style=" text-align: right;">
 					<h5> Frequency</h5>
 					<h5> Resistive Power</h5>
 					<h5> Reactive Power</h5>
@@ -116,7 +136,7 @@
 					<h5> Three-Phase Current</h5>
 					
 				</div>
-				<div class="col-sm-1" style=" text-align: center;">
+				<div class="col-sm-1" style=" text-align: left;">
 					<h5> 60.10Hz</h5>
 					<h5> 103.23MVA</h5>
 					<h5> -12.234MVAr</h5>
@@ -125,26 +145,32 @@
 					<h5> 113.23kA</h5>
 				</div>
 			</div>
-			  
+			</div>
+			<div style="text-align:center"><b>GATE OPENING</b></div>
+			<div class="progress">
 			
+			  <div class="progress-bar progress-bar-striped active" role="progressbar"
+			  aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width:40%">
+				40%
+			  </div>
 			</div>
 		
 			</div>
 		</div>
 		</div>
 		
-		<div class="col-sm-4">
+		<div class="col-sm-3">
 		<div class="panel panel-default" >
 		
 			<div class="panel-heading"><a><b>UNIT 2</b></a></div>
-			<div class="panel-body" style="align:center;">
+			<div class="panel-body" >
 			
 				<div class="container-fluid" id="chart_div2"></div>
 			
 				
 			<div class="container">
 			  <div class="row">
-				<div class="col-sm-2" style=" text-align: left;">
+				<div class="col-sm-2" style=" text-align: right;">
 					<h5> Frequency</h5>
 					<h5> Resistive Power</h5>
 					<h5> Reactive Power</h5>
@@ -153,7 +179,7 @@
 					<h5> Three-Phase Current</h5>
 					
 				</div>
-				<div class="col-sm-1" style=" text-align: center;">
+				<div class="col-sm-1" style=" text-align: left;">
 					<h5> 60.10Hz</h5>
 					<h5> 103.23MVA</h5>
 					<h5> -12.234MVAr</h5>
@@ -162,26 +188,32 @@
 					<h5> 113.23kA</h5>
 				</div>
 			</div>
-			  
-			
+						
+			</div>
+			<div style="text-align:center"><b>GATE OPENING</b></div>
+			<div class="progress">
+			  <div class="progress-bar progress-bar-striped active" role="progressbar"
+			  aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" style="width:50%">
+				50%
+			  </div>
 			</div>
 		
 			</div>
 		</div>
 		</div>
 		
-		<div class="col-sm-4">
+		<div class="col-sm-3">
 		<div class="panel panel-default" >
 		
 			<div class="panel-heading"><a><b>UNIT 3</b></a></div>
-			<div class="panel-body" style="align:center;">
+			<div class="panel-body" >
 			
 				<div class="container-fluid" id="chart_div3"></div>
 			
 				
 			<div class="container">
 			  <div class="row">
-				<div class="col-sm-2" style=" text-align: left;">
+				<div class="col-sm-2" style=" text-align: right;">
 					<h5> Frequency</h5>
 					<h5> Resistive Power</h5>
 					<h5> Reactive Power</h5>
@@ -190,7 +222,7 @@
 					<h5> Three-Phase Current</h5>
 					
 				</div>
-				<div class="col-sm-1" style=" text-align: center;">
+				<div class="col-sm-1" style=" text-align: left;">
 					<h5> 60.10Hz</h5>
 					<h5> 103.23MVA</h5>
 					<h5> -12.234MVAr</h5>
@@ -199,51 +231,62 @@
 					<h5> 113.23kA</h5>
 				</div>
 			</div>
-			  
-			
+			</div>
+			<div style="text-align:center"><b>GATE OPENING</b></div>
+			<div class="progress">
+			  <div class="progress-bar progress-bar-striped active" role="progressbar"
+			  aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width:60%">
+				60%
+			  </div>
 			</div>
 		
 			</div>
 		</div>
 		</div>
-	  
-	  </div>
-						
-						
-						</div>
-	</div>
-	
-	
-	
-     
-	  
-	 
-	
-	</div>
-
-    <div class="col-lg-3">
+		
+		<div class="col-sm-3">
 		
 				<div class="panel panel-default" padding-left:0px;>
-					<div class="panel-heading"><b>RTU</b></div>
+					<div class="panel-heading" style="font-size:14px"><b>RTU WESM/IEMOP Data</b></div>
 						<div class="panel-body">
-					
+						
+						<br><br><br><br><br><br><br><br><br><br><br><br>
+						<br><br><br><br><br><br><br><br>
+						<div class="row">
+							<div class="col-sm-6" style=text-align:right;"><b>AGC Status</b></div>
+							<div class="col-sm-6">
+								<div class="led-box"><div class="led-green"></div></div>
+							
+							</div>
+						
 						</div>
 				</div>
 		
 	
+		</div>
+					
+				
 	</div>
-	
-	
-	
+
   </div>
   
-  <div class ="container-fluid">
+  <div class ="container-fluid" style="margin-top:20px;">
   
   <div class="panel panel-default" >
 			<div class="panel-body" style="align:center;">
+				<div class="row">
+					<div class="col-lg-6"><b>December 24, 2025 10:01 AM</b></div>
+					<div class="col-sm-3"> Date Range
+					
+					</div>
+					<div class="col-sm-3"> Refresh Display
+					
+					</div>
+					
+				</div>
+			</div>
 			
-			</div>
-			</div>
+	</div>
   
   </div>
 
