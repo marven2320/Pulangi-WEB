@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "bootstrap": "^5.3.3",
+    "serialport": "^12.0.0",
+    "websocket": "^1.0.35",
+    "ws": "^8.18.0"
+  }
+}
