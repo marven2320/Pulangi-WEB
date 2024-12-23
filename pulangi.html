@@ -9,6 +9,10 @@
 	<script src="D://projects/Pulangi-WEB/bootstrap/jquery.min.js"></script>
 	<script src="D://projects/Pulangi-WEB/bootstrap/bootstrap.min.js"></script>
 	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+	<link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
+	<link rel="stylesheet" href="/resources/demos/style.css">
+	<script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+	<script src="https://code.jquery.com/ui/1.14.1/jquery-ui.js"></script>
 	
 	<style>
 	
@@ -43,15 +47,22 @@
 	}
 	.led-green {
 	  margin: 0;
-	  width: 24px;
-	  height: 24px;
+	  width: 40px;
+	  height: 40px;
 	  background-color: #ABFF00;
 	  border-radius: 50%;
 	  box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 7px 1px, inset #304701 0 -1px 9px, #89FF00 0 2px 12px;
 	}
 		
 	</style>
-	
+	<script>
+	$( function() {
+    $( "#datepicker1" ).datepicker();
+    });
+	$( function() {
+    $( "#datepicker2" ).datepicker();
+    });
+	</script>
 	<script>
 	
 		$(document).ready(function(){
@@ -61,9 +72,19 @@
 
 		  function drawChart() {
 
-			var data = google.visualization.arrayToDataTable([
+			var data1 = google.visualization.arrayToDataTable([
 			  ['Label', 'Value'],
 			  ['Unit 1', 80]
+			 
+			]);
+			var data2 = google.visualization.arrayToDataTable([
+			  ['Label', 'Value'],
+			  ['Unit 2', 80]
+			 
+			]);
+			var data3 = google.visualization.arrayToDataTable([
+			  ['Label', 'Value'],
+			  ['Unit 3', 80]
 			 
 			]);
 
@@ -78,9 +99,9 @@
 			var chart2 = new google.visualization.Gauge(document.getElementById('chart_div2'));
 			var chart3 = new google.visualization.Gauge(document.getElementById('chart_div3'));
 
-			chart.draw(data, options);
-			chart2.draw(data, options);
-			chart3.draw(data, options);
+			chart.draw(data1, options);
+			chart2.draw(data2, options);
+			chart3.draw(data3, options);
 
 			setInterval(function() {
 			  data.setValue(0, 1, 40 + Math.round(60 * Math.random()));
@@ -92,6 +113,17 @@
 		  }
 		
 		});
+		$('.datepicker1').datepicker({
+		 format: 'mm/dd/yyyy',
+		 startDate: '-3d'
+		
+		});
+		$('.datepicker2').datepicker({
+		 format: 'mm/dd/yyyy',
+		 startDate: '-3d'
+		
+		});
+		
                         
 		</script>
 	
@@ -99,11 +131,11 @@
 </head>
 <body>
 
-<div class="container-fluid">
+<div class="container-fluid" style="background-color:white">
 
     
    
-	<div class="panel panel-default";>
+	<div class="panel panel-default">
 					<div class="panel-heading">
 					
 					<ul class="nav nav-pills">
@@ -113,40 +145,48 @@
 						<li><a href="#">Connection Status</a></li>
 					</ul>
 					</div>
-						<div class="panel-body" style="padding:1px 1px 0px 1px;">
+						<div class="panel-body" style="padding:1px 1px 0px 1px;background-color:#526B9C">
 
       <div class="row">
 		<div class="col-sm-3">
 		<div class="panel panel-default" >
 		
 			<div class="panel-heading"><a><b>UNIT 1</b></a></div>
-			<div class="panel-body" >
+			<div class="panel-body" style="background-color:#526B9C" >
 			
 				<div class="container-fluid" id="chart_div"></div>
-			
+				<div class="row">
+					<div class="col-sm-6" style="background-color:#08296E;color:white;height:30px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Frequency</b></p></div>
+					<div class="col-sm-6" style="background-color:white;height:30px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>60.00 Hz</b></p></div>
+				</div>
 				
-			<div class="container">
-			  <div class="row">
-				<div class="col-sm-2" style=" text-align: right;">
-					<h5> Frequency</h5>
-					<h5> Resistive Power</h5>
-					<h5> Reactive Power</h5>
-					<h5> Power Factor</h5>
-					<h5> Three-Phase Voltage</h5>
-					<h5> Three-Phase Current</h5>
-					
+				<div class="row">
+					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>P(MW)</b></p></div>
+					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Q(MVAR)</b></p></div>
+					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
 				</div>
-				<div class="col-sm-1" style=" text-align: left;">
-					<h5> 60.10Hz</h5>
-					<h5> 103.23MVA</h5>
-					<h5> -12.234MVAr</h5>
-					<h5> 0.9</h5>
-					<h5> 13.8kV</h5>
-					<h5> 113.23kA</h5>
+				<div class="row">
+					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Va(kV)</b></p></div>
+					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ia(A)</b></p></div>
+					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
 				</div>
-			</div>
-			</div>
-			<div style="text-align:center"><b>GATE OPENING</b></div>
+				<div class="row">
+					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Vb(kV)</b></p></div>
+					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ib(A)</b></p></div>
+					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+				</div>
+				<div class="row">
+					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Vc(kV)</b></p></div>
+					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ic(A)</b></p></div>
+					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+				</div>
+			<div style="text-align:center;color:white;"><b>GATE OPENING</b></div>
+				
+			
 			<div class="progress">
 			
 			  <div class="progress-bar progress-bar-striped active" role="progressbar"
@@ -163,34 +203,40 @@
 		<div class="panel panel-default" >
 		
 			<div class="panel-heading"><a><b>UNIT 2</b></a></div>
-			<div class="panel-body" >
+			<div class="panel-body" style="background-color:#526B9C" >
 			
 				<div class="container-fluid" id="chart_div2"></div>
-			
+				<div class="row">
+					<div class="col-sm-6" style="background-color:#08296E;color:white;height:30px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Frequency</b></p></div>
+					<div class="col-sm-6" style="background-color:white;height:30px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>60.00 Hz</b></p></div>
+				</div>
 				
-			<div class="container">
-			  <div class="row">
-				<div class="col-sm-2" style=" text-align: right;">
-					<h5> Frequency</h5>
-					<h5> Resistive Power</h5>
-					<h5> Reactive Power</h5>
-					<h5> Power Factor</h5>
-					<h5> Three-Phase Voltage</h5>
-					<h5> Three-Phase Current</h5>
-					
+				<div class="row">
+					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>P(MW)</b></p></div>
+					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Q(MVAR)</b></p></div>
+					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
 				</div>
-				<div class="col-sm-1" style=" text-align: left;">
-					<h5> 60.10Hz</h5>
-					<h5> 103.23MVA</h5>
-					<h5> -12.234MVAr</h5>
-					<h5> 0.9</h5>
-					<h5> 13.8kV</h5>
-					<h5> 113.23kA</h5>
+				<div class="row">
+					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Va(kV)</b></p></div>
+					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ia(A)</b></p></div>
+					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
 				</div>
-			</div>
-						
-			</div>
-			<div style="text-align:center"><b>GATE OPENING</b></div>
+				<div class="row">
+					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Vb(kV)</b></p></div>
+					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ib(A)</b></p></div>
+					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+				</div>
+				<div class="row">
+					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Vc(kV)</b></p></div>
+					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ic(A)</b></p></div>
+					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+				</div>
+			<div style="text-align:center;color:white;"><b>GATE OPENING</b></div>
+				
 			<div class="progress">
 			  <div class="progress-bar progress-bar-striped active" role="progressbar"
 			  aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" style="width:50%">
@@ -206,33 +252,40 @@
 		<div class="panel panel-default" >
 		
 			<div class="panel-heading"><a><b>UNIT 3</b></a></div>
-			<div class="panel-body" >
+			<div class="panel-body" style="background-color:#526B9C" >
 			
 				<div class="container-fluid" id="chart_div3"></div>
 			
+				<div class="row">
+					<div class="col-sm-6" style="background-color:#08296E;color:white;height:30px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Frequency</b></p></div>
+					<div class="col-sm-6" style="background-color:white;height:30px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>60.00 Hz</b></p></div>
+				</div>
 				
-			<div class="container">
-			  <div class="row">
-				<div class="col-sm-2" style=" text-align: right;">
-					<h5> Frequency</h5>
-					<h5> Resistive Power</h5>
-					<h5> Reactive Power</h5>
-					<h5> Power Factor</h5>
-					<h5> Three-Phase Voltage</h5>
-					<h5> Three-Phase Current</h5>
-					
+				<div class="row">
+					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>P(MW)</b></p></div>
+					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Q(MVAR)</b></p></div>
+					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
 				</div>
-				<div class="col-sm-1" style=" text-align: left;">
-					<h5> 60.10Hz</h5>
-					<h5> 103.23MVA</h5>
-					<h5> -12.234MVAr</h5>
-					<h5> 0.9</h5>
-					<h5> 13.8kV</h5>
-					<h5> 113.23kA</h5>
+				<div class="row">
+					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Va(kV)</b></p></div>
+					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ia(A)</b></p></div>
+					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
 				</div>
-			</div>
-			</div>
-			<div style="text-align:center"><b>GATE OPENING</b></div>
+				<div class="row">
+					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Vb(kV)</b></p></div>
+					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ib(A)</b></p></div>
+					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+				</div>
+				<div class="row">
+					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Vc(kV)</b></p></div>
+					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ic(A)</b></p></div>
+					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+				</div>
+			<div style="text-align:center;color:white;"><b>GATE OPENING</b></div>
 			<div class="progress">
 			  <div class="progress-bar progress-bar-striped active" role="progressbar"
 			  aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width:60%">
@@ -248,13 +301,38 @@
 		
 				<div class="panel panel-default" padding-left:0px;>
 					<div class="panel-heading" style="font-size:14px"><b>RTU WESM/IEMOP Data</b></div>
-						<div class="panel-body">
-						
-						<br><br><br><br><br><br><br><br><br><br><br><br>
-						<br><br><br><br><br><br><br><br>
+						<div class="panel-body" style="background-color:#526B9C">
+						<br>
 						<div class="row">
-							<div class="col-sm-6" style=text-align:right;"><b>AGC Status</b></div>
-							<div class="col-sm-6">
+							<div class="col-sm-6" style="background-color:#08296E;color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b>P(MW)</b></p></div>
+							<div class="col-sm-6" style="background-color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b>0.00</b></p></div>
+						</div>
+						
+						<div class="row">
+							<div class="col-sm-6" style="background-color:#08296E;color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b>Q(MVAR)</b></p></div>
+							<div class="col-sm-6" style="background-color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b>0.00</b></p></div>
+						</div>
+						
+						<div class="row">
+							<div class="col-sm-6" style="background-color:#08296E;color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b>PF</b></p></div>
+							<div class="col-sm-6" style="background-color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b>0.00</b></p></div>
+						</div>
+						
+						<br><br><br>
+						
+						<div class="row">
+							<div class="col-sm-6" style="background-color:#08296E;color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b>V(kV)</b></p></div>
+							<div class="col-sm-6" style="background-color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b>0.00</b></p></div>
+						</div>
+						
+						<div class="row">
+							<div class="col-sm-6" style="background-color:#08296E;color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b>I(A)</b></p></div>
+							<div class="col-sm-6" style="background-color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b>0.00</b></p></div>
+						</div>
+						
+						<div class="row">
+							<div class="col-sm-8" style="text-align:right;font-size:30px;padding:10px;margin:13px;color:white;"><b>AGC STATUS</b></div>
+							<div class="col-sm-2" style="text-align:center;font-size:30px;padding:10px;margin-top:15px;color:white;" >
 								<div class="led-box"><div class="led-green"></div></div>
 							
 							</div>
@@ -273,14 +351,32 @@
   <div class ="container-fluid" style="margin-top:20px;">
   
   <div class="panel panel-default" >
-			<div class="panel-body" style="align:center;">
+			<div class="panel-body" style="align:center;background-color:#526B9C;padding-bottom:0px;">
 				<div class="row">
-					<div class="col-lg-6"><b>December 24, 2025 10:01 AM</b></div>
-					<div class="col-sm-3"> Date Range
+					<div class="col-lg-4" style="font-size:35px;color:yellow;"><b>December 24, 2025<br>10:01 AM</b></div>
+					<div class="col-sm-4"> 
+					<div class="col-sm-5" style="padding-top:20px;text-align:right;font-size:25px;color:white;"><b>Date & Time<br>RANGE</b></div>
+						
+							
+						<div class="col-sm-4">
+								<div style="color:white">START DATE</div>
+								<div style="font-size:20px;">
+								<p><input type="text" id="datepicker1" size="20"></p> </div>
+								<div style="color:white">END DATE</div>
+								<div style="font-size:20px;">
+								<p><input type="text" id="datepicker1" size="20"></p></div>
+								
+						</div>
+						
+						
 					
 					</div>
-					<div class="col-sm-3"> Refresh Display
-					
+					<div class="col-sm-2">
+					<button type="button" class="btn btn-primary" style="margin-top:12px;width:100%;padding:10px;background-color:white;color:black;font-size:25px;">Export Data</button>
+					</div>
+					<div class="col-sm-2">
+					<button type="button" class="btn btn-primary" style="margin-top:2px;width:100%;padding:10px;background-color:white;color:black;font-size:25px;">Refresh Display</button>
+					<button type="button" class="btn btn-primary" style="width:100%; margin-top:5px;padding:10px;background-color:#00FF00;color:black;font-size:25px;">Connected</button>
 					</div>
 					
 				</div>
