@@ -11,6 +11,64 @@ server.listen(3000, function() {
     console.log((new Date()) + ' Server is listening on port 3000');
 });
 
+var d = new Date();
+var wsdata = [
+    {
+        id: "pulangi",
+        unitnum: 1,
+        mw: 0,
+        mvar: 0,
+        freq: 0,
+        vab: 0,
+        vbc: 0,
+        vca: 0,
+        ia: 0,
+        ib: 0,
+        ic: 0,
+        pfa: 0,
+        pfb: 0,
+        pfc: 0,
+        time: d.toTimeString().split(' ')[0],
+        date: d.toISOString().split('T')[0]
+    },
+    {
+        id: "pulangi",
+        unitnum: 2,
+        mw: 0,
+        mvar: 0,
+        freq: 0,
+        vab: 0,
+        vbc: 0,
+        vca: 0,
+        ia: 0,
+        ib: 0,
+        ic: 0,
+        pfa: 0,
+        pfb: 0,
+        pfc: 0,
+        time: d.toTimeString().split(' ')[0],
+        date: d.toISOString().split('T')[0]
+    },
+    {
+        id: "pulangi",
+        unitnum: 3,
+        mw: 0,
+        mvar: 0,
+        freq: 0,
+        vab: 0,
+        vbc: 0,
+        vca: 0,
+        ia: 0,
+        ib: 0,
+        ic: 0,
+        pfa: 0,
+        pfb: 0,
+        pfc: 0,
+        time: d.toTimeString().split(' ')[0],
+        date: d.toISOString().split('T')[0]
+    }
+];
+
 wsServer = new WebSocketServer({
     httpServer: server,
     // You should not use autoAcceptConnections for production
@@ -36,6 +94,72 @@ wsServer.on('request', function(request) {
     
     var connection = request.accept('echo-protocol', request.origin);
     console.log((new Date()) + ' Connection accepted.');
+    
+    setInterval(function(){
+        
+        wsdata = [
+            {
+                id: "pulangi",
+                unitnum: 1,
+                mw: Math.random()*100,
+                mvar: Math.random()*100,
+                freq: Math.random()*10,
+                vab: Math.random()*100,
+                vbc: Math.random()*100,
+                vca: Math.random()*100,
+                ia: Math.random()*100,
+                ib: Math.random()*100,
+                ic: Math.random(),
+                pfa: Math.random(),
+                pfb: Math.random(),
+                pfc: Math.random(),
+                time: d.toTimeString().split(' ')[0],
+                date: d.toISOString().split('T')[0]
+            },
+            {
+                id: "pulangi",
+                unitnum: 2,
+                mw: Math.random()*100,
+                mvar: Math.random()*100,
+                freq: Math.random()*100,
+                vab: Math.random()*100,
+                vbc: Math.random()*100,
+                vca: Math.random()*100,
+                ia: Math.random()*100,
+                ib: Math.random()*100,
+                ic: Math.random()*100,
+                pfa: Math.random(),
+                pfb: Math.random(),
+                pfc: Math.random(),
+                time: d.toTimeString().split(' ')[0],
+                date: d.toISOString().split('T')[0]
+            },
+            {
+                id: "pulangi",
+                unitnum: 3,
+                mw: Math.random()*100,
+                mvar: Math.random()*100,
+                freq: Math.random()*100,
+                vab: Math.random()*100,
+                vbc: Math.random()*100,
+                vca: Math.random()*100,
+                ia: Math.random()*100,
+                ib: Math.random()*100,
+                ic: Math.random()*100,
+                pfa: Math.random(),
+                pfb: Math.random(),
+                pfc: Math.random(),
+                time: d.toTimeString().split(' ')[0],
+                date: d.toISOString().split('T')[0]
+            }
+                ];
+
+
+        connection.send(JSON.stringify(wsdata));
+        
+    },1000);
+    
+
     connection.on('message', function(message) {
         if (message.type === 'utf8') {
             console.log('Received Message: ' + message.utf8Data);
@@ -46,6 +170,8 @@ wsServer.on('request', function(request) {
             connection.sendBytes(message.binaryData);
         }
     });
+
+
     connection.on('close', function(reasonCode, description) {
         console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
     });

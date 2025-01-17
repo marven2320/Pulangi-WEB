@@ -5,9 +5,9 @@
    
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="stylesheet" href="D://projects/Pulangi-WEB/bootstrap/bootstrap.min.css">
-	<script src="D://projects/Pulangi-WEB/bootstrap/jquery.min.js"></script>
-	<script src="D://projects/Pulangi-WEB/bootstrap/bootstrap.min.js"></script>
+	<link rel="stylesheet" href="/home/pulangi-hpp/Documents/projects/Pulangi-WEB/bootstrap/bootstrap.min.css">
+	<script src="/home/pulangi-hpp/Documents/projects/Pulangi-WEB/bootstrap/jquery.min.js"></script>
+	<script src="/home/pulangi-hpp/Documents/projects/Pulangi-WEB/bootstrap/bootstrap.min.js"></script>
 	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 	<link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
 	<link rel="stylesheet" href="/resources/demos/style.css">
@@ -63,11 +63,31 @@
     $( "#datepicker2" ).datepicker();
     });
 	</script>
+
 	<script>
 	
+		
+		$('.datepicker1').datepicker({
+		 format: 'mm/dd/yyyy',
+		 startDate: '-3d'
+		
+		});
+		$('.datepicker2').datepicker({
+		 format: 'mm/dd/yyyy',
+		 startDate: '-3d'
+		
+		});
+		
+                        
+		</script>
+
+		<script>
+
+		var meter_data = {p1:0,p2:0,p3:0};
+
 		$(document).ready(function(){
 		
-		google.charts.load('current', {'packages':['gauge']});
+		  google.charts.load('current', {'packages':['gauge']});
 		  google.charts.setOnLoadCallback(drawChart);
 
 		  function drawChart() {
@@ -104,27 +124,112 @@
 			chart3.draw(data3, options);
 
 			setInterval(function() {
-			  data.setValue(0, 1, 40 + Math.round(60 * Math.random()));
-			  chart.draw(data, options);
-			  chart2.draw(data, options);
-			  chart3.draw(data, options);
-			}, 13000);
+			  data1.setValue(0, 1,meter_data.p1);
+			  data2.setValue(0, 1,meter_data.p2);
+			  data3.setValue(0, 1,meter_data.p3);
+			  chart.draw(data1, options);
+			  chart2.draw(data2, options);
+			  chart3.draw(data3, options);
+			}, 1000);
 			
 		  }
 		
 		});
-		$('.datepicker1').datepicker({
-		 format: 'mm/dd/yyyy',
-		 startDate: '-3d'
-		
-		});
-		$('.datepicker2').datepicker({
-		 format: 'mm/dd/yyyy',
-		 startDate: '-3d'
-		
-		});
-		
-                        
+
+
+
+
+			const webSocket = new WebSocket('ws://localhost:3000/','echo-protocol');
+
+			
+
+			webSocket.onmessage = (event) => {
+				  var data = JSON.parse(event.data);
+
+
+				  /*
+				  chart.draw(Math.floor(data[0].mw), options);
+			  	  chart2.draw(Math.floor(data[0].mw), options);
+			      chart3.draw(Math.floor(data[0].mw), options);
+				  */
+				  meter_data.p1 = data[0].mw.toFixed(4);
+				  meter_data.p2 = data[1].mw.toFixed(4);
+				  meter_data.p3 = data[2].mw.toFixed(4);
+				  var d = new Date();
+
+
+				  //unit 1
+				  document.getElementById('f1').innerHTML = data[0].freq.toFixed(2).toString().bold();
+				  document.getElementById('pw1').innerHTML = data[0].mw.toFixed(4).toString().bold();
+				  document.getElementById('qvar1').innerHTML = data[0].mvar.toFixed(4).toString().bold();
+				  document.getElementById('Va1').innerHTML = data[0].vab.toFixed(4).toString().bold();
+				  document.getElementById('Ia1').innerHTML = data[0].ia.toFixed(4).toString().bold();
+				  document.getElementById('Vb1').innerHTML = data[0].vbc.toFixed(4).toString().bold();
+				  document.getElementById('Ib1').innerHTML = data[0].ib.toFixed(4).toString().bold();
+				  document.getElementById('Vc1').innerHTML = data[0].vca.toFixed(4).toString().bold();
+				  document.getElementById('Ic1').innerHTML = data[0].ic.toFixed(4).toString().bold();
+				  //unit 2
+				  document.getElementById('f2').innerHTML = data[1].freq.toFixed(2).toString().bold();
+				  document.getElementById('pw2').innerHTML = data[1].mw.toFixed(4).toString().bold();
+				  document.getElementById('qvar2').innerHTML = data[1].mvar.toFixed(4).toString().bold();
+				  document.getElementById('Va2').innerHTML = data[1].vab.toFixed(4).toString().bold();
+				  document.getElementById('Ia2').innerHTML = data[1].ia.toFixed(4).toString().bold();
+				  document.getElementById('Vb2').innerHTML = data[1].vbc.toFixed(4).toString().bold();
+				  document.getElementById('Ib2').innerHTML = data[1].ib.toFixed(4).toString().bold();
+				  document.getElementById('Vc2').innerHTML = data[1].vca.toFixed(4).toString().bold();
+				  document.getElementById('Ic2').innerHTML = data[1].ic.toFixed(4).toString().bold();
+				  //unit 3
+				  document.getElementById('f3').innerHTML = data[2].freq.toFixed(2).toString().bold();
+				  document.getElementById('pw3').innerHTML = data[2].mw.toFixed(4).toString().bold();
+				  document.getElementById('qvar3').innerHTML = data[2].mvar.toFixed(4).toString().bold();
+				  document.getElementById('Va3').innerHTML = data[2].vab.toFixed(4).toString().bold();
+				  document.getElementById('Ia3').innerHTML = data[2].ia.toFixed(4).toString().bold();
+				  document.getElementById('Vb3').innerHTML = data[2].vbc.toFixed(4).toString().bold();
+				  document.getElementById('Ib3').innerHTML = data[2].ib.toFixed(4).toString().bold();
+				  document.getElementById('Vc3').innerHTML = data[2].vca.toFixed(4).toString().bold();
+				  document.getElementById('Ic3').innerHTML = data[2].ic.toFixed(4).toString().bold();
+
+				  document.getElementById('dattime').innerHTML = d.toString().split('G')[0].bold();
+
+				  var avgpw = (parseFloat(data[0].mw.toString()) + parseFloat(data[1].mw.toString()) + parseFloat(data[2].mw.toString()))/3;
+				  var avgqvar = (parseFloat(data[0].mvar.toString()) + parseFloat(data[1].mvar.toString()) + parseFloat(data[2].mvar.toString()))/3;
+				  var avgpf = (parseFloat(data[0].pfa.toString()) + parseFloat(data[0].pfb.toString()) + parseFloat(data[0].pfc.toString()) + parseFloat(data[1].pfa.toString()) + parseFloat(data[1].pfb.toString()) + parseFloat(data[1].pfc.toString()) +  parseFloat(data[2].pfa.toString()) + parseFloat(data[2].pfb.toString()) + parseFloat(data[2].pfc.toString()))/9;
+				  var avgV = (parseFloat(data[0].vab.toString()) + parseFloat(data[0].vbc.toString()) + parseFloat(data[0].vca.toString()) + parseFloat(data[1].vab.toString()) + parseFloat(data[1].vbc.toString())+ parseFloat(data[1].vca.toString()) + parseFloat(data[2].vab.toString())+ parseFloat(data[2].vbc.toString())+ parseFloat(data[2].vca.toString()))/9;
+				  var avgI = (parseFloat(data[0].ia.toString()) + parseFloat(data[0].ib.toString()) + parseFloat(data[0].ic.toString()) + parseFloat(data[1].ia.toString()) + parseFloat(data[1].ib.toString())+ parseFloat(data[1].ic.toString()) + parseFloat(data[2].ia.toString())+ parseFloat(data[2].ib.toString())+ parseFloat(data[2].ic.toString()))/9;
+
+				  var avgV1 = (parseFloat(data[0].vab.toString()) + parseFloat(data[0].vbc.toString()) + parseFloat(data[0].vca.toString()))/3;
+				  var avgV2 = (parseFloat(data[1].vab.toString()) + parseFloat(data[1].vbc.toString()) + parseFloat(data[1].vca.toString()))/3;
+				  var avgV3 = (parseFloat(data[2].vab.toString()) + parseFloat(data[2].vbc.toString()) + parseFloat(data[2].vca.toString()))/3;
+
+				  var avgI1 = (parseFloat(data[0].ia.toString()) + parseFloat(data[0].ib.toString()) + parseFloat(data[0].ic.toString()))/3;
+				  var avgI2 = (parseFloat(data[1].ia.toString()) + parseFloat(data[1].ib.toString()) + parseFloat(data[1].ic.toString()))/3;
+				  var avgI3 = (parseFloat(data[2].ia.toString()) + parseFloat(data[2].ib.toString()) + parseFloat(data[2].ic.toString()))/3;
+
+				  var avgpf1 = (parseFloat(data[0].pfa.toString()) + parseFloat(data[0].pfb.toString()) + parseFloat(data[0].pfc.toString()))/3;
+				  var avgpf2 = (parseFloat(data[1].pfa.toString()) + parseFloat(data[1].pfb.toString()) + parseFloat(data[1].pfc.toString()))/3;
+				  var avgpf3 = (parseFloat(data[2].pfa.toString()) + parseFloat(data[2].pfb.toString()) + parseFloat(data[2].pfc.toString()))/3;
+
+				  document.getElementById('avgV1').innerHTML = avgV1.toFixed(4).toString().bold();
+				  document.getElementById('avgV2').innerHTML = avgV2.toFixed(4).toString().bold();
+				  document.getElementById('avgV3').innerHTML = avgV3.toFixed(4).toString().bold();
+
+				  document.getElementById('avgI1').innerHTML = avgI1.toFixed(4).toString().bold();
+				  document.getElementById('avgI2').innerHTML = avgI2.toFixed(4).toString().bold();
+				  document.getElementById('avgI3').innerHTML = avgI3.toFixed(4).toString().bold();
+
+				  document.getElementById('avgpf1').innerHTML = avgpf1.toFixed(2).toString().bold();
+				  document.getElementById('avgpf2').innerHTML = avgpf2.toFixed(2).toString().bold();
+				  document.getElementById('avgpf3').innerHTML = avgpf3.toFixed(2).toString().bold();
+
+				  document.getElementById('avgpw').innerHTML = avgpw.toFixed(4).toString().bold();
+				  document.getElementById('avgqvar').innerHTML = avgqvar.toFixed(4).toString().bold();
+				  document.getElementById('avgpf').innerHTML = avgpf.toFixed(2).toString().bold();
+				  document.getElementById('avgV').innerHTML = avgV.toFixed(4).toString().bold();
+				  document.getElementById('avgI').innerHTML = avgI.toFixed(4).toString().bold();
+
+
+				};
+
 		</script>
 	
 	
@@ -157,33 +262,49 @@
 				<div class="container-fluid" id="chart_div"></div>
 				<div class="row">
 					<div class="col-sm-6" style="background-color:#08296E;color:white;height:30px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Frequency</b></p></div>
-					<div class="col-sm-6" style="background-color:white;height:30px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>60.00 Hz</b></p></div>
+					<div id="f1" class="col-sm-6" style="background-color:white;height:30px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>60.00 Hz</b></p></div>
 				</div>
 				
 				<div class="row">
 					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>P(MW)</b></p></div>
-					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div id = 'pw1' class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
 					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Q(MVAR)</b></p></div>
-					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div id = 'qvar1' class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
 				</div>
 				<div class="row">
 					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Va(kV)</b></p></div>
-					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div id = 'Va1' class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
 					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ia(A)</b></p></div>
-					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div id = 'Ia1' class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
 				</div>
 				<div class="row">
 					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Vb(kV)</b></p></div>
-					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div id = 'Vb1' class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
 					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ib(A)</b></p></div>
-					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div id = 'Ib1' class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
 				</div>
 				<div class="row">
 					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Vc(kV)</b></p></div>
-					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div id = 'Vc1' class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
 					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ic(A)</b></p></div>
-					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div id = 'Ic1' class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
 				</div>
+
+				<div class="row">
+					<div class="col-sm-6" style="background-color:#08296E;color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>V(kV)</b></p></div>
+					<div id="avgV1" class="col-sm-6" style="background-color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+				</div>
+
+				<div class="row">
+					<div class="col-sm-6" style="background-color:#08296E;color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>I(A)</b></p></div>
+					<div id="avgI1" class="col-sm-6" style="background-color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+				</div>
+
+				<div class="row">
+					<div class="col-sm-6" style="background-color:#08296E;color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>PF</b></p></div>
+					<div id="avgpf1" class="col-sm-6" style="background-color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+				</div>
+
 			<div style="text-align:center;color:white;"><b>GATE OPENING</b></div>
 				
 			
@@ -208,33 +329,49 @@
 				<div class="container-fluid" id="chart_div2"></div>
 				<div class="row">
 					<div class="col-sm-6" style="background-color:#08296E;color:white;height:30px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Frequency</b></p></div>
-					<div class="col-sm-6" style="background-color:white;height:30px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>60.00 Hz</b></p></div>
+					<div id="f2" class="col-sm-6" style="background-color:white;height:30px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>60.00 Hz</b></p></div>
 				</div>
 				
 				<div class="row">
 					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>P(MW)</b></p></div>
-					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div id="pw2" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
 					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Q(MVAR)</b></p></div>
-					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div id="qvar2" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
 				</div>
 				<div class="row">
 					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Va(kV)</b></p></div>
-					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div id="Va2" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
 					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ia(A)</b></p></div>
-					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div id="Ia2" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
 				</div>
 				<div class="row">
 					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Vb(kV)</b></p></div>
-					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div id="Vb2" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
 					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ib(A)</b></p></div>
-					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div id="Ib2" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
 				</div>
 				<div class="row">
 					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Vc(kV)</b></p></div>
-					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div id="Vc2" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
 					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ic(A)</b></p></div>
-					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div id="Ic2" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
 				</div>
+
+				<div class="row">
+					<div class="col-sm-6" style="background-color:#08296E;color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>V(kV)</b></p></div>
+					<div id="avgV2" class="col-sm-6" style="background-color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+				</div>
+
+				<div class="row">
+					<div class="col-sm-6" style="background-color:#08296E;color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>I(A)</b></p></div>
+					<div id="avgI2" class="col-sm-6" style="background-color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+				</div>
+
+				<div class="row">
+					<div class="col-sm-6" style="background-color:#08296E;color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>PF</b></p></div>
+					<div id="avgpf2" class="col-sm-6" style="background-color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+				</div>
+
 			<div style="text-align:center;color:white;"><b>GATE OPENING</b></div>
 				
 			<div class="progress">
@@ -258,32 +395,47 @@
 			
 				<div class="row">
 					<div class="col-sm-6" style="background-color:#08296E;color:white;height:30px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Frequency</b></p></div>
-					<div class="col-sm-6" style="background-color:white;height:30px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>60.00 Hz</b></p></div>
+					<div id="f3" class="col-sm-6" style="background-color:white;height:30px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>60.00 Hz</b></p></div>
 				</div>
 				
 				<div class="row">
 					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>P(MW)</b></p></div>
-					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div id="pw3" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
 					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Q(MVAR)</b></p></div>
-					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div id="qvar3" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
 				</div>
 				<div class="row">
 					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Va(kV)</b></p></div>
-					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div id="Va3" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
 					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ia(A)</b></p></div>
-					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div id="Ia3" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
 				</div>
 				<div class="row">
 					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Vb(kV)</b></p></div>
-					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div id="Vb3" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
 					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ib(A)</b></p></div>
-					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div id="Ib3" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
 				</div>
 				<div class="row">
 					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Vc(kV)</b></p></div>
-					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div id="Vc3" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
 					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ic(A)</b></p></div>
-					<div class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+					<div id="Ic3" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+				</div>
+
+				<div class="row">
+					<div class="col-sm-6" style="background-color:#08296E;color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>V(kV)</b></p></div>
+					<div id="avgV3" class="col-sm-6" style="background-color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+				</div>
+
+				<div class="row">
+					<div class="col-sm-6" style="background-color:#08296E;color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>I(A)</b></p></div>
+					<div id="avgI3" class="col-sm-6" style="background-color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
+				</div>
+
+				<div class="row">
+					<div class="col-sm-6" style="background-color:#08296E;color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>PF</b></p></div>
+					<div id="avgpf3" class="col-sm-6" style="background-color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>0.00</b></p></div>
 				</div>
 			<div style="text-align:center;color:white;"><b>GATE OPENING</b></div>
 			<div class="progress">
@@ -305,32 +457,33 @@
 						<br>
 						<div class="row">
 							<div class="col-sm-6" style="background-color:#08296E;color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b>P(MW)</b></p></div>
-							<div class="col-sm-6" style="background-color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b>0.00</b></p></div>
+							<div id="avgpw" class="col-sm-6" style="background-color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b>0.00</b></p></div>
 						</div>
 						
 						<div class="row">
 							<div class="col-sm-6" style="background-color:#08296E;color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b>Q(MVAR)</b></p></div>
-							<div class="col-sm-6" style="background-color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b>0.00</b></p></div>
+							<div id="avgqvar" class="col-sm-6" style="background-color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b>0.00</b></p></div>
 						</div>
 						
 						<div class="row">
 							<div class="col-sm-6" style="background-color:#08296E;color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b>PF</b></p></div>
-							<div class="col-sm-6" style="background-color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b>0.00</b></p></div>
+							<div id="avgpf" class="col-sm-6" style="background-color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b>0.00</b></p></div>
 						</div>
 						
 						<br><br><br>
 						
 						<div class="row">
 							<div class="col-sm-6" style="background-color:#08296E;color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b>V(kV)</b></p></div>
-							<div class="col-sm-6" style="background-color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b>0.00</b></p></div>
+							<div id="avgV" class="col-sm-6" style="background-color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b>0.00</b></p></div>
 						</div>
 						
 						<div class="row">
 							<div class="col-sm-6" style="background-color:#08296E;color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b>I(A)</b></p></div>
-							<div class="col-sm-6" style="background-color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b>0.00</b></p></div>
+							<div id="avgI" class="col-sm-6" style="background-color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b>0.00</b></p></div>
 						</div>
 						
 						<div class="row">
+							<br><br><br><br><br><br>
 							<div class="col-sm-8" style="text-align:right;font-size:30px;padding:10px;margin:13px;color:white;"><b>AGC STATUS</b></div>
 							<div class="col-sm-2" style="text-align:center;font-size:30px;padding:10px;margin-top:15px;color:white;" >
 								<div class="led-box"><div class="led-green"></div></div>
@@ -353,7 +506,7 @@
   <div class="panel panel-default" >
 			<div class="panel-body" style="align:center;background-color:#526B9C;padding-bottom:0px;">
 				<div class="row">
-					<div class="col-lg-4" style="font-size:35px;color:yellow;"><b>December 24, 2025<br>10:01 AM</b></div>
+					<div id="dattime" class="col-lg-4" style="font-size:35px;color:yellow;"><b>December 24, 2025<br>10:01 AM</b></div>
 					<div class="col-sm-4"> 
 					<div class="col-sm-5" style="padding-top:20px;text-align:right;font-size:25px;color:white;"><b>Date & Time<br>RANGE</b></div>
 						
