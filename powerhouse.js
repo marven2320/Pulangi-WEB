@@ -66,8 +66,8 @@ const mysql = require('mysql2');
 const pool = mysql.createPool({
     host: 'localhost',
     user: 'root',
-    password: 'ab&j!',
-    database: 'pulangidb',
+    password: 'KaRMSys2025!',
+    database: 'pulangi_data',
     connectionLimit: 10
   });
 
@@ -109,8 +109,12 @@ var table = [
 
 for (let i = 0;i < ipcon.length; i++)
 {
+    try{
     client[i].connectTCP(ipcon[i], {port: 502});
     client[i].setTimeout(5000);
+    }catch{
+        
+    }
 }
 //------start-------- FOR MODBUS COMMUNICATION 
 const getMetersValue = async (meters) => {
