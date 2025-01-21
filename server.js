@@ -11,6 +11,18 @@ server.listen(3000, function() {
     console.log((new Date()) + ' Server is listening on port 3000');
 });
 
+const mysql = require('mysql2');
+const pool = mysql.createPool({
+    host: 'localhost',
+    user: 'root',
+    password: 'KaRMSys2025!',
+    database: 'pulangi_data',
+    connectionLimit: 10
+  });
+var table = [
+    ['"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"']
+];
+
 var d = new Date();
 var wsdata = [
     {
@@ -161,14 +173,32 @@ wsServer.on('request', function(request) {
     
 
     connection.on('message', function(message) {
-        if (message.type === 'utf8') {
-            console.log('Received Message: ' + message.utf8Data);
-            connection.sendUTF(message.utf8Data);
-        }
-        else if (message.type === 'binary') {
-            console.log('Received Binary Message of ' + message.binaryData.length + ' bytes');
-            connection.sendBytes(message.binaryData);
-        }
+           var data = JSON.parse(message.utf8Data); 
+        
+            
+            console.log('Received Message: ' + data[0].startdate);
+            console.log('Received Message: ' + data[0].enddate);
+
+
+            //const  sql = 'SELECT * from pulangi WHERE date between \''+ data[0].startdate+ '\'' + ' AND \''+data[0].enddate+ '\''+' ORDER by date DESC';
+            const  sql = 'SELECT * from pulangi WHERE mw= 100';
+            console.log(sql);
+
+            pool.query(
+            {
+              sql
+            },
+            (err, result, fields) => {
+              if (err instanceof Error) {
+                //console.log(err);
+                return;
+              }
+          
+            console.log(result);
+            console.log(fields);
+            }
+          );
+        
     });
 
 

@@ -56,15 +56,23 @@
 	}
 		
 	</style>
+
 		<script>
 		var today;
     	today = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
 		$( function() {
-	    $( "#datepicker1" ).datepicker({minDate: new Date(2025, 1 -1, 1),maxDate: today});
+	    $( "#datepicker1" ).datepicker({minDate	: new Date(2025, 1 -1, 1),maxDate: today});
 	    });
 		$( function() {
 	    $( "#datepicker2" ).datepicker({minDate: new Date(2025, 1 -1, 1),maxDate: today});
 	    });
+	    var userdata =  [{startdate:'',enddate:''}];
+	    
+	    function reformatDateString(s) {
+ 			var b = s.split('/');	
+ 			const dateformat = b[2]+'-'+b[0]+'-'+b[1];
+ 			return dateformat;
+		}
 
 	    $(document).ready(function() {
 		    $("#xportdata").click(function(){
@@ -72,10 +80,12 @@
 		        var datepick2 = document.getElementById("datepicker2").value;
 		        if ((!datepick1)||(!datepick2)){
 		        	//check for empty or incorrect input
-		        	alert("Invalid Start or END Date for ra eports!");
+		        	alert("Invalid START or END Date for ra eports!");
 		        }else{
-		        	//call php function for database query
-
+		        	
+				       userdata =  [{startdate:reformatDateString(datepick1),enddate:reformatDateString(datepick2)}];
+				       webSocket.send(JSON.stringify(userdata));
+				    
 		        }
  
 		    });
@@ -147,11 +157,6 @@
 		  }
 		
 		});
-
-			
-
-			
-				
 
 
 			webSocket.onmessage = (event) => {
@@ -526,7 +531,7 @@
 						<div class="col-sm-4">
 								<div style="color:white">START DATE</div>
 								<div style="font-size:20px;">
-								<p><input type="text" id="datepicker1" size="20"></p> </div>
+								<p><input type="text" id="datepicker1" size="20" dataformat="YYYY-MM-DD"></p> </div>
 								<div style="color:white">END DATE</div>
 								<div style="font-size:20px;">
 								<p><input type="text" id="datepicker2" size="20"></p></div>
@@ -537,7 +542,7 @@
 					
 					</div>
 					<div class="col-sm-2">
-					<button id="xportdata" type="button" class="btn btn-primary" style="margin-top:36px;width:100%;padding:10px;background-color:white;color:black;font-size:25px;">Export Data</button>
+					<button id="xportdata" type="button" action = "reports.php" class="btn btn-primary" style="margin-top:36px;width:100%;padding:10px;background-color:white;color:black;font-size:25px;">Export Data</button>
 					</div>
 					<div class="col-sm-2">
 					<button id="statusbtn" type="button" class="btn btn-primary" style="width:100%; margin-top:36px;padding:10px;background-color:#00FF00;color:black;font-size:25px;">Connected</button>
