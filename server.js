@@ -15,7 +15,7 @@ const mysql = require('mysql2');
 const pool = mysql.createPool({
     host: 'localhost',
     user: 'root',
-    password: 'KaRMSys2025!',
+    //password: 'KaRMSys2025!',
     database: 'pulangi_data',
     connectionLimit: 10
   });
@@ -180,24 +180,24 @@ wsServer.on('request', function(request) {
             console.log('Received Message: ' + data[0].enddate);
 
 
-            //const  sql = 'SELECT * from pulangi WHERE date between \''+ data[0].startdate+ '\'' + ' AND \''+data[0].enddate+ '\''+' ORDER by date DESC';
-            const  sql = 'SELECT * from pulangi WHERE mw= 100';
-            console.log(sql);
+            const  sql = 'SELECT * from pulangi WHERE date BETWEEN \''+ data[0].startdate+ '\'' + ' AND \''+data[0].enddate+ '\''+' ORDER by date ASC';
+            //const  sql = 'SELECT * from pulangi WHERE mw= 100';
+            //console.log(sql);
 
-            pool.query(
-            {
-              sql
-            },
-            (err, result, fields) => {
-              if (err instanceof Error) {
-                //console.log(err);
-                return;
-              }
-          
-            console.log(result);
-            console.log(fields);
+            try {
+                  pool.query({sql},(err, result, fields) => {
+                  if (err instanceof Error) {
+                    console.log(err);
+                    return;
+                  }
+                  //console.log(result); // results contains rows returned by server
+                  connection.send(JSON.stringify(result));
+                  });
+            }catch (err) {
+                  console.log(err);
             }
-          );
+
+           
         
     });
 

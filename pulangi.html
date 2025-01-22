@@ -67,7 +67,7 @@
 	    $( "#datepicker2" ).datepicker({minDate: new Date(2025, 1 -1, 1),maxDate: today});
 	    });
 	    var userdata =  [{startdate:'',enddate:''}];
-	    
+
 	    function reformatDateString(s) {
  			var b = s.split('/');	
  			const dateformat = b[2]+'-'+b[0]+'-'+b[1];
@@ -105,6 +105,36 @@
 		var meter_data = {p1:0,p2:0,p3:0};
 		var con_flag = 0;
 		var webSocket = new WebSocket('ws://localhost:3000/','echo-protocol');
+
+		const download = function(data){
+			const blob = new Blob([data],{type:'text/csv'});
+			const url = window.URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.setAttribute('hidden','');
+			a.setAttribute('href',url);
+			a.setAttribute('download','report.csv');
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+
+		};
+
+		const objectTOCsv = function(data){
+			const csvRows = [];
+
+			const headers = Object.keys(data[0]);
+			csvRows.push(headers.join(','));
+			
+			for (const row of data){
+				const values = headers.map(header =>{
+					const escaped = (''+row[header]).replace(/"/g,'\\"');
+					return `"${escaped}"`;
+				});
+				csvRows.push(values.join(','));
+			}
+
+			return csvRows.join('\n');
+		};
 
 		$(document).ready(function(){
 		
@@ -161,89 +191,97 @@
 
 			webSocket.onmessage = (event) => {
 				  var data = JSON.parse(event.data);
+				  //console.log(data);
+				  	  try{
+					  /*
+					  chart.draw(Math.floor(data[0].mw), options);
+				  	  chart2.draw(Math.floor(data[0].mw), options);
+				      chart3.draw(Math.floor(data[0].mw), options);
+					  */
+					  meter_data.p1 = data[0].mw.toFixed(4);
+					  meter_data.p2 = data[1].mw.toFixed(4);
+					  meter_data.p3 = data[2].mw.toFixed(4);
+					  var d = new Date();
 
 
-				  /*
-				  chart.draw(Math.floor(data[0].mw), options);
-			  	  chart2.draw(Math.floor(data[0].mw), options);
-			      chart3.draw(Math.floor(data[0].mw), options);
-				  */
-				  meter_data.p1 = data[0].mw.toFixed(4);
-				  meter_data.p2 = data[1].mw.toFixed(4);
-				  meter_data.p3 = data[2].mw.toFixed(4);
-				  var d = new Date();
+					  //unit 1
+					  document.getElementById('f1').innerHTML = data[0].freq.toFixed(2).toString().bold();
+					  document.getElementById('pw1').innerHTML = data[0].mw.toFixed(4).toString().bold();
+					  document.getElementById('qvar1').innerHTML = data[0].mvar.toFixed(4).toString().bold();
+					  document.getElementById('Va1').innerHTML = data[0].vab.toFixed(4).toString().bold();
+					  document.getElementById('Ia1').innerHTML = data[0].ia.toFixed(4).toString().bold();
+					  document.getElementById('Vb1').innerHTML = data[0].vbc.toFixed(4).toString().bold();
+					  document.getElementById('Ib1').innerHTML = data[0].ib.toFixed(4).toString().bold();
+					  document.getElementById('Vc1').innerHTML = data[0].vca.toFixed(4).toString().bold();
+					  document.getElementById('Ic1').innerHTML = data[0].ic.toFixed(4).toString().bold();
+					  //unit 2
+					  document.getElementById('f2').innerHTML = data[1].freq.toFixed(2).toString().bold();
+					  document.getElementById('pw2').innerHTML = data[1].mw.toFixed(4).toString().bold();
+					  document.getElementById('qvar2').innerHTML = data[1].mvar.toFixed(4).toString().bold();
+					  document.getElementById('Va2').innerHTML = data[1].vab.toFixed(4).toString().bold();
+					  document.getElementById('Ia2').innerHTML = data[1].ia.toFixed(4).toString().bold();
+					  document.getElementById('Vb2').innerHTML = data[1].vbc.toFixed(4).toString().bold();
+					  document.getElementById('Ib2').innerHTML = data[1].ib.toFixed(4).toString().bold();
+					  document.getElementById('Vc2').innerHTML = data[1].vca.toFixed(4).toString().bold();
+					  document.getElementById('Ic2').innerHTML = data[1].ic.toFixed(4).toString().bold();
+					  //unit 3
+					  document.getElementById('f3').innerHTML = data[2].freq.toFixed(2).toString().bold();
+					  document.getElementById('pw3').innerHTML = data[2].mw.toFixed(4).toString().bold();
+					  document.getElementById('qvar3').innerHTML = data[2].mvar.toFixed(4).toString().bold();
+					  document.getElementById('Va3').innerHTML = data[2].vab.toFixed(4).toString().bold();
+					  document.getElementById('Ia3').innerHTML = data[2].ia.toFixed(4).toString().bold();
+					  document.getElementById('Vb3').innerHTML = data[2].vbc.toFixed(4).toString().bold();
+					  document.getElementById('Ib3').innerHTML = data[2].ib.toFixed(4).toString().bold();
+					  document.getElementById('Vc3').innerHTML = data[2].vca.toFixed(4).toString().bold();
+					  document.getElementById('Ic3').innerHTML = data[2].ic.toFixed(4).toString().bold();
 
+					  document.getElementById('dattime').innerHTML = d.toString().split('G')[0].bold();
 
-				  //unit 1
-				  document.getElementById('f1').innerHTML = data[0].freq.toFixed(2).toString().bold();
-				  document.getElementById('pw1').innerHTML = data[0].mw.toFixed(4).toString().bold();
-				  document.getElementById('qvar1').innerHTML = data[0].mvar.toFixed(4).toString().bold();
-				  document.getElementById('Va1').innerHTML = data[0].vab.toFixed(4).toString().bold();
-				  document.getElementById('Ia1').innerHTML = data[0].ia.toFixed(4).toString().bold();
-				  document.getElementById('Vb1').innerHTML = data[0].vbc.toFixed(4).toString().bold();
-				  document.getElementById('Ib1').innerHTML = data[0].ib.toFixed(4).toString().bold();
-				  document.getElementById('Vc1').innerHTML = data[0].vca.toFixed(4).toString().bold();
-				  document.getElementById('Ic1').innerHTML = data[0].ic.toFixed(4).toString().bold();
-				  //unit 2
-				  document.getElementById('f2').innerHTML = data[1].freq.toFixed(2).toString().bold();
-				  document.getElementById('pw2').innerHTML = data[1].mw.toFixed(4).toString().bold();
-				  document.getElementById('qvar2').innerHTML = data[1].mvar.toFixed(4).toString().bold();
-				  document.getElementById('Va2').innerHTML = data[1].vab.toFixed(4).toString().bold();
-				  document.getElementById('Ia2').innerHTML = data[1].ia.toFixed(4).toString().bold();
-				  document.getElementById('Vb2').innerHTML = data[1].vbc.toFixed(4).toString().bold();
-				  document.getElementById('Ib2').innerHTML = data[1].ib.toFixed(4).toString().bold();
-				  document.getElementById('Vc2').innerHTML = data[1].vca.toFixed(4).toString().bold();
-				  document.getElementById('Ic2').innerHTML = data[1].ic.toFixed(4).toString().bold();
-				  //unit 3
-				  document.getElementById('f3').innerHTML = data[2].freq.toFixed(2).toString().bold();
-				  document.getElementById('pw3').innerHTML = data[2].mw.toFixed(4).toString().bold();
-				  document.getElementById('qvar3').innerHTML = data[2].mvar.toFixed(4).toString().bold();
-				  document.getElementById('Va3').innerHTML = data[2].vab.toFixed(4).toString().bold();
-				  document.getElementById('Ia3').innerHTML = data[2].ia.toFixed(4).toString().bold();
-				  document.getElementById('Vb3').innerHTML = data[2].vbc.toFixed(4).toString().bold();
-				  document.getElementById('Ib3').innerHTML = data[2].ib.toFixed(4).toString().bold();
-				  document.getElementById('Vc3').innerHTML = data[2].vca.toFixed(4).toString().bold();
-				  document.getElementById('Ic3').innerHTML = data[2].ic.toFixed(4).toString().bold();
+					  var avgpw = (parseFloat(data[0].mw.toString()) + parseFloat(data[1].mw.toString()) + parseFloat(data[2].mw.toString()))/3;
+					  var avgqvar = (parseFloat(data[0].mvar.toString()) + parseFloat(data[1].mvar.toString()) + parseFloat(data[2].mvar.toString()))/3;
+					  var avgpf = (parseFloat(data[0].pfa.toString()) + parseFloat(data[0].pfb.toString()) + parseFloat(data[0].pfc.toString()) + parseFloat(data[1].pfa.toString()) + parseFloat(data[1].pfb.toString()) + parseFloat(data[1].pfc.toString()) +  parseFloat(data[2].pfa.toString()) + parseFloat(data[2].pfb.toString()) + parseFloat(data[2].pfc.toString()))/9;
+					  var avgV = (parseFloat(data[0].vab.toString()) + parseFloat(data[0].vbc.toString()) + parseFloat(data[0].vca.toString()) + parseFloat(data[1].vab.toString()) + parseFloat(data[1].vbc.toString())+ parseFloat(data[1].vca.toString()) + parseFloat(data[2].vab.toString())+ parseFloat(data[2].vbc.toString())+ parseFloat(data[2].vca.toString()))/9;
+					  var avgI = (parseFloat(data[0].ia.toString()) + parseFloat(data[0].ib.toString()) + parseFloat(data[0].ic.toString()) + parseFloat(data[1].ia.toString()) + parseFloat(data[1].ib.toString())+ parseFloat(data[1].ic.toString()) + parseFloat(data[2].ia.toString())+ parseFloat(data[2].ib.toString())+ parseFloat(data[2].ic.toString()))/9;
 
-				  document.getElementById('dattime').innerHTML = d.toString().split('G')[0].bold();
+					  var avgV1 = (parseFloat(data[0].vab.toString()) + parseFloat(data[0].vbc.toString()) + parseFloat(data[0].vca.toString()))/3;
+					  var avgV2 = (parseFloat(data[1].vab.toString()) + parseFloat(data[1].vbc.toString()) + parseFloat(data[1].vca.toString()))/3;
+					  var avgV3 = (parseFloat(data[2].vab.toString()) + parseFloat(data[2].vbc.toString()) + parseFloat(data[2].vca.toString()))/3;
 
-				  var avgpw = (parseFloat(data[0].mw.toString()) + parseFloat(data[1].mw.toString()) + parseFloat(data[2].mw.toString()))/3;
-				  var avgqvar = (parseFloat(data[0].mvar.toString()) + parseFloat(data[1].mvar.toString()) + parseFloat(data[2].mvar.toString()))/3;
-				  var avgpf = (parseFloat(data[0].pfa.toString()) + parseFloat(data[0].pfb.toString()) + parseFloat(data[0].pfc.toString()) + parseFloat(data[1].pfa.toString()) + parseFloat(data[1].pfb.toString()) + parseFloat(data[1].pfc.toString()) +  parseFloat(data[2].pfa.toString()) + parseFloat(data[2].pfb.toString()) + parseFloat(data[2].pfc.toString()))/9;
-				  var avgV = (parseFloat(data[0].vab.toString()) + parseFloat(data[0].vbc.toString()) + parseFloat(data[0].vca.toString()) + parseFloat(data[1].vab.toString()) + parseFloat(data[1].vbc.toString())+ parseFloat(data[1].vca.toString()) + parseFloat(data[2].vab.toString())+ parseFloat(data[2].vbc.toString())+ parseFloat(data[2].vca.toString()))/9;
-				  var avgI = (parseFloat(data[0].ia.toString()) + parseFloat(data[0].ib.toString()) + parseFloat(data[0].ic.toString()) + parseFloat(data[1].ia.toString()) + parseFloat(data[1].ib.toString())+ parseFloat(data[1].ic.toString()) + parseFloat(data[2].ia.toString())+ parseFloat(data[2].ib.toString())+ parseFloat(data[2].ic.toString()))/9;
+					  var avgI1 = (parseFloat(data[0].ia.toString()) + parseFloat(data[0].ib.toString()) + parseFloat(data[0].ic.toString()))/3;
+					  var avgI2 = (parseFloat(data[1].ia.toString()) + parseFloat(data[1].ib.toString()) + parseFloat(data[1].ic.toString()))/3;
+					  var avgI3 = (parseFloat(data[2].ia.toString()) + parseFloat(data[2].ib.toString()) + parseFloat(data[2].ic.toString()))/3;
 
-				  var avgV1 = (parseFloat(data[0].vab.toString()) + parseFloat(data[0].vbc.toString()) + parseFloat(data[0].vca.toString()))/3;
-				  var avgV2 = (parseFloat(data[1].vab.toString()) + parseFloat(data[1].vbc.toString()) + parseFloat(data[1].vca.toString()))/3;
-				  var avgV3 = (parseFloat(data[2].vab.toString()) + parseFloat(data[2].vbc.toString()) + parseFloat(data[2].vca.toString()))/3;
+					  var avgpf1 = (parseFloat(data[0].pfa.toString()) + parseFloat(data[0].pfb.toString()) + parseFloat(data[0].pfc.toString()))/3;
+					  var avgpf2 = (parseFloat(data[1].pfa.toString()) + parseFloat(data[1].pfb.toString()) + parseFloat(data[1].pfc.toString()))/3;
+					  var avgpf3 = (parseFloat(data[2].pfa.toString()) + parseFloat(data[2].pfb.toString()) + parseFloat(data[2].pfc.toString()))/3;
 
-				  var avgI1 = (parseFloat(data[0].ia.toString()) + parseFloat(data[0].ib.toString()) + parseFloat(data[0].ic.toString()))/3;
-				  var avgI2 = (parseFloat(data[1].ia.toString()) + parseFloat(data[1].ib.toString()) + parseFloat(data[1].ic.toString()))/3;
-				  var avgI3 = (parseFloat(data[2].ia.toString()) + parseFloat(data[2].ib.toString()) + parseFloat(data[2].ic.toString()))/3;
+					  document.getElementById('avgV1').innerHTML = avgV1.toFixed(4).toString().bold();
+					  document.getElementById('avgV2').innerHTML = avgV2.toFixed(4).toString().bold();
+					  document.getElementById('avgV3').innerHTML = avgV3.toFixed(4).toString().bold();
 
-				  var avgpf1 = (parseFloat(data[0].pfa.toString()) + parseFloat(data[0].pfb.toString()) + parseFloat(data[0].pfc.toString()))/3;
-				  var avgpf2 = (parseFloat(data[1].pfa.toString()) + parseFloat(data[1].pfb.toString()) + parseFloat(data[1].pfc.toString()))/3;
-				  var avgpf3 = (parseFloat(data[2].pfa.toString()) + parseFloat(data[2].pfb.toString()) + parseFloat(data[2].pfc.toString()))/3;
+					  document.getElementById('avgI1').innerHTML = avgI1.toFixed(4).toString().bold();
+					  document.getElementById('avgI2').innerHTML = avgI2.toFixed(4).toString().bold();
+					  document.getElementById('avgI3').innerHTML = avgI3.toFixed(4).toString().bold();
 
-				  document.getElementById('avgV1').innerHTML = avgV1.toFixed(4).toString().bold();
-				  document.getElementById('avgV2').innerHTML = avgV2.toFixed(4).toString().bold();
-				  document.getElementById('avgV3').innerHTML = avgV3.toFixed(4).toString().bold();
+					  document.getElementById('avgpf1').innerHTML = avgpf1.toFixed(2).toString().bold();
+					  document.getElementById('avgpf2').innerHTML = avgpf2.toFixed(2).toString().bold();
+					  document.getElementById('avgpf3').innerHTML = avgpf3.toFixed(2).toString().bold();
 
-				  document.getElementById('avgI1').innerHTML = avgI1.toFixed(4).toString().bold();
-				  document.getElementById('avgI2').innerHTML = avgI2.toFixed(4).toString().bold();
-				  document.getElementById('avgI3').innerHTML = avgI3.toFixed(4).toString().bold();
+					  document.getElementById('avgpw').innerHTML = avgpw.toFixed(4).toString().bold();
+					  document.getElementById('avgqvar').innerHTML = avgqvar.toFixed(4).toString().bold();
+					  document.getElementById('avgpf').innerHTML = avgpf.toFixed(2).toString().bold();
+					  document.getElementById('avgV').innerHTML = avgV.toFixed(4).toString().bold();
+					  document.getElementById('avgI').innerHTML = avgI.toFixed(4).toString().bold();
 
-				  document.getElementById('avgpf1').innerHTML = avgpf1.toFixed(2).toString().bold();
-				  document.getElementById('avgpf2').innerHTML = avgpf2.toFixed(2).toString().bold();
-				  document.getElementById('avgpf3').innerHTML = avgpf3.toFixed(2).toString().bold();
+					  con_flag = 0;
+					}catch{
+						//console.log(data);
 
-				  document.getElementById('avgpw').innerHTML = avgpw.toFixed(4).toString().bold();
-				  document.getElementById('avgqvar').innerHTML = avgqvar.toFixed(4).toString().bold();
-				  document.getElementById('avgpf').innerHTML = avgpf.toFixed(2).toString().bold();
-				  document.getElementById('avgV').innerHTML = avgV.toFixed(4).toString().bold();
-				  document.getElementById('avgI').innerHTML = avgI.toFixed(4).toString().bold();
+						const csvData =  objectTOCsv(data);
+						download(csvData);
 
-				con_flag = 0;
+					}
+
 				};
 
 				
