@@ -13,7 +13,7 @@
 	<link rel="stylesheet" href="/resources/demos/style.css">
 	<script src="/home/pulangi-hpp/Documents/projects/Pulangi-WEB/bootstrap/jquery-3.7.1.js"></script>
 	<script src="/home/pulangi-hpp/Documents/projects/Pulangi-WEB/bootstrap/jquery-ui.js"></script>
-	<meta http-equiv=”refresh” content=”5" />
+	
 	
 	<style>
 	
@@ -140,6 +140,7 @@
 		var meter_data = {p1:0,p2:0,p3:0};
 		var con_flag = 0;
 		var webSocket = new WebSocket('ws://localhost:3000/','echo-protocol');
+		
 
 		
 
@@ -224,10 +225,15 @@
 		  }
 		
 		});
-
+			webSocket.onclose =  (event) => {
+				document.getElementById('statusbtn').style.background='red';
+				document.getElementById('statusbtn').innerHTML = 'DISCONNECTED';
+			};
 
 			webSocket.onmessage = (event) => {
 				  var data = JSON.parse(event.data);
+				  document.getElementById('statusbtn').style.background='LimeGreen';
+				  document.getElementById('statusbtn').innerHTML = 'Connected';
 				  //console.log(data);
 				  	  try{
 					  /*
@@ -329,7 +335,7 @@
 			}
 				
 		</script>
-			}
+			
 	
 	
 </head>
