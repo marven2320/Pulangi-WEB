@@ -8,11 +8,11 @@
 	<link rel="stylesheet" href="/home/pulangi-hpp/Documents/projects/Pulangi-WEB/bootstrap/bootstrap.min.css">
 	<script src="/home/pulangi-hpp/Documents/projects/Pulangi-WEB/bootstrap/jquery.min.js"></script>
 	<script src="/home/pulangi-hpp/Documents/projects/Pulangi-WEB/bootstrap/bootstrap.min.js"></script>
-	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-	<link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
+	<script type="text/javascript" src="/home/pulangi-hpp/Documents/projects/Pulangi-WEB/bootstrap/loader.js"></script>
+	<link rel="stylesheet" href="/home/pulangi-hpp/Documents/projects/Pulangi-WEB/bootstrap/jquery-ui.css">
 	<link rel="stylesheet" href="/resources/demos/style.css">
-	<script src="https://code.jquery.com/jquery-3.7.1.js"></script>
-	<script src="https://code.jquery.com/ui/1.14.1/jquery-ui.js"></script>
+	<script src="/home/pulangi-hpp/Documents/projects/Pulangi-WEB/bootstrap/jquery-3.7.1.js"></script>
+	<script src="/home/pulangi-hpp/Documents/projects/Pulangi-WEB/bootstrap/jquery-ui.js"></script>
 	<meta http-equiv=”refresh” content=”5" />
 	
 	<style>
@@ -317,6 +317,7 @@
 						const csvData =  objectTOCsv(data);
 						download(csvData);
 						setTimeout(displayloading, 1000);
+						alert('Report File Downloaded!\nPlease view your download folder...');
 
 						
 
@@ -325,7 +326,6 @@
 				};
 			function displayloading(){
 				document.getElementById('loadingscrn').style.display = 'none';
-				alert('Report File Downloaded!\nPlease view your download folder...');
 			}
 				
 		</script>
@@ -404,13 +404,13 @@
 					<div id="avgpf1" class="col-sm-6" style="background-color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
 				</div>
 
-			<div style="text-align:center;color:white;"><b>GATE OPENING</b></div>
+			<div style="text-align:center;color:white;margin-top: 30px;"><b>GATE OPENING</b></div>
 				
 			
 			<div class="progress">
 			
-			  <div class="progress-bar progress-bar-striped active" role="progressbar"
-			  aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width:40%">
+			  <div class="progress-bar progress-bar-danger progress-bar-striped active" role="progressbar"
+			  aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width:40%;">
 				40%
 			  </div>
 			</div>
@@ -471,10 +471,10 @@
 					<div id="avgpf2" class="col-sm-6" style="background-color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
 				</div>
 
-			<div style="text-align:center;color:white;"><b>GATE OPENING</b></div>
+			<div style="text-align:center;color:white;margin-top: 30px;"><b>GATE OPENING</b></div>
 				
 			<div class="progress">
-			  <div class="progress-bar progress-bar-striped active" role="progressbar"
+			  <div class="progress-bar progress-bar-danger progress-bar-striped active" role="progressbar"
 			  aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" style="width:50%">
 				50%
 			  </div>
@@ -536,9 +536,9 @@
 					<div class="col-sm-6" style="background-color:#08296E;color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>PF</b></p></div>
 					<div id="avgpf3" class="col-sm-6" style="background-color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
 				</div>
-			<div style="text-align:center;color:white;"><b>GATE OPENING</b></div>
+			<div style="text-align:center;color:white;margin-top: 30px;"><b>GATE OPENING</b></div>
 			<div class="progress">
-			  <div class="progress-bar progress-bar-striped active" role="progressbar"
+			  <div class="progress-bar progress-bar-danger progress-bar-striped active" role="progressbar"
 			  aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width:60%">
 				60%
 			  </div>
@@ -554,7 +554,7 @@
 					<div class="panel-heading" style="font-size:14px"><b>Average Data/RTU WESM/IEMOP Data</b></div>
 						<div class="panel-body" style="background-color:#526B9C">
 						<br>
-						<div class="row">
+						<div class="row" style="margin-top:21px;">
 							<div class="col-sm-6" style="background-color:#08296E;color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b>P(MW)</b></p></div>
 							<div id="avgpw" class="col-sm-6" style="background-color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b></b></p></div>
 						</div>
