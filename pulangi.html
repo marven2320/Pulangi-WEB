@@ -88,6 +88,39 @@
 			100% { transform: rotate(360deg); }
 		}
 
+	.unitstatus1{
+            width:300px;
+            height:150px;
+            position: fixed;
+            background-color: transparent;
+            margin-top: -700px;
+            margin-left: 50px;          
+     }
+     .unitstatus2{
+            width:300px;
+            height:150px;
+            position: fixed;
+            background-color: transparent;
+            margin-top: -700px;
+            margin-left: 500px;          
+     }
+     .unitstatus3{
+            width:300px;
+            height:150px;
+            position: fixed;
+            background-color: transparent;
+            margin-top: -700px;
+            margin-left: 1000px;          
+     }
+     .img {
+    	max-width: 100%;
+    	max-height: 100%;
+    	float:left;
+    	background-repeat: no-repeat;	
+    	background-size: contain;
+	}
+
+
 	</style>
 
 		<script>
@@ -246,19 +279,83 @@
 					  meter_data.p3 = data[2].mw.toFixed(4);
 					  var d = new Date();
 
+					  if (parseFloat(data[0].vab)==0){
+					  		document.getElementById('status_unit1').style.display = 'block';
+					  }else{
+					  		document.getElementById('status_unit1').style.display = 'none';
+					  }
+					  if (parseFloat(data[1].vab)==0){
+					  		document.getElementById('status_unit2').style.display = 'block';
+					  }else{
+					  		document.getElementById('status_unit2').style.display = 'none';
+					  }
+					  if (parseFloat(data[2].vab)==0){
+					  		document.getElementById('status_unit3').style.display = 'block';
+					  }else{
+					  		document.getElementById('status_unit3').style.display = 'none';
+					  }
+
+					  if (parseFloat(data[0].ia)>=3954){
+					  		document.getElementById('Ia1').style.background='red';
+					  }else{
+					  		document.getElementById('Ia1').style.background='white';
+					  }
+					  if (parseFloat(data[0].ib)>=3954){
+					  		document.getElementById('Ib1').style.background='red';
+					  }else{
+					  		document.getElementById('Ib1').style.background='white';
+					  }
+					  if (parseFloat(data[0].ic)>=3954){
+					  		document.getElementById('Ic1').style.background='red';
+					  }else{
+					  		document.getElementById('Ic1').style.background='white';
+					  }
+
+					  if (parseFloat(data[1].ia)>=3954){
+					  		document.getElementById('Ia2').style.background='red';
+					  }else{
+					  		document.getElementById('Ia2').style.background='white';
+					  }
+					  if (parseFloat(data[1].ib)>=3954){
+					  		document.getElementById('Ib2').style.background='red';
+					  }else{
+					  		document.getElementById('Ib2').style.background='white';
+					  }
+					  if (parseFloat(data[1].ic)>=3954){
+					  		document.getElementById('Ic2').style.background='red';
+					  }else{
+					  		document.getElementById('Ic2').style.background='white';
+					  }
+
+					  if (parseFloat(data[2].ia)>=3954){
+					  		document.getElementById('Ia3').style.background='red';
+					  }else{
+					  		document.getElementById('Ia3').style.background='white';
+					  }
+					  if (parseFloat(data[2].ib)>=3954){
+					  		document.getElementById('Ib3').style.background='red';
+					  }else{
+					  		document.getElementById('Ib3').style.background='white';
+					  }
+					  if (parseFloat(data[2].ic)>=3954){
+					  		document.getElementById('Ic3').style.background='red';
+					  }else{
+					  		document.getElementById('Ic3').style.background='white';
+					  }
 
 					  //unit 1
-					  document.getElementById('f1').innerHTML = data[0].freq.toFixed(2).toString().bold();
+					  document.getElementById('f1').innerHTML = data[0].freq.toFixed(4).toString().bold();
 					  document.getElementById('pw1').innerHTML = data[0].mw.toFixed(4).toString().bold();
 					  document.getElementById('qvar1').innerHTML = data[0].mvar.toFixed(4).toString().bold();
 					  document.getElementById('Va1').innerHTML = data[0].vab.toFixed(4).toString().bold();
 					  document.getElementById('Ia1').innerHTML = data[0].ia.toFixed(4).toString().bold();
+
 					  document.getElementById('Vb1').innerHTML = data[0].vbc.toFixed(4).toString().bold();
 					  document.getElementById('Ib1').innerHTML = data[0].ib.toFixed(4).toString().bold();
 					  document.getElementById('Vc1').innerHTML = data[0].vca.toFixed(4).toString().bold();
 					  document.getElementById('Ic1').innerHTML = data[0].ic.toFixed(4).toString().bold();
 					  //unit 2
-					  document.getElementById('f2').innerHTML = data[1].freq.toFixed(2).toString().bold();
+					  document.getElementById('f2').innerHTML = data[1].freq.toFixed(4).toString().bold();
 					  document.getElementById('pw2').innerHTML = data[1].mw.toFixed(4).toString().bold();
 					  document.getElementById('qvar2').innerHTML = data[1].mvar.toFixed(4).toString().bold();
 					  document.getElementById('Va2').innerHTML = data[1].vab.toFixed(4).toString().bold();
@@ -268,7 +365,7 @@
 					  document.getElementById('Vc2').innerHTML = data[1].vca.toFixed(4).toString().bold();
 					  document.getElementById('Ic2').innerHTML = data[1].ic.toFixed(4).toString().bold();
 					  //unit 3
-					  document.getElementById('f3').innerHTML = data[2].freq.toFixed(2).toString().bold();
+					  document.getElementById('f3').innerHTML = data[2].freq.toFixed(4).toString().bold();
 					  document.getElementById('pw3').innerHTML = data[2].mw.toFixed(4).toString().bold();
 					  document.getElementById('qvar3').innerHTML = data[2].mvar.toFixed(4).toString().bold();
 					  document.getElementById('Va3').innerHTML = data[2].vab.toFixed(4).toString().bold();
@@ -290,9 +387,9 @@
 					  var avgV2 = (parseFloat(data[1].vab.toString()) + parseFloat(data[1].vbc.toString()) + parseFloat(data[1].vca.toString()))/3;
 					  var avgV3 = (parseFloat(data[2].vab.toString()) + parseFloat(data[2].vbc.toString()) + parseFloat(data[2].vca.toString()))/3;
 
-					  var avgI1 = (parseFloat(data[0].ia.toString()) + parseFloat(data[0].ib.toString()) + parseFloat(data[0].ic.toString()))/3;
-					  var avgI2 = (parseFloat(data[1].ia.toString()) + parseFloat(data[1].ib.toString()) + parseFloat(data[1].ic.toString()))/3;
-					  var avgI3 = (parseFloat(data[2].ia.toString()) + parseFloat(data[2].ib.toString()) + parseFloat(data[2].ic.toString()))/3;
+					  var avgI1 = (parseFloat(data[0].ia.toString()) + parseFloat(data[0].ib.toString()) + parseFloat(data[0].ic.toString()))/3000;
+					  var avgI2 = (parseFloat(data[1].ia.toString()) + parseFloat(data[1].ib.toString()) + parseFloat(data[1].ic.toString()))/3000;
+					  var avgI3 = (parseFloat(data[2].ia.toString()) + parseFloat(data[2].ib.toString()) + parseFloat(data[2].ic.toString()))/3000;
 
 					  var avgpf1 = (parseFloat(data[0].pfa.toString()) + parseFloat(data[0].pfb.toString()) + parseFloat(data[0].pfc.toString()))/3;
 					  var avgpf2 = (parseFloat(data[1].pfa.toString()) + parseFloat(data[1].pfb.toString()) + parseFloat(data[1].pfc.toString()))/3;
@@ -302,6 +399,21 @@
 					  document.getElementById('avgV2').innerHTML = avgV2.toFixed(4).toString().bold();
 					  document.getElementById('avgV3').innerHTML = avgV3.toFixed(4).toString().bold();
 
+					  if (avgI1>=3954){
+					  		document.getElementById('avgI1').style.background='red';
+					  }else{
+					  		document.getElementById('avgI1').style.background='white';
+					  }
+					  if (avgI2>=3954){
+					  		document.getElementById('avgI2').style.background='red';
+					  }else{
+					  		document.getElementById('avgI2').style.background='white';
+					  }
+					  if (avgI3>=3954){
+					  		document.getElementById('avgI3').style.background='red';
+					  }else{
+					  		document.getElementById('avgI3').style.background='white';
+					  }
 					  document.getElementById('avgI1').innerHTML = avgI1.toFixed(4).toString().bold();
 					  document.getElementById('avgI2').innerHTML = avgI2.toFixed(4).toString().bold();
 					  document.getElementById('avgI3').innerHTML = avgI3.toFixed(4).toString().bold();
@@ -322,7 +434,7 @@
 
 						const csvData =  objectTOCsv(data);
 						download(csvData);
-						setTimeout(displayloading, 1000);
+						setTimeout(displayloading,1000);
 						alert('Report File Downloaded!\nPlease view your download folder...');
 
 						
@@ -343,7 +455,7 @@
 
 <div class="container-fluid" style="background-color:white">
 
-    
+	  
    
 	<div class="panel panel-default">
 					<div class="panel-heading">
@@ -365,6 +477,7 @@
 			<div class="panel-body" style="background-color:#526B9C" >
 			
 				<div class="container-fluid" id="chart_div"></div>
+				
 				<div class="row">
 					<div class="col-sm-6" style="background-color:#08296E;color:white;height:30px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Frequency</b></p></div>
 					<div id="f1" class="col-sm-6" style="background-color:white;height:30px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
@@ -646,6 +759,17 @@
 	<div id="loadingscrn" class="Center" style="display:none">
 		<div class="loader"></div>
 	</div>
+
+	<div id="status_unit1" class="unitstatus1" style="display:none">
+		<img src="/home/pulangi-hpp/Documents/projects/offline_stat.png">
+	</div>
+	<div id="status_unit2" class="unitstatus2" style="display:none">
+		<img src="/home/pulangi-hpp/Documents/projects/offline_stat.png">
+	</div>
+	<div id="status_unit3" class="unitstatus3" style="display:none">
+		<img src="/home/pulangi-hpp/Documents/projects/offline_stat.png">
+	</div>
+	
 </div>
 
 
