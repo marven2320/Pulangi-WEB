@@ -3,16 +3,14 @@
 <head>
     <title>Pulangi HPP Power House Datalogger</title>
    
-	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="stylesheet" href="/home/pulangi-hpp/Documents/projects/Pulangi-WEB/bootstrap/bootstrap.min.css">
-	<script src="/home/pulangi-hpp/Documents/projects/Pulangi-WEB/bootstrap/jquery.min.js"></script>
-	<script src="/home/pulangi-hpp/Documents/projects/Pulangi-WEB/bootstrap/bootstrap.min.js"></script>
-	<script type="text/javascript" src="/home/pulangi-hpp/Documents/projects/Pulangi-WEB/bootstrap/loader.js"></script>
-	<link rel="stylesheet" href="/home/pulangi-hpp/Documents/projects/Pulangi-WEB/bootstrap/jquery-ui.css">
-	<link rel="stylesheet" href="/resources/demos/style.css">
-	<script src="/home/pulangi-hpp/Documents/projects/Pulangi-WEB/bootstrap/jquery-3.7.1.js"></script>
-	<script src="/home/pulangi-hpp/Documents/projects/Pulangi-WEB/bootstrap/jquery-ui.js"></script>
+	<link rel="stylesheet" href="../Pulangi-WEB-main/bootstrap/bootstrap.min.css">
+	<script src="../Pulangi-WEB-main/bootstrap/jquery.min.js"></script>
+	<script src="../Pulangi-WEB-main/bootstrap/bootstrap.min.js"></script>
+	<script type="text/javascript" src="../Pulangi-WEB-main/bootstrap/loader.js"></script>
+	<link rel="stylesheet" href="../Pulangi-WEB-main/bootstrap/jquery-ui.css">
+	<script src="../Pulangi-WEB-main/bootstrap/jquery-3.7.1.js"></script>
+	<script src="../Pulangi-WEB-main/bootstrap/jquery-ui.js"></script>
 	
 	
 	<style>
@@ -29,15 +27,15 @@
 		height:100%;
 	}
 	#chart_div{
-	margin-left:40px;
+	margin-left:110px;
 	//background-color:red;
 	}
 	#chart_div2{
-	margin-left:40px;
+	margin-left:110px;
 	//background-color:red;
 	}
 	#chart_div3{
-	margin-left:40px;
+	margin-left:110px;
 	//background-color:red;
 	}
 	.led-box {
@@ -94,7 +92,7 @@
             position: fixed;
             background-color: transparent;
             margin-top: -700px;
-            margin-left: 50px;          
+            margin-left: 100px;          
      }
      .unitstatus2{
             width:300px;
@@ -102,7 +100,7 @@
             position: fixed;
             background-color: transparent;
             margin-top: -700px;
-            margin-left: 500px;          
+            margin-left: 570px;          
      }
      .unitstatus3{
             width:300px;
@@ -110,7 +108,7 @@
             position: fixed;
             background-color: transparent;
             margin-top: -700px;
-            margin-left: 1000px;          
+            margin-left: 1050px;          
      }
      .img {
     	max-width: 100%;
@@ -172,7 +170,7 @@
 
 		var meter_data = {p1:0,p2:0,p3:0};
 		var con_flag = 0;
-		var webSocket = new WebSocket('ws://localhost:3000/','echo-protocol');
+		var webSocket = new WebSocket('ws://localhost:8000/','echo-protocol');
 		
 
 		
@@ -268,15 +266,15 @@
 				  document.getElementById('statusbtn').style.background='LimeGreen';
 				  document.getElementById('statusbtn').innerHTML = 'Connected';
 				  //console.log(data);
-				  	  try{
+				  	try{
 					  /*
 					  chart.draw(Math.floor(data[0].mw), options);
 				  	  chart2.draw(Math.floor(data[0].mw), options);
 				      chart3.draw(Math.floor(data[0].mw), options);
 					  */
-					  meter_data.p1 = data[0].mw.toFixed(4);
-					  meter_data.p2 = data[1].mw.toFixed(4);
-					  meter_data.p3 = data[2].mw.toFixed(4);
+					  meter_data.p1 = parseFloat(data[0].mw).toFixed(4);
+					  meter_data.p2 = parseFloat(data[1].mw).toFixed(4);
+					  meter_data.p3 = parseFloat(data[2].mw).toFixed(4);
 					  var d = new Date();
 
 					  if (parseFloat(data[0].vab)==0){
@@ -294,6 +292,7 @@
 					  }else{
 					  		document.getElementById('status_unit3').style.display = 'none';
 					  }
+							
 
 					  if (parseFloat(data[0].ia)>=3954){
 					  		document.getElementById('Ia1').style.background='red';
@@ -344,36 +343,36 @@
 					  }
 
 					  //unit 1
-					  document.getElementById('f1').innerHTML = data[0].freq.toFixed(4).toString().bold();
-					  document.getElementById('pw1').innerHTML = data[0].mw.toFixed(4).toString().bold();
-					  document.getElementById('qvar1').innerHTML = data[0].mvar.toFixed(4).toString().bold();
-					  document.getElementById('Va1').innerHTML = data[0].vab.toFixed(4).toString().bold();
-					  document.getElementById('Ia1').innerHTML = data[0].ia.toFixed(4).toString().bold();
-
-					  document.getElementById('Vb1').innerHTML = data[0].vbc.toFixed(4).toString().bold();
-					  document.getElementById('Ib1').innerHTML = data[0].ib.toFixed(4).toString().bold();
-					  document.getElementById('Vc1').innerHTML = data[0].vca.toFixed(4).toString().bold();
-					  document.getElementById('Ic1').innerHTML = data[0].ic.toFixed(4).toString().bold();
+					  document.getElementById('f1').innerHTML = parseFloat(data[0].freq).toFixed(4).toString().bold();
+					  document.getElementById('pw1').innerHTML = parseFloat(data[0].mw).toFixed(4).toString().bold();
+					  document.getElementById('qvar1').innerHTML = parseFloat(data[0].mvar).toFixed(4).toString().bold();
+					  document.getElementById('Va1').innerHTML = parseFloat(data[0].vab).toFixed(4).toString().bold();
+					  document.getElementById('Ia1').innerHTML = parseFloat(data[0].ia).toFixed(4).toString().bold();
+					  document.getElementById('Vb1').innerHTML = parseFloat(data[0].vbc).toFixed(4).toString().bold();
+					  document.getElementById('Ib1').innerHTML = parseFloat(data[0].ib).toFixed(4).toString().bold();
+					  document.getElementById('Vc1').innerHTML = parseFloat(data[0].vca).toFixed(4).toString().bold();
+					  document.getElementById('Ic1').innerHTML = parseFloat(data[0].ic).toFixed(4).toString().bold();
 					  //unit 2
-					  document.getElementById('f2').innerHTML = data[1].freq.toFixed(4).toString().bold();
-					  document.getElementById('pw2').innerHTML = data[1].mw.toFixed(4).toString().bold();
-					  document.getElementById('qvar2').innerHTML = data[1].mvar.toFixed(4).toString().bold();
-					  document.getElementById('Va2').innerHTML = data[1].vab.toFixed(4).toString().bold();
-					  document.getElementById('Ia2').innerHTML = data[1].ia.toFixed(4).toString().bold();
-					  document.getElementById('Vb2').innerHTML = data[1].vbc.toFixed(4).toString().bold();
-					  document.getElementById('Ib2').innerHTML = data[1].ib.toFixed(4).toString().bold();
-					  document.getElementById('Vc2').innerHTML = data[1].vca.toFixed(4).toString().bold();
-					  document.getElementById('Ic2').innerHTML = data[1].ic.toFixed(4).toString().bold();
+					  document.getElementById('f2').innerHTML = parseFloat(data[1].freq).toFixed(4).toString().bold();
+					  document.getElementById('pw2').innerHTML = parseFloat(data[1].mw).toFixed(4).toString().bold();
+					  document.getElementById('qvar2').innerHTML = parseFloat(data[1].mvar).toFixed(4).toString().bold();
+					  document.getElementById('Va2').innerHTML = parseFloat(data[1].vab).toFixed(4).toString().bold();
+					  document.getElementById('Ia2').innerHTML = parseFloat(data[1].ia).toFixed(4).toString().bold();
+					  document.getElementById('Vb2').innerHTML = parseFloat(data[1].vbc).toFixed(4).toString().bold();
+					  document.getElementById('Ib2').innerHTML = parseFloat(data[1].ib).toFixed(4).toString().bold();
+					  document.getElementById('Vc2').innerHTML = parseFloat(data[1].vca).toFixed(4).toString().bold();
+					  document.getElementById('Ic2').innerHTML = parseFloat(data[1].ic).toFixed(4).toString().bold();
 					  //unit 3
-					  document.getElementById('f3').innerHTML = data[2].freq.toFixed(4).toString().bold();
-					  document.getElementById('pw3').innerHTML = data[2].mw.toFixed(4).toString().bold();
-					  document.getElementById('qvar3').innerHTML = data[2].mvar.toFixed(4).toString().bold();
-					  document.getElementById('Va3').innerHTML = data[2].vab.toFixed(4).toString().bold();
-					  document.getElementById('Ia3').innerHTML = data[2].ia.toFixed(4).toString().bold();
-					  document.getElementById('Vb3').innerHTML = data[2].vbc.toFixed(4).toString().bold();
-					  document.getElementById('Ib3').innerHTML = data[2].ib.toFixed(4).toString().bold();
-					  document.getElementById('Vc3').innerHTML = data[2].vca.toFixed(4).toString().bold();
-					  document.getElementById('Ic3').innerHTML = data[2].ic.toFixed(4).toString().bold();
+					  document.getElementById('f3').innerHTML = parseFloat(data[2].freq).toFixed(4).toString().bold();
+					  document.getElementById('pw3').innerHTML = parseFloat(data[2].mw).toFixed(4).toString().bold();
+					  document.getElementById('qvar3').innerHTML = parseFloat(data[2].mvar).toFixed(4).toString().bold();
+					  document.getElementById('Va3').innerHTML = parseFloat(data[2].vab).toFixed(4).toString().bold();
+					  document.getElementById('Ia3').innerHTML = parseFloat(data[2].ia).toFixed(4).toString().bold();
+					  document.getElementById('Vb3').innerHTML = parseFloat(data[2].vbc).toFixed(4).toString().bold();
+					  document.getElementById('Ib3').innerHTML = parseFloat(data[2].ib).toFixed(4).toString().bold();
+					  document.getElementById('Vc3').innerHTML = parseFloat(data[2].vca).toFixed(4).toString().bold();
+					  document.getElementById('Ic3').innerHTML = parseFloat(data[2].ic).toFixed(4).toString().bold();
+				
 
 					  document.getElementById('dattime').innerHTML = d.toString().split('G')[0].bold();
 
@@ -387,9 +386,9 @@
 					  var avgV2 = (parseFloat(data[1].vab.toString()) + parseFloat(data[1].vbc.toString()) + parseFloat(data[1].vca.toString()))/3;
 					  var avgV3 = (parseFloat(data[2].vab.toString()) + parseFloat(data[2].vbc.toString()) + parseFloat(data[2].vca.toString()))/3;
 
-					  var avgI1 = (parseFloat(data[0].ia.toString()) + parseFloat(data[0].ib.toString()) + parseFloat(data[0].ic.toString()))/3000;
-					  var avgI2 = (parseFloat(data[1].ia.toString()) + parseFloat(data[1].ib.toString()) + parseFloat(data[1].ic.toString()))/3000;
-					  var avgI3 = (parseFloat(data[2].ia.toString()) + parseFloat(data[2].ib.toString()) + parseFloat(data[2].ic.toString()))/3000;
+					  var avgI1 = (parseFloat(data[0].ia.toString()) + parseFloat(data[0].ib.toString()) + parseFloat(data[0].ic.toString()))/3;
+					  var avgI2 = (parseFloat(data[1].ia.toString()) + parseFloat(data[1].ib.toString()) + parseFloat(data[1].ic.toString()))/3;
+					  var avgI3 = (parseFloat(data[2].ia.toString()) + parseFloat(data[2].ib.toString()) + parseFloat(data[2].ic.toString()))/3;
 
 					  var avgpf1 = (parseFloat(data[0].pfa.toString()) + parseFloat(data[0].pfb.toString()) + parseFloat(data[0].pfc.toString()))/3;
 					  var avgpf2 = (parseFloat(data[1].pfa.toString()) + parseFloat(data[1].pfb.toString()) + parseFloat(data[1].pfc.toString()))/3;
@@ -418,13 +417,13 @@
 					  document.getElementById('avgI2').innerHTML = avgI2.toFixed(4).toString().bold();
 					  document.getElementById('avgI3').innerHTML = avgI3.toFixed(4).toString().bold();
 
-					  document.getElementById('avgpf1').innerHTML = avgpf1.toFixed(2).toString().bold();
-					  document.getElementById('avgpf2').innerHTML = avgpf2.toFixed(2).toString().bold();
-					  document.getElementById('avgpf3').innerHTML = avgpf3.toFixed(2).toString().bold();
+					  document.getElementById('avgpf1').innerHTML = avgpf1.toFixed(4).toString().bold();
+					  document.getElementById('avgpf2').innerHTML = avgpf2.toFixed(4).toString().bold();
+					  document.getElementById('avgpf3').innerHTML = avgpf3.toFixed(4).toString().bold();
 
 					  document.getElementById('avgpw').innerHTML = avgpw.toFixed(4).toString().bold();
 					  document.getElementById('avgqvar').innerHTML = avgqvar.toFixed(4).toString().bold();
-					  document.getElementById('avgpf').innerHTML = avgpf.toFixed(2).toString().bold();
+					  document.getElementById('avgpf').innerHTML = avgpf.toFixed(4).toString().bold();
 					  document.getElementById('avgV').innerHTML = avgV.toFixed(4).toString().bold();
 					  document.getElementById('avgI').innerHTML = avgI.toFixed(4).toString().bold();
 
@@ -761,13 +760,13 @@
 	</div>
 
 	<div id="status_unit1" class="unitstatus1" style="display:none">
-		<img src="/home/pulangi-hpp/Documents/projects/offline_stat.png">
+		<img src="../Pulangi-WEB-main/offline_stat.png">
 	</div>
 	<div id="status_unit2" class="unitstatus2" style="display:none">
-		<img src="/home/pulangi-hpp/Documents/projects/offline_stat.png">
+		<img src="../Pulangi-WEB-main/offline_stat.png">
 	</div>
 	<div id="status_unit3" class="unitstatus3" style="display:none">
-		<img src="/home/pulangi-hpp/Documents/projects/offline_stat.png">
+		<img src="../Pulangi-WEB-main/offline_stat.png">
 	</div>
 	
 </div>
