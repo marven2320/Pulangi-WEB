@@ -1,21 +1,32 @@
 #!/usr/bin/env node
 var WebSocketServer = require('websocket').server;
-var http = require('http');
+var https = require('https');
+const fs = require('fs');
+const path = require('path')
+const express = require('express');
+const serve   = require('express-static');
 
-var server = http.createServer(function(request, response) {
-    console.log((new Date()) + ' Received request for ' + request.url);
-    response.writeHead(404);
-    response.end();
+
+const options = {
+  key: fs.readFileSync('key.pem'),
+  cert: fs.readFileSync('cert.pem')
+};
+
+var app = express();
+
+app.use(serve(__dirname + '/'));
+
+ var server = https.createServer(options, app);
+ server.listen(8000, function() {
+    console.log((new Date()) + ' Server is listening on port 8000');
 });
-server.listen(3000, function() {
-    console.log((new Date()) + ' Server is listening on port 3000');
-});
+
 
 const mysql = require('mysql2');
 const pool = mysql.createPool({
     host: 'localhost',
     user: 'root',
-    //password: 'KaRMSys2025!',
+    password: 'KaRMSys2025!',
     database: 'pulangi_data',
     connectionLimit: 10
   });
@@ -107,6 +118,10 @@ wsServer.on('request', function(request) {
     var connection = request.accept('echo-protocol', request.origin);
     console.log((new Date()) + ' Connection accepted.');
     
+    function getRandomArbitrary(min, max) {
+          return Math.random() * (max - min) + min;
+    }
+
     setInterval(function(){
         
         wsdata = [
@@ -115,16 +130,16 @@ wsServer.on('request', function(request) {
                 unitnum: 1,
                 mw: Math.random()*100,
                 mvar: Math.random()*100,
-                freq: Math.random()*10,
-                vab: Math.random()*100,
-                vbc: Math.random()*100,
-                vca: Math.random()*100,
-                ia: Math.random()*100,
-                ib: Math.random()*100,
+                freq: getRandomArbitrary(59,61),
+                vab: getRandomArbitrary(-1,13.8),
+                vbc: getRandomArbitrary(-1,13.8),
+                vca: getRandomArbitrary(-1,13.8),
+                ia: Math.random()*5000,
+                ib: Math.random()*5000,
                 ic: Math.random(),
-                pfa: Math.random(),
-                pfb: Math.random(),
-                pfc: Math.random(),
+                pfa: getRandomArbitrary(0,1),
+                pfb: getRandomArbitrary(0,1),
+                pfc: getRandomArbitrary(0,1),
                 time: d.toTimeString().split(' ')[0],
                 date: d.toISOString().split('T')[0]
             },
@@ -133,16 +148,16 @@ wsServer.on('request', function(request) {
                 unitnum: 2,
                 mw: Math.random()*100,
                 mvar: Math.random()*100,
-                freq: Math.random()*100,
-                vab: Math.random()*100,
-                vbc: Math.random()*100,
-                vca: Math.random()*100,
-                ia: Math.random()*100,
-                ib: Math.random()*100,
-                ic: Math.random()*100,
-                pfa: Math.random(),
-                pfb: Math.random(),
-                pfc: Math.random(),
+                freq: getRandomArbitrary(59,61),
+                vab: getRandomArbitrary(-1,13.8),
+                vbc: getRandomArbitrary(-1,13.8),
+                vca: getRandomArbitrary(-1,13.8),
+                ia: Math.random()*5000,
+                ib: Math.random()*5000,
+                ic: Math.random()*5000,
+                pfa: getRandomArbitrary(0,1),
+                pfb: getRandomArbitrary(0,1),
+                pfc: getRandomArbitrary(0,1),
                 time: d.toTimeString().split(' ')[0],
                 date: d.toISOString().split('T')[0]
             },
@@ -151,16 +166,16 @@ wsServer.on('request', function(request) {
                 unitnum: 3,
                 mw: Math.random()*100,
                 mvar: Math.random()*100,
-                freq: Math.random()*100,
-                vab: Math.random()*100,
-                vbc: Math.random()*100,
-                vca: Math.random()*100,
-                ia: Math.random()*100,
-                ib: Math.random()*100,
-                ic: Math.random()*100,
-                pfa: Math.random(),
-                pfb: Math.random(),
-                pfc: Math.random(),
+                freq: getRandomArbitrary(59,61),
+                vab: getRandomArbitrary(-1,13.8),
+                vbc: getRandomArbitrary(-1,13.8),
+                vca: getRandomArbitrary(-1,13.8),
+                ia: Math.random()*5000,
+                ib: Math.random()*5000,
+                ic: Math.random()*5000,
+                pfa: getRandomArbitrary(0,1),
+                pfb: getRandomArbitrary(0,1),
+                pfc: getRandomArbitrary(0,1),
                 time: d.toTimeString().split(' ')[0],
                 date: d.toISOString().split('T')[0]
             }
@@ -176,14 +191,12 @@ wsServer.on('request', function(request) {
            var data = JSON.parse(message.utf8Data); 
         
             
-            console.log('Received Message: ' + data[0].startdate);
-            console.log('Received Message: ' + data[0].enddate);
+            //console.log('Received Message: ' + data[0].startdate);
+            //console.log('Received Message: ' + data[0].enddate);
 
 
             const  sql = 'SELECT * from pulangi WHERE date BETWEEN \''+ data[0].startdate+ '\'' + ' AND \''+data[0].enddate+ '\''+' ORDER by date ASC';
-            //const  sql = 'SELECT * from pulangi WHERE mw= 100';
-            //console.log(sql);
-
+            
             try {
                   pool.query({sql},(err, result, fields) => {
                   if (err instanceof Error) {

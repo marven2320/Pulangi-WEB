@@ -3,14 +3,74 @@
 <head>
     <title>Pulangi HPP Power House Datalogger</title>
    
+	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="stylesheet" href="../Pulangi-WEB-main/bootstrap/bootstrap.min.css">
-	<script src="../Pulangi-WEB-main/bootstrap/jquery.min.js"></script>
-	<script src="../Pulangi-WEB-main/bootstrap/bootstrap.min.js"></script>
-	<script type="text/javascript" src="../Pulangi-WEB-main/bootstrap/loader.js"></script>
-	<link rel="stylesheet" href="../Pulangi-WEB-main/bootstrap/jquery-ui.css">
-	<script src="../Pulangi-WEB-main/bootstrap/jquery-3.7.1.js"></script>
-	<script src="../Pulangi-WEB-main/bootstrap/jquery-ui.js"></script>
+	<link rel="stylesheet" href="/bootstrap/bootstrap.min.css">
+	<script src="/bootstrap/jquery.min.js"></script>
+	<script src="/bootstrap/bootstrap.min.js"></script>
+	<script type="text/javascript" src="/bootstrap/loader.js"></script>
+	<link rel="stylesheet" href="/bootstrap/jquery-ui.css">
+	
+	<script src="/bootstrap/jquery-3.7.1.js"></script>
+	<script src="/bootstrap/jquery-ui.js"></script>
+
+	<script src="https://www.gstatic.com/charts/loader.js"></script>
+	<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+
+	<script>
+	var timeRange = {
+	  "start_time": {
+	    "hour": [],
+	    "minute": [],
+	    "seconds": []    
+	  },
+	  "end_time": {
+	    "hour": [],
+	    "minute": [],
+	    "seconds": [] 
+	  }
+	};
+
+	for (let i = 0; i < 24; i++) {
+  		timeRange.start_time.hour[i] = (i+1).toString();
+  		timeRange.end_time.hour[i] = (i+1).toString();
+	}
+	for (let i = 0; i < 60; i++) {
+  		timeRange.start_time.minute[i] = (i+1).toString();
+  		timeRange.end_time.minute[i] = (i+1).toString();
+  		timeRange.start_time.seconds[i] = (i+1).toString();
+  		timeRange.end_time.seconds[i] = (i+1).toString();
+	}
+	
+	window.onload = function() {
+	  var start_hh = document.getElementById("start_hh");
+	  var start_mm = document.getElementById("start_mm");
+	  var start_ss = document.getElementById("start_ss");
+	  var end_hh = document.getElementById("end_hh");
+	  var end_mm = document.getElementById("end_mm");
+	  var end_ss = document.getElementById("end_ss");
+	 
+	  	for (var y in timeRange.start_time.hour) {
+	      start_hh.options[start_hh.options.length] = new Option(y, y);
+	    }
+	    for (var y in timeRange.start_time.minute) {
+	      start_mm.options[start_mm.options.length] = new Option(y, y);
+	    }
+	    for (var y in timeRange.start_time.seconds) {
+	      start_ss.options[start_ss.options.length] = new Option(y, y);
+	    }
+	    for (var y in timeRange.end_time.hour) {
+	      end_hh.options[end_hh.options.length] = new Option(y, y);
+	    }
+	    for (var y in timeRange.end_time.minute) {
+	      end_mm.options[end_mm.options.length] = new Option(y, y);
+	    }
+	    for (var y in timeRange.end_time.seconds) {
+	      end_ss.options[end_ss.options.length] = new Option(y, y);
+	    }
+	}
+	</script>
 	
 	
 	<style>
@@ -100,7 +160,7 @@
             position: fixed;
             background-color: transparent;
             margin-top: -700px;
-            margin-left: 570px;          
+            margin-left: 550px;          
      }
      .unitstatus3{
             width:300px;
@@ -108,7 +168,7 @@
             position: fixed;
             background-color: transparent;
             margin-top: -700px;
-            margin-left: 1050px;          
+            margin-left: 1000px;          
      }
      .img {
     	max-width: 100%;
@@ -120,7 +180,7 @@
 
 
 	</style>
-
+		
 		<script>
 		var today;
     	today = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
@@ -142,19 +202,36 @@
 		    $("#xportdata").click(function(){
 		        var datepick1 = document.getElementById("datepicker1").value;
 		        var datepick2 = document.getElementById("datepicker2").value;
-		        if ((!datepick1)||(!datepick2)){
+		        var start_hh = document.getElementById("start_hh").value;
+		        var end_hh = document.getElementById("end_hh").value;
+		        var start_mm = document.getElementById("start_mm").value;
+		        var end_mm = document.getElementById("end_mm").value;
+		        var start_ss = document.getElementById("start_ss").value;
+		        var end_ss = document.getElementById("end_ss").value;
+		        console.log(start_hh);
+		        if ((!datepick1)||(!datepick2)||(!start_hh)||(!end_hh)||(!start_mm)||(!end_mm)||(!start_ss)||(!end_ss)){
 		        	//check for empty or incorrect input
-		        	alert("Invalid START or END Date for ra eports!");
+		        	alert("Invalid START or END Date/Time for reports!");
 		        }else{
 		        	
+		        	if (parseInt(end_hh)<parseInt(start_hh)){
+		        		alert("Invalid START and END Time for reports!");
+
+		        	}else{
 				       userdata =  [{startdate:reformatDateString(datepick1),enddate:reformatDateString(datepick2)}];
 				       document.getElementById('loadingscrn').style.display = 'block';
-				       
 				       webSocket.send(JSON.stringify(userdata));
-				    
+				        console.log(JSON.stringify(userdata));
+   						
+   						//window.open('/viewdata.html', '_blank');
+				       
+				   }
+
+					    
 		        }
  
 		    });
+
 		    $("#statusbtn").click(function(){
 		        
 		       alert("System is Connected!");
@@ -170,13 +247,17 @@
 
 		var meter_data = {p1:0,p2:0,p3:0};
 		var con_flag = 0;
-		var webSocket = new WebSocket('ws://localhost:8000/','echo-protocol');
+		var webSocket = new WebSocket('https://localhost:8000/','echo-protocol');
 		
 
 		
 
 		const download = function(data){
+
+
+
 			const blob = new Blob([data],{type:'text/csv'});
+			
 			const url = window.URL.createObjectURL(blob);
 			const a = document.createElement('a');
 			a.setAttribute('hidden','');
@@ -191,6 +272,7 @@
 		const objectTOCsv = function(data){
 			const csvRows = [];
 
+			
 			const headers = Object.keys(data[0]);
 			csvRows.push(headers.join(','));
 			
@@ -263,36 +345,36 @@
 
 			webSocket.onmessage = (event) => {
 				  var data = JSON.parse(event.data);
+
 				  document.getElementById('statusbtn').style.background='LimeGreen';
 				  document.getElementById('statusbtn').innerHTML = 'Connected';
-				  //console.log(data);
-				  	try{
+				  
+				  	  try{
 					  /*
 					  chart.draw(Math.floor(data[0].mw), options);
 				  	  chart2.draw(Math.floor(data[0].mw), options);
 				      chart3.draw(Math.floor(data[0].mw), options);
 					  */
-					  meter_data.p1 = parseFloat(data[0].mw).toFixed(4);
-					  meter_data.p2 = parseFloat(data[1].mw).toFixed(4);
-					  meter_data.p3 = parseFloat(data[2].mw).toFixed(4);
+					  meter_data.p1 = data[0].mw.toFixed(4);
+					  meter_data.p2 = data[1].mw.toFixed(4);
+					  meter_data.p3 = data[2].mw.toFixed(4);
 					  var d = new Date();
 
-					  if (parseFloat(data[0].vab)==0){
+					  if (parseFloat(data[0].vab)<=0){
 					  		document.getElementById('status_unit1').style.display = 'block';
 					  }else{
 					  		document.getElementById('status_unit1').style.display = 'none';
 					  }
-					  if (parseFloat(data[1].vab)==0){
+					  if (parseFloat(data[1].vab)<=0){
 					  		document.getElementById('status_unit2').style.display = 'block';
 					  }else{
 					  		document.getElementById('status_unit2').style.display = 'none';
 					  }
-					  if (parseFloat(data[2].vab)==0){
+					  if (parseFloat(data[2].vab)<=0){
 					  		document.getElementById('status_unit3').style.display = 'block';
 					  }else{
 					  		document.getElementById('status_unit3').style.display = 'none';
 					  }
-							
 
 					  if (parseFloat(data[0].ia)>=3954){
 					  		document.getElementById('Ia1').style.background='red';
@@ -343,36 +425,36 @@
 					  }
 
 					  //unit 1
-					  document.getElementById('f1').innerHTML = parseFloat(data[0].freq).toFixed(4).toString().bold();
-					  document.getElementById('pw1').innerHTML = parseFloat(data[0].mw).toFixed(4).toString().bold();
-					  document.getElementById('qvar1').innerHTML = parseFloat(data[0].mvar).toFixed(4).toString().bold();
-					  document.getElementById('Va1').innerHTML = parseFloat(data[0].vab).toFixed(4).toString().bold();
-					  document.getElementById('Ia1').innerHTML = parseFloat(data[0].ia).toFixed(4).toString().bold();
-					  document.getElementById('Vb1').innerHTML = parseFloat(data[0].vbc).toFixed(4).toString().bold();
-					  document.getElementById('Ib1').innerHTML = parseFloat(data[0].ib).toFixed(4).toString().bold();
-					  document.getElementById('Vc1').innerHTML = parseFloat(data[0].vca).toFixed(4).toString().bold();
-					  document.getElementById('Ic1').innerHTML = parseFloat(data[0].ic).toFixed(4).toString().bold();
+					  document.getElementById('f1').innerHTML = data[0].freq.toFixed(4).toString().bold();
+					  document.getElementById('pw1').innerHTML = data[0].mw.toFixed(4).toString().bold();
+					  document.getElementById('qvar1').innerHTML = data[0].mvar.toFixed(4).toString().bold();
+					  document.getElementById('Va1').innerHTML = data[0].vab.toFixed(4).toString().bold();
+					  document.getElementById('Ia1').innerHTML = data[0].ia.toFixed(4).toString().bold();
+
+					  document.getElementById('Vb1').innerHTML = data[0].vbc.toFixed(4).toString().bold();
+					  document.getElementById('Ib1').innerHTML = data[0].ib.toFixed(4).toString().bold();
+					  document.getElementById('Vc1').innerHTML = data[0].vca.toFixed(4).toString().bold();
+					  document.getElementById('Ic1').innerHTML = data[0].ic.toFixed(4).toString().bold();
 					  //unit 2
-					  document.getElementById('f2').innerHTML = parseFloat(data[1].freq).toFixed(4).toString().bold();
-					  document.getElementById('pw2').innerHTML = parseFloat(data[1].mw).toFixed(4).toString().bold();
-					  document.getElementById('qvar2').innerHTML = parseFloat(data[1].mvar).toFixed(4).toString().bold();
-					  document.getElementById('Va2').innerHTML = parseFloat(data[1].vab).toFixed(4).toString().bold();
-					  document.getElementById('Ia2').innerHTML = parseFloat(data[1].ia).toFixed(4).toString().bold();
-					  document.getElementById('Vb2').innerHTML = parseFloat(data[1].vbc).toFixed(4).toString().bold();
-					  document.getElementById('Ib2').innerHTML = parseFloat(data[1].ib).toFixed(4).toString().bold();
-					  document.getElementById('Vc2').innerHTML = parseFloat(data[1].vca).toFixed(4).toString().bold();
-					  document.getElementById('Ic2').innerHTML = parseFloat(data[1].ic).toFixed(4).toString().bold();
+					  document.getElementById('f2').innerHTML = data[1].freq.toFixed(4).toString().bold();
+					  document.getElementById('pw2').innerHTML = data[1].mw.toFixed(4).toString().bold();
+					  document.getElementById('qvar2').innerHTML = data[1].mvar.toFixed(4).toString().bold();
+					  document.getElementById('Va2').innerHTML = data[1].vab.toFixed(4).toString().bold();
+					  document.getElementById('Ia2').innerHTML = data[1].ia.toFixed(4).toString().bold();
+					  document.getElementById('Vb2').innerHTML = data[1].vbc.toFixed(4).toString().bold();
+					  document.getElementById('Ib2').innerHTML = data[1].ib.toFixed(4).toString().bold();
+					  document.getElementById('Vc2').innerHTML = data[1].vca.toFixed(4).toString().bold();
+					  document.getElementById('Ic2').innerHTML = data[1].ic.toFixed(4).toString().bold();
 					  //unit 3
-					  document.getElementById('f3').innerHTML = parseFloat(data[2].freq).toFixed(4).toString().bold();
-					  document.getElementById('pw3').innerHTML = parseFloat(data[2].mw).toFixed(4).toString().bold();
-					  document.getElementById('qvar3').innerHTML = parseFloat(data[2].mvar).toFixed(4).toString().bold();
-					  document.getElementById('Va3').innerHTML = parseFloat(data[2].vab).toFixed(4).toString().bold();
-					  document.getElementById('Ia3').innerHTML = parseFloat(data[2].ia).toFixed(4).toString().bold();
-					  document.getElementById('Vb3').innerHTML = parseFloat(data[2].vbc).toFixed(4).toString().bold();
-					  document.getElementById('Ib3').innerHTML = parseFloat(data[2].ib).toFixed(4).toString().bold();
-					  document.getElementById('Vc3').innerHTML = parseFloat(data[2].vca).toFixed(4).toString().bold();
-					  document.getElementById('Ic3').innerHTML = parseFloat(data[2].ic).toFixed(4).toString().bold();
-				
+					  document.getElementById('f3').innerHTML = data[2].freq.toFixed(4).toString().bold();
+					  document.getElementById('pw3').innerHTML = data[2].mw.toFixed(4).toString().bold();
+					  document.getElementById('qvar3').innerHTML = data[2].mvar.toFixed(4).toString().bold();
+					  document.getElementById('Va3').innerHTML = data[2].vab.toFixed(4).toString().bold();
+					  document.getElementById('Ia3').innerHTML = data[2].ia.toFixed(4).toString().bold();
+					  document.getElementById('Vb3').innerHTML = data[2].vbc.toFixed(4).toString().bold();
+					  document.getElementById('Ib3').innerHTML = data[2].ib.toFixed(4).toString().bold();
+					  document.getElementById('Vc3').innerHTML = data[2].vca.toFixed(4).toString().bold();
+					  document.getElementById('Ic3').innerHTML = data[2].ic.toFixed(4).toString().bold();
 
 					  document.getElementById('dattime').innerHTML = d.toString().split('G')[0].bold();
 
@@ -386,9 +468,9 @@
 					  var avgV2 = (parseFloat(data[1].vab.toString()) + parseFloat(data[1].vbc.toString()) + parseFloat(data[1].vca.toString()))/3;
 					  var avgV3 = (parseFloat(data[2].vab.toString()) + parseFloat(data[2].vbc.toString()) + parseFloat(data[2].vca.toString()))/3;
 
-					  var avgI1 = (parseFloat(data[0].ia.toString()) + parseFloat(data[0].ib.toString()) + parseFloat(data[0].ic.toString()))/3;
-					  var avgI2 = (parseFloat(data[1].ia.toString()) + parseFloat(data[1].ib.toString()) + parseFloat(data[1].ic.toString()))/3;
-					  var avgI3 = (parseFloat(data[2].ia.toString()) + parseFloat(data[2].ib.toString()) + parseFloat(data[2].ic.toString()))/3;
+					  var avgI1 = (parseFloat(data[0].ia.toString()) + parseFloat(data[0].ib.toString()) + parseFloat(data[0].ic.toString()))/3000;
+					  var avgI2 = (parseFloat(data[1].ia.toString()) + parseFloat(data[1].ib.toString()) + parseFloat(data[1].ic.toString()))/3000;
+					  var avgI3 = (parseFloat(data[2].ia.toString()) + parseFloat(data[2].ib.toString()) + parseFloat(data[2].ic.toString()))/3000;
 
 					  var avgpf1 = (parseFloat(data[0].pfa.toString()) + parseFloat(data[0].pfb.toString()) + parseFloat(data[0].pfc.toString()))/3;
 					  var avgpf2 = (parseFloat(data[1].pfa.toString()) + parseFloat(data[1].pfb.toString()) + parseFloat(data[1].pfc.toString()))/3;
@@ -417,25 +499,132 @@
 					  document.getElementById('avgI2').innerHTML = avgI2.toFixed(4).toString().bold();
 					  document.getElementById('avgI3').innerHTML = avgI3.toFixed(4).toString().bold();
 
-					  document.getElementById('avgpf1').innerHTML = avgpf1.toFixed(4).toString().bold();
-					  document.getElementById('avgpf2').innerHTML = avgpf2.toFixed(4).toString().bold();
-					  document.getElementById('avgpf3').innerHTML = avgpf3.toFixed(4).toString().bold();
+					  document.getElementById('avgpf1').innerHTML = avgpf1.toFixed(2).toString().bold();
+					  document.getElementById('avgpf2').innerHTML = avgpf2.toFixed(2).toString().bold();
+					  document.getElementById('avgpf3').innerHTML = avgpf3.toFixed(2).toString().bold();
 
 					  document.getElementById('avgpw').innerHTML = avgpw.toFixed(4).toString().bold();
 					  document.getElementById('avgqvar').innerHTML = avgqvar.toFixed(4).toString().bold();
-					  document.getElementById('avgpf').innerHTML = avgpf.toFixed(4).toString().bold();
+					  document.getElementById('avgpf').innerHTML = avgpf.toFixed(2).toString().bold();
 					  document.getElementById('avgV').innerHTML = avgV.toFixed(4).toString().bold();
 					  document.getElementById('avgI').innerHTML = avgI.toFixed(4).toString().bold();
 
 					  con_flag = 0;
 					}catch{
-						//console.log(data);
+						console.log(data);
+						var start_hh = document.getElementById("start_hh").value;
+						if (start_hh<10){
+							start_hh = '0'+start_hh.toString();
+						}
+						var end_hh = document.getElementById("end_hh").value;
+						if (end_hh<10){
+							end_hh = '0'+end_hh.toString();
+						}			
+						var start_mm = document.getElementById("start_mm").value;
+						if (start_mm<10){
+							start_mm = '0'+start_mm.toString();
+						}
+						var end_mm = document.getElementById("end_mm").value;
+						if (end_mm<10){
+							end_mm = '0'+end_mm.toString();
+						}
+						var start_ss = document.getElementById("start_ss").value;
+						if (start_ss<10){
+							start_ss = '0'+start_ss.toString();
+						}
+						var end_ss = document.getElementById("end_ss").value;
+						if (end_ss<10){
+							end_ss = '0'+end_ss.toString();
+						}
 
-						const csvData =  objectTOCsv(data);
+						const startingtime = start_hh.toString()+':'+start_mm.toString()+':'+start_ss.toString();
+						const endingtime = end_hh.toString()+':'+end_mm.toString()+':'+end_ss.toString();
+						
+
+						
+						var newdata=[{
+							ID:0,
+							date:0,
+							energy1: 0,
+							energy2: 0,
+							energy3: 0,
+							freq1: 0,
+							freq2: 0,
+							freq3: 0,
+							ia1: 0,
+							ia2: 0,
+							ia3: 0,
+							ib1: 0,
+							ib2: 0,
+							ib3: 0,
+							ic1: 0,
+							ic2: 0,
+							ic3: 0,
+							mvar: 0,
+							mvar1: 0,
+							mvar2: 0,
+							mvar3: 0,
+							mw: 0,
+							mw1: 0,
+							mw2: 0,
+							mw3: 0,
+							pfa1: 0,
+							pfa2: 0,
+							pfa3: 0,
+							pfb1: 0,
+							pfb2: 0,
+							pfb3: 0,
+							pfc1: 0,
+							pfc2: 0,
+							pfc3: 0,
+							time: 0,
+							vab1: 0,
+							vab2: 0,
+							vab3: 0,
+							vbc1: 0,
+							vbc2: 0,
+							vbc3: 0,
+							vca1: 0,
+							vca2: 0,
+							vca3: 0
+						}];
+						var r = 0;
+						var flag_start = 0;
+						var flag_end = 0;
+
+						console.log(startingtime);
+						console.log(data[0].time.toString());
+
+						for (let i=0; i<data.length;i++){
+							if (startingtime==data[i].time.toString()){
+								flag_start = 1;
+								
+							}
+							if (endingtime==data[i].time.toString()){
+								flag_end = 1;
+							}
+
+							if (flag_start==1 && flag_end==0){
+								newdata[r] = Object.assign({},data[i]);
+								r++;
+							}
+							if (flag_start==1 && flag_end==1){
+								newdata[r] = Object.assign({},data[i]);
+								break;
+							}
+						}
+
+						console.log(newdata);
+						
+						
+						const csvData =  objectTOCsv(newdata);
+						
 						download(csvData);
 						setTimeout(displayloading,1000);
 						alert('Report File Downloaded!\nPlease view your download folder...');
 
+						window.open('/viewdata.html', '_blank');
+						
 						
 
 					}
@@ -700,7 +889,7 @@
 						</div>
 						
 						<div class="row">
-							<br><br><br><br><br><br>
+							<br>
 							<div class="col-sm-8" style="text-align:right;font-size:30px;padding:10px;margin:13px;color:white;"><b>AGC STATUS</b></div>
 							<div class="col-sm-2" style="text-align:center;font-size:30px;padding:10px;margin-top:15px;color:white;" >
 								<div class="led-box"><div class="led-green"></div></div>
@@ -708,7 +897,9 @@
 							</div>
 						
 						</div>
-				</div>
+						<div>
+							<button id="statusbtn" type="button" class="btn btn-primary" style="width:100%; margin-top:36px;padding:10px;background-color:#00FF00;color:black;font-size:25px;">Connected</button>
+						</div>
 		
 	
 		</div>
@@ -723,12 +914,13 @@
   <div class="panel panel-default" >
 			<div class="panel-body" style="align:center;background-color:#526B9C;padding-bottom:0px;">
 				<div class="row">
-					<div id="dattime" class="col-lg-4" style="margin-top:36px;font-size:35px;color:yellow;"></div>
-					<div class="col-sm-4"> 
-					<div class="col-sm-5" style="margin-top:8px;padding-top:20px;text-align:right;font-size:28px;color:white;"><b>Date & Time<br>RANGE</b></div>
+					<div id="dattime" class="col-lg-3" style="margin-top:36px;font-size:35px;color:yellow;"></div>
+
+					
+					<div class="col-sm-2" style="margin-top:8px;padding-top:20px;text-align:right;font-size:28px;color:white;"><b>Date & Time<br>RANGE</b></div>
 						
 							
-						<div class="col-sm-4">
+						<div class="col-sm-2">
 								<div style="color:white">START DATE</div>
 								<div style="font-size:20px;">
 								<p><input type="text" id="datepicker1" size="20" dataformat="YYYY-MM-DD"></p> </div>
@@ -737,18 +929,73 @@
 								<p><input type="text" id="datepicker2" size="20"></p></div>
 								
 						</div>
+
+						<div class="col-sm-5">
+							<br>
+								<div class="row" >
+									<div class="col-sm-3" style="color:white;font-size:18px;">START TIME:</div>
+									<div class="col-sm-1" style="margin-left:-70px;margin-top:-2px; ">
+										<select id="start_hh" >
+	    									<option value="" selected="selected">HH</option>
+	  									</select>
+	  								</div>
+	  									<div class="col-sm-1" style="margin-left:-10px;margin-top:-2px;" >
+
+										<select id="start_mm" >
+	    									<option value="" selected="selected">MM</option>
+	  									</select>
+	  								</div>
+
+	  								<div class="col-sm-1" style="margin-left:10px;margin-top:-2px;" >
+
+										<select id="start_ss">
+	    									<option value="" selected="selected">SS</option>
+	  									</select>
+	  								</div>
+	  								
+  								</div>
+								
+								
+								
+						</div>
+						<br><br>
+
+						<div class="row" style="margin-top:20px">
+									<div class="col-sm-2" style="margin-left:24px;color:white;font-size:18px;" >END TIME:</div>
+									<div class="col-sm-1" style="margin-left:-195px;margin-top:-2px;" >
+
+										<select id="end_hh">
+	    									<option value="" selected="selected">HH</option>
+	  									</select>
+	  								</div>
+	  									<div class="col-sm-1" style="margin-left:-136px;margin-top:-2px;">
+
+										<select id="end_mm">
+	    									<option value="" selected="selected">MM</option>
+	  									</select>
+	  								</div>
+
+	  								<div class="col-sm-1" style="margin-left:-76px;margin-top:-2px;">
+
+										<select id="end_ss">
+	    									<option value="" selected="selected">SS</option>
+	  									</select>
+	  								</div>
+	  								
+	  					<div class="col-sm-2">
+							<button id="xportdata" type="button" class="btn btn-primary" style="margin-left:-10px;margin-top:-45px;width:100%;padding:10px;background-color:white;color:black;font-size:25px;">Export Data</button>
+						</div>
+  						</div>
 						
 						
+
 					
 					</div>
-					<div class="col-sm-2">
-					<button id="xportdata" type="button" action = "reports.php" class="btn btn-primary" style="margin-top:36px;width:100%;padding:10px;background-color:white;color:black;font-size:25px;">Export Data</button>
-					</div>
-					<div class="col-sm-2">
-					<button id="statusbtn" type="button" class="btn btn-primary" style="width:100%; margin-top:36px;padding:10px;background-color:#00FF00;color:black;font-size:25px;">Connected</button>
+					
+
 					</div>
 					
-				</div>
+				
 			</div>
 			
 	</div>
@@ -760,13 +1007,13 @@
 	</div>
 
 	<div id="status_unit1" class="unitstatus1" style="display:none">
-		<img src="../Pulangi-WEB-main/offline_stat.png">
+		<img src="/offline_stat.png">
 	</div>
 	<div id="status_unit2" class="unitstatus2" style="display:none">
-		<img src="../Pulangi-WEB-main/offline_stat.png">
+		<img src="/offline_stat.png">
 	</div>
 	<div id="status_unit3" class="unitstatus3" style="display:none">
-		<img src="../Pulangi-WEB-main/offline_stat.png">
+		<img src="/offline_stat.png">
 	</div>
 	
 </div>

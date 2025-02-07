@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+<script src="https://www.gstatic.com/charts/loader.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/bootstrap/bootstrap.min.css">
+  <script src="/bootstrap/jquery.min.js"></script>
+  <script src="/bootstrap/bootstrap.min.js"></script>
+  <script type="text/javascript" src="/bootstrap/loader.js"></script>
+  <link rel="stylesheet" href="/bootstrap/jquery-ui.css">
+  
+  <script src="/bootstrap/jquery-3.7.1.js"></script>
+  <script src="/bootstrap/jquery-ui.js"></script>
+
+
+
+<body>
+
+<div style="margin-left:20px; margin-top: 30px; width:120px;height:120px;"><img src="npclogo.png" style="width: 100%;height: 100%;object-fit: cover;"></div>
+<div style="margin-left:20px;margin-top: -5px;">
+  <h1 style="margin-left:20px;">National Power Corporation</h1>
+  <h2 style="margin-left:20px;margin-top: -5px;">Pulangi 4 Hydro Power Plant</h2>
+  <h3 style="margin-left:20px;margin-top: -5px;">P28F+683, Maramag, BukidnonMaramag, Bukidnon</h3>
+</div>
+<br>
+<br>
+<br>
+
+<h2 style="margin-left:20px;"><b> Frequency Vs Time Visualization</b><h2>
+
+<div style="margin: 10px 10px 25px 10px;"><input type="file" id="file" style="width: 700px;height: 45px;"></div>
+
+<h2 style="margin-left:20px;"><b> A. UNIT 1</b><h2>
+
+<div id="myChart1" style="margin-left:20px;width:100%; max-width:650px; height:350px; border: 1px solid black;padding:0;"></div>
+<br>
+<h2 style="margin-left:20px;"><b> B. UNIT 2</b><h2>
+<div id="myChart2" style="margin-left:20px; width:100%; max-width:650px; height:350px; border: 1px solid black;padding:0;"></div>
+<br>
+<h2 style="margin-left:20px;"><b> C. UNIT 3</b><h2>
+<div id="myChart3" style="margin-left:20px;width:100%; max-width:650px; height:350px; border: 1px solid black;padding:0;"></div>
+<br>
+
+
+<h2 style="margin-left:20px;"><b> Power Vs Time Visualization</b><h2>
+
+<h2 style="margin-left:20px;"><b> A. UNIT 1</b><h2>
+
+<div id="mypow1" style="margin-left:20px;width:100%; max-width:650px; height:350px; border: 1px solid black;padding:0;"></div>
+<br>
+<h2 style="margin-left:20px;"><b> B. UNIT 2</b><h2>
+<div id="mypow2" style="margin-left:20px; width:100%; max-width:650px; height:350px; border: 1px solid black;padding:0;"></div>
+<br>
+<h2 style="margin-left:20px;"><b> C. UNIT 3</b><h2>
+<div id="mypow3" style="margin-left:20px;width:100%; max-width:650px; height:350px; border: 1px solid black;padding:0;"></div>
+<br>
+<br>
+
+<h3>Prepared by:</h3><br>
+<h3><b><u>Engr. Wilfredo B. Busgano</b></u></h3>
+<br><h4 style="margin-top: -20px;"><b>Plant Manager</b></h4>
+<br>
+
+<div id="loadingscrn" class="Center" style="display:none">
+    <div class="loader"></div>
+  </div>
+<style>
+  .loader {
+        border: 30px solid #f3f3f3;
+        border-radius: 50%;
+        border-top: 30px solid #3498db;
+        width: 150px;
+        height: 150px;
+        -webkit-animation: spin 2s linear infinite; /* Safari */
+        animation: spin 2s linear infinite;
+        float:left;
+      }
+
+      /* Safari */
+    @-webkit-keyframes spin {
+      0% { -webkit-transform: rotate(0deg); }
+      100% { -webkit-transform: rotate(360deg); }
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  
+</style>>
+
+<script>
+    var i = document.getElementById('file');
+    var data = 0;
+   
+    i.addEventListener('change', function () {
+        if (!!i.files && i.files.length > 0) {
+           parseCSV(i.files[0]);
+           
+        }
+    });
+
+    function parseCSV(file) {
+        if (!file || !FileReader) {
+            return;
+        }
+
+        var reader = new FileReader();
+
+        reader.onload = function (e) {
+            document.getElementById('loadingscrn').style.display = 'block';
+            const mydata = e.target.result;
+
+            var forgraph1 = [];
+            var forgraph2 = [];
+            var forgraph3 = [];
+            var forgraph4 = [];
+            var forgraph5 = [];
+            var forgraph6 = [];
+            var myArray = [];
+            var stripper0 = [];
+            var stripper1 = [];
+            var finaldata1 = [];
+            var finaldata2 = [];
+            var finaldata3 = [];
+            var finaldata4 = [];
+            var finaldata5 = [];
+            var finaldata6 = [];
+
+            var myval = [];
+            var newdata =  mydata.split(/\r?\n/);
+
+            for (let i=0;i<newdata.length;i++){
+              myval[i]= newdata[i].split(",");
+              forgraph1[i] = myval[i][42].toString()+","+myval[i][39].toString();
+              forgraph2[i] = myval[i][42].toString()+","+myval[i][40].toString();
+              forgraph3[i] = myval[i][42].toString()+","+myval[i][41].toString();
+              forgraph4[i] = myval[i][42].toString()+","+myval[i][1].toString();
+              forgraph5[i] = myval[i][42].toString()+","+myval[i][2].toString();
+              forgraph6[i] = myval[i][42].toString()+","+myval[i][3].toString();
+              myArray = forgraph1[i].split(",");
+              stripper0 = myArray[0].replaceAll('"','');
+              stripper1 = myArray[1].replaceAll('"','');
+              if (i==0){
+                finaldata1[i] = [stripper0,stripper1];
+              }else{
+                finaldata1[i] = [stripper0,parseFloat(stripper1)];
+              }
+
+              myArray = forgraph2[i].split(",");
+              stripper0 = myArray[0].replaceAll('"','');
+              stripper1 = myArray[1].replaceAll('"','');
+              if (i==0){
+                finaldata2[i] = [stripper0,stripper1];
+              }else{
+                finaldata2[i] = [stripper0,parseFloat(stripper1)];
+              }
+
+              myArray = forgraph3[i].split(",");
+              stripper0 = myArray[0].replaceAll('"','');
+              stripper1 = myArray[1].replaceAll('"','');
+              if (i==0){
+                finaldata3[i] = [stripper0,stripper1];
+              }else{
+                finaldata3[i] = [stripper0,parseFloat(stripper1)];
+              }
+
+              myArray = forgraph4[i].split(",");
+              stripper0 = myArray[0].replaceAll('"','');
+              stripper1 = myArray[1].replaceAll('"','');
+              if (i==0){
+                finaldata4[i] = [stripper0,stripper1];
+              }else{
+                finaldata4[i] = [stripper0,parseFloat(stripper1)];
+              }
+
+              myArray = forgraph5[i].split(",");
+              stripper0 = myArray[0].replaceAll('"','');
+              stripper1 = myArray[1].replaceAll('"','');
+              if (i==0){
+                finaldata5[i] = [stripper0,stripper1];
+              }else{
+                finaldata5[i] = [stripper0,parseFloat(stripper1)];
+              }
+
+              myArray = forgraph6[i].split(",");
+              stripper0 = myArray[0].replaceAll('"','');
+              stripper1 = myArray[1].replaceAll('"','');
+              if (i==0){
+                finaldata6[i] = [stripper0,stripper1];
+              }else{
+                finaldata6[i] = [stripper0,parseFloat(stripper1)];
+              }
+
+
+
+            }
+
+            google.charts.load('current',{packages:['corechart']});
+            google.charts.setOnLoadCallback(drawChart);
+
+            function drawChart() {
+                /*finaldata[i] = [stripper0.toString(),parseFloat(stripper1)];
+                finaldata[i] = [stripper0.toString(),parseFloat(stripper1)];
+                finaldata[i] = [stripper0.toString(),parseFloat(stripper1)];*/
+            
+
+            const data1 = google.visualization.arrayToDataTable(finaldata1);
+            const data2= google.visualization.arrayToDataTable(finaldata2);
+            const data3= google.visualization.arrayToDataTable(finaldata3);
+            const data4 = google.visualization.arrayToDataTable(finaldata4);
+            const data5= google.visualization.arrayToDataTable(finaldata5);
+            const data6= google.visualization.arrayToDataTable(finaldata6);
+
+            // Set Options
+            const options1 = {
+              //title: 'Time vs. Frequency (UNIT 1)',
+              hAxis: {title: 'Time(s)'},
+              vAxis: {title: 'Frequency (Hz)'},
+              legend: 'none'
+            };
+            const options2 = {
+              //title: 'Time vs. Frequency (UNIT 1)',
+              hAxis: {title: 'Time(s)'},
+              vAxis: {title: 'Power (MW)'},
+              legend: 'none'
+            };
+
+            // Draw
+            const chart1 = new google.visualization.LineChart(document.getElementById('myChart1'));
+            chart1.draw(data1, options1);
+
+            const chart2 = new google.visualization.LineChart(document.getElementById('myChart2'));
+            chart2.draw(data2, options1);
+
+            const chart3 = new google.visualization.LineChart(document.getElementById('myChart3'));
+            chart3.draw(data3, options1);
+
+            const chart4 = new google.visualization.LineChart(document.getElementById('mypow1'));
+            chart4.draw(data4, options2);
+
+            const chart5 = new google.visualization.LineChart(document.getElementById('mypow2'));
+            chart5.draw(data5, options2);
+
+            const chart6 = new google.visualization.LineChart(document.getElementById('mypow3'));
+            chart6.draw(data6, options2);
+
+            setTimeout(displayloading,1000);
+
+
+
+            }
+
+
+
+        };
+
+        reader.readAsText(file);
+    }
+
+    function displayloading(){
+        document.getElementById('loadingscrn').style.display = 'none';
+    }
+    
+</script>
+
+  
+
+</body>
+</html>
