@@ -14,8 +14,8 @@
 	<script src="/bootstrap/jquery-3.7.1.js"></script>
 	<script src="/bootstrap/jquery-ui.js"></script>
 
-	<script src="https://www.gstatic.com/charts/loader.js"></script>
-	<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+	<script src="/bootstrap/loader.js"></script>
+	
 
 
 	<script>
@@ -208,7 +208,7 @@
 		        var end_mm = document.getElementById("end_mm").value;
 		        var start_ss = document.getElementById("start_ss").value;
 		        var end_ss = document.getElementById("end_ss").value;
-		        console.log(start_hh);
+		        //<!-- console.log(start_hh); -->
 		        if ((!datepick1)||(!datepick2)||(!start_hh)||(!end_hh)||(!start_mm)||(!end_mm)||(!start_ss)||(!end_ss)){
 		        	//check for empty or incorrect input
 		        	alert("Invalid START or END Date/Time for reports!");
@@ -221,7 +221,7 @@
 				       userdata =  [{startdate:reformatDateString(datepick1),enddate:reformatDateString(datepick2)}];
 				       document.getElementById('loadingscrn').style.display = 'block';
 				       webSocket.send(JSON.stringify(userdata));
-				        console.log(JSON.stringify(userdata));
+				        //<!--console.log(JSON.stringify(userdata));-->
    						
    						//window.open('/viewdata.html', '_blank');
 				       
@@ -247,7 +247,7 @@
 
 		var meter_data = {p1:0,p2:0,p3:0};
 		var con_flag = 0;
-		var webSocket = new WebSocket('https://localhost:8000/','echo-protocol');
+		var webSocket = new WebSocket('https://5.0.0.125:8000/','echo-protocol');
 		
 
 		
@@ -355,9 +355,9 @@
 				  	  chart2.draw(Math.floor(data[0].mw), options);
 				      chart3.draw(Math.floor(data[0].mw), options);
 					  */
-					  meter_data.p1 = data[0].mw.toFixed(4);
-					  meter_data.p2 = data[1].mw.toFixed(4);
-					  meter_data.p3 = data[2].mw.toFixed(4);
+					  meter_data.p1 = parseFloat(data[0].mw).toFixed(4);
+					  meter_data.p2 = parseFloat(data[1].mw).toFixed(4);
+					  meter_data.p3 = parseFloat(data[2].mw).toFixed(4);
 					  var d = new Date();
 
 					  if (parseFloat(data[0].vab)<=0){
@@ -376,90 +376,90 @@
 					  		document.getElementById('status_unit3').style.display = 'none';
 					  }
 
-					  if (parseFloat(data[0].ia)>=3954){
+					  if (parseFloat(data[0].ia)>=3.954){
 					  		document.getElementById('Ia1').style.background='red';
 					  }else{
 					  		document.getElementById('Ia1').style.background='white';
 					  }
-					  if (parseFloat(data[0].ib)>=3954){
+					  if (parseFloat(data[0].ib)>=3.954){
 					  		document.getElementById('Ib1').style.background='red';
 					  }else{
 					  		document.getElementById('Ib1').style.background='white';
 					  }
-					  if (parseFloat(data[0].ic)>=3954){
+					  if (parseFloat(data[0].ic)>=3.954){
 					  		document.getElementById('Ic1').style.background='red';
 					  }else{
 					  		document.getElementById('Ic1').style.background='white';
 					  }
 
-					  if (parseFloat(data[1].ia)>=3954){
+					  if (parseFloat(data[1].ia)>=3.954){
 					  		document.getElementById('Ia2').style.background='red';
 					  }else{
 					  		document.getElementById('Ia2').style.background='white';
 					  }
-					  if (parseFloat(data[1].ib)>=3954){
+					  if (parseFloat(data[1].ib)>=3.954){
 					  		document.getElementById('Ib2').style.background='red';
 					  }else{
 					  		document.getElementById('Ib2').style.background='white';
 					  }
-					  if (parseFloat(data[1].ic)>=3954){
+					  if (parseFloat(data[1].ic)>=3.954){
 					  		document.getElementById('Ic2').style.background='red';
 					  }else{
 					  		document.getElementById('Ic2').style.background='white';
 					  }
 
-					  if (parseFloat(data[2].ia)>=3954){
+					  if (parseFloat(data[2].ia)>=3.954){
 					  		document.getElementById('Ia3').style.background='red';
 					  }else{
 					  		document.getElementById('Ia3').style.background='white';
 					  }
-					  if (parseFloat(data[2].ib)>=3954){
+					  if (parseFloat(data[2].ib)>=3.954){
 					  		document.getElementById('Ib3').style.background='red';
 					  }else{
 					  		document.getElementById('Ib3').style.background='white';
 					  }
-					  if (parseFloat(data[2].ic)>=3954){
+					  if (parseFloat(data[2].ic)>=3.954){
 					  		document.getElementById('Ic3').style.background='red';
 					  }else{
 					  		document.getElementById('Ic3').style.background='white';
 					  }
 
 					  //unit 1
-					  document.getElementById('f1').innerHTML = data[0].freq.toFixed(4).toString().bold();
-					  document.getElementById('pw1').innerHTML = data[0].mw.toFixed(4).toString().bold();
-					  document.getElementById('qvar1').innerHTML = data[0].mvar.toFixed(4).toString().bold();
-					  document.getElementById('Va1').innerHTML = data[0].vab.toFixed(4).toString().bold();
-					  document.getElementById('Ia1').innerHTML = data[0].ia.toFixed(4).toString().bold();
+					  document.getElementById('f1').innerHTML = parseFloat(data[0].freq).toFixed(4).toString().bold();
+					  document.getElementById('pw1').innerHTML = parseFloat(data[0].mw).toFixed(4).toString().bold();
+					  document.getElementById('qvar1').innerHTML = parseFloat(data[0].mvar).toFixed(4).toString().bold();
+					  document.getElementById('Va1').innerHTML = parseFloat(data[0].vab).toFixed(4).toString().bold();
+					  document.getElementById('Ia1').innerHTML = parseFloat(data[0].ia).toFixed(4).toString().bold();
 
-					  document.getElementById('Vb1').innerHTML = data[0].vbc.toFixed(4).toString().bold();
-					  document.getElementById('Ib1').innerHTML = data[0].ib.toFixed(4).toString().bold();
-					  document.getElementById('Vc1').innerHTML = data[0].vca.toFixed(4).toString().bold();
-					  document.getElementById('Ic1').innerHTML = data[0].ic.toFixed(4).toString().bold();
+					  document.getElementById('Vb1').innerHTML = parseFloat(data[0].vbc).toFixed(4).toString().bold();
+					  document.getElementById('Ib1').innerHTML = parseFloat(data[0].ib).toFixed(4).toString().bold();
+					  document.getElementById('Vc1').innerHTML = parseFloat(data[0].vca).toFixed(4).toString().bold();
+					  document.getElementById('Ic1').innerHTML = parseFloat(data[0].ic).toFixed(4).toString().bold();
 					  //unit 2
-					  document.getElementById('f2').innerHTML = data[1].freq.toFixed(4).toString().bold();
-					  document.getElementById('pw2').innerHTML = data[1].mw.toFixed(4).toString().bold();
-					  document.getElementById('qvar2').innerHTML = data[1].mvar.toFixed(4).toString().bold();
-					  document.getElementById('Va2').innerHTML = data[1].vab.toFixed(4).toString().bold();
-					  document.getElementById('Ia2').innerHTML = data[1].ia.toFixed(4).toString().bold();
-					  document.getElementById('Vb2').innerHTML = data[1].vbc.toFixed(4).toString().bold();
-					  document.getElementById('Ib2').innerHTML = data[1].ib.toFixed(4).toString().bold();
-					  document.getElementById('Vc2').innerHTML = data[1].vca.toFixed(4).toString().bold();
-					  document.getElementById('Ic2').innerHTML = data[1].ic.toFixed(4).toString().bold();
+					  document.getElementById('f2').innerHTML = parseFloat(data[1].freq).toFixed(4).toString().bold();
+					  document.getElementById('pw2').innerHTML = parseFloat(data[1].mw).toFixed(4).toString().bold();
+					  document.getElementById('qvar2').innerHTML = parseFloat(data[1].mvar).toFixed(4).toString().bold();
+					  document.getElementById('Va2').innerHTML = parseFloat(data[1].vab).toFixed(4).toString().bold();
+					  document.getElementById('Ia2').innerHTML = parseFloat(data[1].ia).toFixed(4).toString().bold();
+					  document.getElementById('Vb2').innerHTML = parseFloat(data[1].vbc).toFixed(4).toString().bold();
+					  document.getElementById('Ib2').innerHTML = parseFloat(data[1].ib).toFixed(4).toString().bold();
+					  document.getElementById('Vc2').innerHTML = parseFloat(data[1].vca).toFixed(4).toString().bold();
+					  document.getElementById('Ic2').innerHTML = parseFloat(data[1].ic).toFixed(4).toString().bold();
 					  //unit 3
-					  document.getElementById('f3').innerHTML = data[2].freq.toFixed(4).toString().bold();
-					  document.getElementById('pw3').innerHTML = data[2].mw.toFixed(4).toString().bold();
-					  document.getElementById('qvar3').innerHTML = data[2].mvar.toFixed(4).toString().bold();
-					  document.getElementById('Va3').innerHTML = data[2].vab.toFixed(4).toString().bold();
-					  document.getElementById('Ia3').innerHTML = data[2].ia.toFixed(4).toString().bold();
-					  document.getElementById('Vb3').innerHTML = data[2].vbc.toFixed(4).toString().bold();
-					  document.getElementById('Ib3').innerHTML = data[2].ib.toFixed(4).toString().bold();
-					  document.getElementById('Vc3').innerHTML = data[2].vca.toFixed(4).toString().bold();
-					  document.getElementById('Ic3').innerHTML = data[2].ic.toFixed(4).toString().bold();
+					  document.getElementById('f3').innerHTML = parseFloat(data[2].freq).toFixed(4).toString().bold();
+					  document.getElementById('pw3').innerHTML = parseFloat(data[2].mw).toFixed(4).toString().bold();
+					  document.getElementById('qvar3').innerHTML = parseFloat(data[2].mvar).toFixed(4).toString().bold();
+					  document.getElementById('Va3').innerHTML = parseFloat(data[2].vab).toFixed(4).toString().bold();
+					  document.getElementById('Ia3').innerHTML = parseFloat(data[2].ia).toFixed(4).toString().bold();
+					  document.getElementById('Vb3').innerHTML = parseFloat(data[2].vbc).toFixed(4).toString().bold();
+					  document.getElementById('Ib3').innerHTML = parseFloat(data[2].ib).toFixed(4).toString().bold();
+					  document.getElementById('Vc3').innerHTML = parseFloat(data[2].vca).toFixed(4).toString().bold();
+					  document.getElementById('Ic3').innerHTML = parseFloat(data[2].ic).toFixed(4).toString().bold();
 
 					  document.getElementById('dattime').innerHTML = d.toString().split('G')[0].bold();
 
-					  var avgpw = (parseFloat(data[0].mw.toString()) + parseFloat(data[1].mw.toString()) + parseFloat(data[2].mw.toString()))/3;
-					  var avgqvar = (parseFloat(data[0].mvar.toString()) + parseFloat(data[1].mvar.toString()) + parseFloat(data[2].mvar.toString()))/3;
+					  var avgpw = (parseFloat(data[0].mw.toString()) + parseFloat(data[1].mw.toString()) + parseFloat(data[2].mw.toString()))/1;
+					  var avgqvar = (parseFloat(data[0].mvar.toString()) + parseFloat(data[1].mvar.toString()) + parseFloat(data[2].mvar.toString()))/1;
 					  var avgpf = (parseFloat(data[0].pfa.toString()) + parseFloat(data[0].pfb.toString()) + parseFloat(data[0].pfc.toString()) + parseFloat(data[1].pfa.toString()) + parseFloat(data[1].pfb.toString()) + parseFloat(data[1].pfc.toString()) +  parseFloat(data[2].pfa.toString()) + parseFloat(data[2].pfb.toString()) + parseFloat(data[2].pfc.toString()))/9;
 					  var avgV = (parseFloat(data[0].vab.toString()) + parseFloat(data[0].vbc.toString()) + parseFloat(data[0].vca.toString()) + parseFloat(data[1].vab.toString()) + parseFloat(data[1].vbc.toString())+ parseFloat(data[1].vca.toString()) + parseFloat(data[2].vab.toString())+ parseFloat(data[2].vbc.toString())+ parseFloat(data[2].vca.toString()))/9;
 					  var avgI = (parseFloat(data[0].ia.toString()) + parseFloat(data[0].ib.toString()) + parseFloat(data[0].ic.toString()) + parseFloat(data[1].ia.toString()) + parseFloat(data[1].ib.toString())+ parseFloat(data[1].ic.toString()) + parseFloat(data[2].ia.toString())+ parseFloat(data[2].ib.toString())+ parseFloat(data[2].ic.toString()))/9;
@@ -468,9 +468,9 @@
 					  var avgV2 = (parseFloat(data[1].vab.toString()) + parseFloat(data[1].vbc.toString()) + parseFloat(data[1].vca.toString()))/3;
 					  var avgV3 = (parseFloat(data[2].vab.toString()) + parseFloat(data[2].vbc.toString()) + parseFloat(data[2].vca.toString()))/3;
 
-					  var avgI1 = (parseFloat(data[0].ia.toString()) + parseFloat(data[0].ib.toString()) + parseFloat(data[0].ic.toString()))/3000;
-					  var avgI2 = (parseFloat(data[1].ia.toString()) + parseFloat(data[1].ib.toString()) + parseFloat(data[1].ic.toString()))/3000;
-					  var avgI3 = (parseFloat(data[2].ia.toString()) + parseFloat(data[2].ib.toString()) + parseFloat(data[2].ic.toString()))/3000;
+					  var avgI1 = (parseFloat(data[0].ia.toString()) + parseFloat(data[0].ib.toString()) + parseFloat(data[0].ic.toString()))/3;
+					  var avgI2 = (parseFloat(data[1].ia.toString()) + parseFloat(data[1].ib.toString()) + parseFloat(data[1].ic.toString()))/3;
+					  var avgI3 = (parseFloat(data[2].ia.toString()) + parseFloat(data[2].ib.toString()) + parseFloat(data[2].ic.toString()))/3;
 
 					  var avgpf1 = (parseFloat(data[0].pfa.toString()) + parseFloat(data[0].pfb.toString()) + parseFloat(data[0].pfc.toString()))/3;
 					  var avgpf2 = (parseFloat(data[1].pfa.toString()) + parseFloat(data[1].pfb.toString()) + parseFloat(data[1].pfc.toString()))/3;
@@ -499,19 +499,19 @@
 					  document.getElementById('avgI2').innerHTML = avgI2.toFixed(4).toString().bold();
 					  document.getElementById('avgI3').innerHTML = avgI3.toFixed(4).toString().bold();
 
-					  document.getElementById('avgpf1').innerHTML = avgpf1.toFixed(2).toString().bold();
-					  document.getElementById('avgpf2').innerHTML = avgpf2.toFixed(2).toString().bold();
-					  document.getElementById('avgpf3').innerHTML = avgpf3.toFixed(2).toString().bold();
+					  document.getElementById('avgpf1').innerHTML = avgpf1.toFixed(4).toString().bold();
+					  document.getElementById('avgpf2').innerHTML = avgpf2.toFixed(4).toString().bold();
+					  document.getElementById('avgpf3').innerHTML = avgpf3.toFixed(4).toString().bold();
 
 					  document.getElementById('avgpw').innerHTML = avgpw.toFixed(4).toString().bold();
 					  document.getElementById('avgqvar').innerHTML = avgqvar.toFixed(4).toString().bold();
-					  document.getElementById('avgpf').innerHTML = avgpf.toFixed(2).toString().bold();
+					  document.getElementById('avgpf').innerHTML = avgpf.toFixed(4).toString().bold();
 					  document.getElementById('avgV').innerHTML = avgV.toFixed(4).toString().bold();
 					  document.getElementById('avgI').innerHTML = avgI.toFixed(4).toString().bold();
 
 					  con_flag = 0;
 					}catch{
-						console.log(data);
+						//<!--console.log(data);-->
 						var start_hh = document.getElementById("start_hh").value;
 						if (start_hh<10){
 							start_hh = '0'+start_hh.toString();
@@ -592,9 +592,9 @@
 						var flag_start = 0;
 						var flag_end = 0;
 
-						console.log(startingtime);
-						console.log(data[0].time.toString());
-
+						//console.log(startingtime);
+						//console.log(data[0].time.toString());
+						//console.log(data);
 						for (let i=0; i<data.length;i++){
 							if (startingtime==data[i].time.toString()){
 								flag_start = 1;
@@ -614,7 +614,7 @@
 							}
 						}
 
-						console.log(newdata);
+						//console.log(newdata);
 						
 						
 						const csvData =  objectTOCsv(newdata);
@@ -680,19 +680,19 @@
 				<div class="row">
 					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Va(kV)</b></p></div>
 					<div id = 'Va1' class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
-					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ia(A)</b></p></div>
+					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ia(kA)</b></p></div>
 					<div id = 'Ia1' class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
 				</div>
 				<div class="row">
 					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Vb(kV)</b></p></div>
 					<div id = 'Vb1' class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
-					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ib(A)</b></p></div>
+					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ib(kA)</b></p></div>
 					<div id = 'Ib1' class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
 				</div>
 				<div class="row">
 					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Vc(kV)</b></p></div>
 					<div id = 'Vc1' class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
-					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ic(A)</b></p></div>
+					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ic(kA)</b></p></div>
 					<div id = 'Ic1' class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
 				</div>
 
@@ -702,7 +702,7 @@
 				</div>
 
 				<div class="row">
-					<div class="col-sm-6" style="background-color:#08296E;color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>I(A)</b></p></div>
+					<div class="col-sm-6" style="background-color:#08296E;color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>I(kA)</b></p></div>
 					<div id="avgI1" class="col-sm-6" style="background-color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
 				</div>
 
@@ -747,19 +747,19 @@
 				<div class="row">
 					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Va(kV)</b></p></div>
 					<div id="Va2" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
-					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ia(A)</b></p></div>
+					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ia(kA)</b></p></div>
 					<div id="Ia2" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
 				</div>
 				<div class="row">
 					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Vb(kV)</b></p></div>
 					<div id="Vb2" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
-					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ib(A)</b></p></div>
+					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ib(kA)</b></p></div>
 					<div id="Ib2" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
 				</div>
 				<div class="row">
 					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Vc(kV)</b></p></div>
 					<div id="Vc2" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
-					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ic(A)</b></p></div>
+					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ic(kA)</b></p></div>
 					<div id="Ic2" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
 				</div>
 
@@ -769,7 +769,7 @@
 				</div>
 
 				<div class="row">
-					<div class="col-sm-6" style="background-color:#08296E;color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>I(A)</b></p></div>
+					<div class="col-sm-6" style="background-color:#08296E;color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>I(kA)</b></p></div>
 					<div id="avgI2" class="col-sm-6" style="background-color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
 				</div>
 
@@ -813,19 +813,19 @@
 				<div class="row">
 					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Va(kV)</b></p></div>
 					<div id="Va3" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
-					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ia(A)</b></p></div>
+					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ia(kA)</b></p></div>
 					<div id="Ia3" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
 				</div>
 				<div class="row">
 					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Vb(kV)</b></p></div>
 					<div id="Vb3" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
-					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ib(A)</b></p></div>
+					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ib(kA)</b></p></div>
 					<div id="Ib3" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
 				</div>
 				<div class="row">
 					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Vc(kV)</b></p></div>
 					<div id="Vc3" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
-					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ic(A)</b></p></div>
+					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ic(kA)</b></p></div>
 					<div id="Ic3" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
 				</div>
 
@@ -835,7 +835,7 @@
 				</div>
 
 				<div class="row">
-					<div class="col-sm-6" style="background-color:#08296E;color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>I(A)</b></p></div>
+					<div class="col-sm-6" style="background-color:#08296E;color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>I(kA)</b></p></div>
 					<div id="avgI3" class="col-sm-6" style="background-color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
 				</div>
 
@@ -858,7 +858,7 @@
 		<div class="col-sm-3">
 		
 				<div class="panel panel-default" padding-left:0px;>
-					<div class="panel-heading" style="font-size:14px"><b>Average Data/RTU WESM/IEMOP Data</b></div>
+					<div class="panel-heading" style="font-size:14px"><b>Overall Data/RTU WESM/IEMOP Data</b></div>
 						<div class="panel-body" style="background-color:#526B9C">
 						<br>
 						<div class="row" style="margin-top:21px;">
@@ -884,7 +884,7 @@
 						</div>
 						
 						<div class="row">
-							<div class="col-sm-6" style="background-color:#08296E;color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b>I(A)</b></p></div>
+							<div class="col-sm-6" style="background-color:#08296E;color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b>I(kA)</b></p></div>
 							<div id="avgI" class="col-sm-6" style="background-color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b></b></p></div>
 						</div>
 						
@@ -961,21 +961,21 @@
 						<br><br>
 
 						<div class="row" style="margin-top:20px">
-									<div class="col-sm-2" style="margin-left:24px;color:white;font-size:18px;" >END TIME:</div>
-									<div class="col-sm-1" style="margin-left:-195px;margin-top:-2px;" >
+									<div class="col-sm-2" style="margin-left:22px;color:white;font-size:18px;" >END TIME:</div>
+									<div class="col-sm-1" style="margin-left:-194px;margin-top:-2px;" >
 
 										<select id="end_hh">
 	    									<option value="" selected="selected">HH</option>
 	  									</select>
 	  								</div>
-	  									<div class="col-sm-1" style="margin-left:-136px;margin-top:-2px;">
+	  									<div class="col-sm-1" style="margin-left:-135px;margin-top:-2px;">
 
 										<select id="end_mm">
 	    									<option value="" selected="selected">MM</option>
 	  									</select>
 	  								</div>
 
-	  								<div class="col-sm-1" style="margin-left:-76px;margin-top:-2px;">
+	  								<div class="col-sm-1" style="margin-left:-75px;margin-top:-2px;">
 
 										<select id="end_ss">
 	    									<option value="" selected="selected">SS</option>

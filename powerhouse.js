@@ -1,8 +1,28 @@
-//WEBSOCKET
+#!/usr/bin/env node
 var WebSocketServer = require('websocket').server;
-var http = require('http');
+var http = require('https');
+const fs = require('fs');
+const path = require('path')
+const express = require('express');
+const serve   = require('express-static');
 var clients = [];
 var clientsIP = [];
+
+
+const options = {
+  key: fs.readFileSync('key.pem'),
+  cert: fs.readFileSync('cert.pem')
+};
+
+var app = express();
+
+app.use(serve(__dirname + '/'));
+
+ var server = http.createServer(options, app);
+ server.listen(8000, function() {
+    console.log((new Date()) + ' Server is listening on port 8000');
+});
+
 var d = new Date();
 var wsdata = [
     {
@@ -152,41 +172,41 @@ const getMeterValue = async (clientn) => {
 
         //READ FREQ
         val =  await client[clientn].readInputRegisters(900, 1);
-        F[clientn] = ((val.data|0)/100).toString();
+        F[clientn] = ((val.data|0)/100).toFixed(4).toString();
         await sleep(100);
 
         //READ PF
         val =  await client[clientn].readInputRegisters(912, 3);
-        PFA[clientn] = ((val.data[0]|0)/100).toFixed(2).toString();
-        PFB[clientn] = ((val.data[1]|0)/100).toFixed(2).toString();
-        PFC[clientn] = ((val.data[2]|0)/100).toFixed(2).toString();
-        PFave[clientn] = (((val.data[0]|0)/100+(val.data[1]|0)/100+(val.data[2]|0)/100)/3).toFixed(2).toString();
+        PFA[clientn] = ((val.data[0]|0)/100).toFixed(4).toString();
+        PFB[clientn] = ((val.data[1]|0)/100).toFixed(4).toString();
+        PFC[clientn] = ((val.data[2]|0)/100).toFixed(4).toString();
+        PFave[clientn] = (((val.data[0]|0)/100+(val.data[1]|0)/100+(val.data[2]|0)/100)/3).toFixed(4).toString();
         await sleep(100);
         
         //READ I
         val =  await client[clientn].readInputRegisters(4000, 6);
-        IA[clientn] = ((((val.data[0]<<16)|(val.data[1]))|0)/100).toFixed(2).toString();
-        IB[clientn] = ((((val.data[2]<<16)|(val.data[3]))|0)/100).toFixed(2).toString();
-        IC[clientn] = ((((val.data[4]<<16)|(val.data[5]))|0)/100).toFixed(2).toString();
-        Iave[clientn] = (((((val.data[0]<<16)|(val.data[1]))|0)/100+(((val.data[2]<<16)|(val.data[3]))|0)/100+(((val.data[4]<<16)|(val.data[5]))|0)/100)/3).toFixed(2).toString();
+        IA[clientn] = ((((val.data[0]<<16)|(val.data[1]))|0)/100000).toFixed(4).toString();
+        IB[clientn] = ((((val.data[2]<<16)|(val.data[3]))|0)/100000).toFixed(4).toString();
+        IC[clientn] = ((((val.data[4]<<16)|(val.data[5]))|0)/100000).toFixed(4).toString();
+        Iave[clientn] = (((((val.data[0]<<16)|(val.data[1]))|0)/100000+(((val.data[2]<<16)|(val.data[3]))|0)/100000+(((val.data[4]<<16)|(val.data[5]))|0)/100000)/3).toFixed(4).toString();
         await sleep(100);
 
         //READ V
         val =  await client[clientn].readInputRegisters(4014, 6);
-        VAB[clientn] = ((((val.data[0]<<16)|(val.data[1]))|0)/100).toFixed(2).toString();
-        VBC[clientn] = ((((val.data[2]<<16)|(val.data[3]))|0)/100).toFixed(2).toString();
-        VCA[clientn] = ((((val.data[4]<<16)|(val.data[5]))|0)/100).toFixed(2).toString();
-        Vave[clientn] = (((((val.data[0]<<16)|(val.data[1]))|0)/100+(((val.data[2]<<16)|(val.data[3]))|0)/100+(((val.data[4]<<16)|(val.data[5]))|0)/100)/3).toFixed(2).toString();
+        VAB[clientn] = ((((val.data[0]<<16)|(val.data[1]))|0)/100).toFixed(4).toString();
+        VBC[clientn] = ((((val.data[2]<<16)|(val.data[3]))|0)/100).toFixed(4).toString();
+        VCA[clientn] = ((((val.data[4]<<16)|(val.data[5]))|0)/100).toFixed(4).toString();
+        Vave[clientn] = (((((val.data[0]<<16)|(val.data[1]))|0)/100+(((val.data[2]<<16)|(val.data[3]))|0)/100+(((val.data[4]<<16)|(val.data[5]))|0)/100)/3).toFixed(4).toString();
         await sleep(100);
 
         //READ PSQ
         val =  await client[clientn].readInputRegisters(4040, 6);
-        P[clientn] = ((((val.data[0]<<16)|(val.data[1]))|0)/100000).toFixed(2).toString();
-        S[clientn] = ((((val.data[2]<<16)|(val.data[3]))|0)/100000).toFixed(2).toString();
-        Q[clientn] = ((((val.data[4]<<16)|(val.data[5]))|0)/100000).toFixed(2).toString();
+        P[clientn] = ((((val.data[0]<<16)|(val.data[1]))|0)/100000).toFixed(4).toString();
+        S[clientn] = ((((val.data[2]<<16)|(val.data[3]))|0)/100000).toFixed(4).toString();
+        Q[clientn] = ((((val.data[4]<<16)|(val.data[5]))|0)/100000).toFixed(4).toString();
         if(datacomplete[0] && datacomplete[1] && datacomplete[2]){
-            Ptotal = (parseFloat(P[0])+parseFloat(P[1])+parseFloat(P[2])).toFixed(2).toString();
-            Qtotal = (parseFloat(Q[0])+parseFloat(Q[1])+parseFloat(Q[2])).toFixed(2).toString();
+            Ptotal = (parseFloat(P[0])+parseFloat(P[1])+parseFloat(P[2])).toFixed(4).toString();
+            Qtotal = (parseFloat(Q[0])+parseFloat(Q[1])+parseFloat(Q[2])).toFixed(4).toString();
         }
         await sleep(100);
         datacomplete[clientn] = 1;
@@ -311,14 +331,6 @@ function savetoDatabase(){
 //------end-------- FOR DATASTORAGE
 
 //------start-------- FOR WEBSOCKET
-var server = http.createServer(function(request, response) {
-    console.log((new Date()) + ' Received request for ' + request.url);
-    response.writeHead(404);
-    response.end();
-});
-server.listen(8080, function() {
-    console.log((new Date()) + ' Server is listening on port 8080');
-});
 
 wsServer = new WebSocketServer({
     httpServer: server,
@@ -342,29 +354,48 @@ wsServer.on('request', function(request) {
       console.log((new Date()) + ' Connection from origin ' + request.origin + ' rejected.');
       return;
     }
-    var connection = request.accept(request.origin);
+    var connection = request.accept('echo-protocol',request.origin);
     clients.push(connection);
     clientsIP.push(connection.remoteAddress);
-    console.log(clientsIP);
-    console.log((new Date()) + ' Connection accepted.');
+    //console.log(clientsIP);
+    //console.log((new Date()) + ' Connection accepted.');
     connection.on('message', function(message) {
         if (message.type === 'utf8') {
-            console.log('Received Message: ' + message.utf8Data);
+            //console.log('Received Message: ' + message.utf8Data);
             connection.sendUTF(message.utf8Data);
-        }
+	    var data = JSON.parse(message.utf8Data);
+	    const sql = 'SELECT * from pulangi WHERE date BETWEEN\''+ data[0].startdate+ '\'' + ' AND \''+data[0].enddate+ '\''+' ORDER by date ASC';
+       	try {
+                  pool.query({sql},(err, result, fields) => {
+                  if (err instanceof Error) {
+                    console.log(err);
+                    return;
+                  }
+                  //console.log(result); // results contains rows returned by server
+                  connection.send(JSON.stringify(result));
+                  });
+            }catch (err) {
+                  console.log(err);
+            }
+	 }
         else if (message.type === 'binary') {
-            console.log('Received Binary Message of ' + message.binaryData.length + ' bytes');
+            //console.log('Received Binary Message of ' + message.binaryData.length + ' bytes');
             connection.sendBytes(message.binaryData);
         }
     });
     connection.on('close', function(reasonCode, description) {
-        console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
+        //console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
+	const index = clientsIP.indexOf(connection.remoteAddress);
+        if (index > -1) { // only splice array when item is found
+            clients.splice(index, 1); // 2nd parameter means remove one item only
+            clientsIP.splice(index, 1); // 2nd parameter means remove one item only
+        }
     });
 
     setInterval(function(){
         try{
-            for(let i = 0;i < wsdata.length;i++){
-                clients[i].sendUTF(JSON.stringify(wsdata[i]));
+            for(let i = 0;i < clients.length;i++){
+                clients[i].sendUTF(JSON.stringify(wsdata));
                 //console.log(JSON.stringify(wsdata[i])); 
             }
         }catch(e){
