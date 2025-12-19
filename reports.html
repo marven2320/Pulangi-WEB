@@ -16,9 +16,16 @@
 
 	<script src="/bootstrap/loader.js"></script>
 	
+	
 
 
 	<script>
+	
+	
+	
+	
+	
+	
 	var timeRange = {
 	  "start_time": {
 	    "hour": [],
@@ -177,465 +184,95 @@
     	background-repeat: no-repeat;	
     	background-size: contain;
 	}
+	input[type=radio] {
+    border: 0px;
+    width: 10%;
+    height: 1.5em;
+	}
+}
 
 
 	</style>
 		
 		<script>
-		var today;
-    	today = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
-		$( function() {
-	    $( "#datepicker1" ).datepicker({minDate	: new Date(2025, 1 -1, 1),maxDate: today});
-	    });
-		$( function() {
-	    $( "#datepicker2" ).datepicker({minDate: new Date(2025, 1 -1, 1),maxDate: today});
-	    });
-	    var userdata =  [{startdate:'',enddate:''}];
-
-	    function reformatDateString(s) {
- 			var b = s.split('/');	
- 			const dateformat = b[2]+'-'+b[0]+'-'+b[1];
- 			return dateformat;
-		}
-
-	    $(document).ready(function() {
-		    $("#xportdata").click(function(){
-		        var datepick1 = document.getElementById("datepicker1").value;
-		        var datepick2 = document.getElementById("datepicker2").value;
-		        var start_hh = document.getElementById("start_hh").value;
-		        var end_hh = document.getElementById("end_hh").value;
-		        var start_mm = document.getElementById("start_mm").value;
-		        var end_mm = document.getElementById("end_mm").value;
-		        var start_ss = document.getElementById("start_ss").value;
-		        var end_ss = document.getElementById("end_ss").value;
-		        //<!-- console.log(start_hh); -->
-		        if ((!datepick1)||(!datepick2)||(!start_hh)||(!end_hh)||(!start_mm)||(!end_mm)||(!start_ss)||(!end_ss)){
-		        	//check for empty or incorrect input
-		        	alert("Invalid START or END Date/Time for reports!");
-		        }else{
-		        	
-		        	if (parseInt(end_hh)<parseInt(start_hh)){
-		        		alert("Invalid START and END Time for reports!");
-
-		        	}else{
-				       userdata =  [{startdate:reformatDateString(datepick1),enddate:reformatDateString(datepick2)}];
-				       document.getElementById('loadingscrn').style.display = 'block';
-				       webSocket.send(JSON.stringify(userdata));
-				        //<!--console.log(JSON.stringify(userdata));-->
-   						
-   						//window.open('/viewdata.html', '_blank');
-				       
-				   }
-
-					    
-		        }
- 
-		    });
-
-		    $("#statusbtn").click(function(){
-		        
-		       alert("System is Connected!");
-		        
-		    });
-		});
-
-		</script>
-
-
-
-		<script>
 
 		var meter_data = {p1:0,p2:0,p3:0};
 		var con_flag = 0;
-		var webSocket = new WebSocket('https://localhost:8000/','echo-protocol');
+		var webSocket = new WebSocket('https://5.0.0.121:8000/','echo-protocol');
 		
-
 		
-
-		const download = function(data){
-
-
-
-			const blob = new Blob([data],{type:'text/csv'});
-			
-			const url = window.URL.createObjectURL(blob);
-			const a = document.createElement('a');
-			a.setAttribute('hidden','');
-			a.setAttribute('href',url);
-			a.setAttribute('download','report.csv');
-			document.body.appendChild(a);
-			a.click();
-			document.body.removeChild(a);
-
-		};
-
-		const objectTOCsv = function(data){
-			const csvRows = [];
-
-			
-			const headers = Object.keys(data[0]);
-			csvRows.push(headers.join(','));
-			
-			for (const row of data){
-				const values = headers.map(header =>{
-					const escaped = (''+row[header]).replace(/"/g,'\\"');
-					return `"${escaped}"`;
-				});
-				csvRows.push(values.join(','));
-			}
-
-			return csvRows.join('\n');
-		};
-
-		$(document).ready(function(){
-		
-		  google.charts.load('current', {'packages':['gauge']});
-		  google.charts.setOnLoadCallback(drawChart);
-
-		  function drawChart() {
-
-			var data1 = google.visualization.arrayToDataTable([
-			  ['Label', 'Value'],
-			  ['Unit 1', 80]
-			 
-			]);
-			var data2 = google.visualization.arrayToDataTable([
-			  ['Label', 'Value'],
-			  ['Unit 2', 80]
-			 
-			]);
-			var data3 = google.visualization.arrayToDataTable([
-			  ['Label', 'Value'],
-			  ['Unit 3', 80]
-			 
-			]);
-
-			var options = {
-			  width: 200, height: 200,
-			  redFrom: 90, redTo: 100,
-			  yellowFrom:75, yellowTo: 90,
-			  minorTicks: 5
-			};
-
-			var chart = new google.visualization.Gauge(document.getElementById('chart_div'));
-			var chart2 = new google.visualization.Gauge(document.getElementById('chart_div2'));
-			var chart3 = new google.visualization.Gauge(document.getElementById('chart_div3'));
-
-			chart.draw(data1, options);
-			chart2.draw(data2, options);
-			chart3.draw(data3, options);
-
-			setInterval(function() {
-			  data1.setValue(0, 1,meter_data.p1);
-			  data2.setValue(0, 1,meter_data.p2);
-			  data3.setValue(0, 1,meter_data.p3);
-
-			  chart.draw(data1, options);
-			  chart2.draw(data2, options);
-			  chart3.draw(data3, options);
-			}, 1000);
-			
-		  }
-		
-		});
 			webSocket.onclose =  (event) => {
 				document.getElementById('statusbtn').style.background='red';
 				document.getElementById('statusbtn').innerHTML = 'DISCONNECTED';
 			};
 
 			webSocket.onmessage = (event) => {
-				  var data = JSON.parse(event.data);
-
-				  document.getElementById('statusbtn').style.background='LimeGreen';
-				  document.getElementById('statusbtn').innerHTML = 'Connected';
 				  
-				  	  try{
-					  /*
-					  chart.draw(Math.floor(data[0].mw), options);
-				  	  chart2.draw(Math.floor(data[0].mw), options);
-				      chart3.draw(Math.floor(data[0].mw), options);
-					  */
-					  meter_data.p1 = parseFloat(data[0].mw).toFixed(4);
-					  meter_data.p2 = parseFloat(data[1].mw).toFixed(4);
-					  meter_data.p3 = parseFloat(data[2].mw).toFixed(4);
-					  var d = new Date();
-
-					  if (parseFloat(data[0].vab)<=0){
-					  		document.getElementById('status_unit1').style.display = 'block';
-					  }else{
-					  		document.getElementById('status_unit1').style.display = 'none';
-					  }
-					  if (parseFloat(data[1].vab)<=0){
-					  		document.getElementById('status_unit2').style.display = 'block';
-					  }else{
-					  		document.getElementById('status_unit2').style.display = 'none';
-					  }
-					  if (parseFloat(data[2].vab)<=0){
-					  		document.getElementById('status_unit3').style.display = 'block';
-					  }else{
-					  		document.getElementById('status_unit3').style.display = 'none';
-					  }
-
-					  if (parseFloat(data[0].ia)>=3.954){
-					  		document.getElementById('Ia1').style.background='red';
-					  }else{
-					  		document.getElementById('Ia1').style.background='white';
-					  }
-					  if (parseFloat(data[0].ib)>=3.954){
-					  		document.getElementById('Ib1').style.background='red';
-					  }else{
-					  		document.getElementById('Ib1').style.background='white';
-					  }
-					  if (parseFloat(data[0].ic)>=3.954){
-					  		document.getElementById('Ic1').style.background='red';
-					  }else{
-					  		document.getElementById('Ic1').style.background='white';
-					  }
-
-					  if (parseFloat(data[1].ia)>=3.954){
-					  		document.getElementById('Ia2').style.background='red';
-					  }else{
-					  		document.getElementById('Ia2').style.background='white';
-					  }
-					  if (parseFloat(data[1].ib)>=3.954){
-					  		document.getElementById('Ib2').style.background='red';
-					  }else{
-					  		document.getElementById('Ib2').style.background='white';
-					  }
-					  if (parseFloat(data[1].ic)>=3.954){
-					  		document.getElementById('Ic2').style.background='red';
-					  }else{
-					  		document.getElementById('Ic2').style.background='white';
-					  }
-
-					  if (parseFloat(data[2].ia)>=3.954){
-					  		document.getElementById('Ia3').style.background='red';
-					  }else{
-					  		document.getElementById('Ia3').style.background='white';
-					  }
-					  if (parseFloat(data[2].ib)>=3.954){
-					  		document.getElementById('Ib3').style.background='red';
-					  }else{
-					  		document.getElementById('Ib3').style.background='white';
-					  }
-					  if (parseFloat(data[2].ic)>=3.954){
-					  		document.getElementById('Ic3').style.background='red';
-					  }else{
-					  		document.getElementById('Ic3').style.background='white';
-					  }
-
-					  //unit 1
-					  document.getElementById('f1').innerHTML = parseFloat(data[0].freq).toFixed(4).toString().bold();
-					  document.getElementById('pw1').innerHTML = parseFloat(data[0].mw).toFixed(4).toString().bold();
-					  document.getElementById('qvar1').innerHTML = parseFloat(data[0].mvar).toFixed(4).toString().bold();
-					  document.getElementById('Va1').innerHTML = parseFloat(data[0].vab).toFixed(4).toString().bold();
-					  document.getElementById('Ia1').innerHTML = parseFloat(data[0].ia).toFixed(4).toString().bold();
-
-					  document.getElementById('Vb1').innerHTML = parseFloat(data[0].vbc).toFixed(4).toString().bold();
-					  document.getElementById('Ib1').innerHTML = parseFloat(data[0].ib).toFixed(4).toString().bold();
-					  document.getElementById('Vc1').innerHTML = parseFloat(data[0].vca).toFixed(4).toString().bold();
-					  document.getElementById('Ic1').innerHTML = parseFloat(data[0].ic).toFixed(4).toString().bold();
-					  //unit 2
-					  document.getElementById('f2').innerHTML = parseFloat(data[1].freq).toFixed(4).toString().bold();
-					  document.getElementById('pw2').innerHTML = parseFloat(data[1].mw).toFixed(4).toString().bold();
-					  document.getElementById('qvar2').innerHTML = parseFloat(data[1].mvar).toFixed(4).toString().bold();
-					  document.getElementById('Va2').innerHTML = parseFloat(data[1].vab).toFixed(4).toString().bold();
-					  document.getElementById('Ia2').innerHTML = parseFloat(data[1].ia).toFixed(4).toString().bold();
-					  document.getElementById('Vb2').innerHTML = parseFloat(data[1].vbc).toFixed(4).toString().bold();
-					  document.getElementById('Ib2').innerHTML = parseFloat(data[1].ib).toFixed(4).toString().bold();
-					  document.getElementById('Vc2').innerHTML = parseFloat(data[1].vca).toFixed(4).toString().bold();
-					  document.getElementById('Ic2').innerHTML = parseFloat(data[1].ic).toFixed(4).toString().bold();
-					  //unit 3
-					  document.getElementById('f3').innerHTML = parseFloat(data[2].freq).toFixed(4).toString().bold();
-					  document.getElementById('pw3').innerHTML = parseFloat(data[2].mw).toFixed(4).toString().bold();
-					  document.getElementById('qvar3').innerHTML = parseFloat(data[2].mvar).toFixed(4).toString().bold();
-					  document.getElementById('Va3').innerHTML = parseFloat(data[2].vab).toFixed(4).toString().bold();
-					  document.getElementById('Ia3').innerHTML = parseFloat(data[2].ia).toFixed(4).toString().bold();
-					  document.getElementById('Vb3').innerHTML = parseFloat(data[2].vbc).toFixed(4).toString().bold();
-					  document.getElementById('Ib3').innerHTML = parseFloat(data[2].ib).toFixed(4).toString().bold();
-					  document.getElementById('Vc3').innerHTML = parseFloat(data[2].vca).toFixed(4).toString().bold();
-					  document.getElementById('Ic3').innerHTML = parseFloat(data[2].ic).toFixed(4).toString().bold();
-
-					  document.getElementById('dattime').innerHTML = d.toString().split('G')[0].bold();
-
-					  var avgpw = (parseFloat(data[0].mw.toString()) + parseFloat(data[1].mw.toString()) + parseFloat(data[2].mw.toString()))/1;
-					  var avgqvar = (parseFloat(data[0].mvar.toString()) + parseFloat(data[1].mvar.toString()) + parseFloat(data[2].mvar.toString()))/1;
-					  var avgpf = (parseFloat(data[0].pfa.toString()) + parseFloat(data[0].pfb.toString()) + parseFloat(data[0].pfc.toString()) + parseFloat(data[1].pfa.toString()) + parseFloat(data[1].pfb.toString()) + parseFloat(data[1].pfc.toString()) +  parseFloat(data[2].pfa.toString()) + parseFloat(data[2].pfb.toString()) + parseFloat(data[2].pfc.toString()))/9;
-					  var avgV = (parseFloat(data[0].vab.toString()) + parseFloat(data[0].vbc.toString()) + parseFloat(data[0].vca.toString()) + parseFloat(data[1].vab.toString()) + parseFloat(data[1].vbc.toString())+ parseFloat(data[1].vca.toString()) + parseFloat(data[2].vab.toString())+ parseFloat(data[2].vbc.toString())+ parseFloat(data[2].vca.toString()))/9;
-					  var avgI = (parseFloat(data[0].ia.toString()) + parseFloat(data[0].ib.toString()) + parseFloat(data[0].ic.toString()) + parseFloat(data[1].ia.toString()) + parseFloat(data[1].ib.toString())+ parseFloat(data[1].ic.toString()) + parseFloat(data[2].ia.toString())+ parseFloat(data[2].ib.toString())+ parseFloat(data[2].ic.toString()))/9;
-
-					  var avgV1 = (parseFloat(data[0].vab.toString()) + parseFloat(data[0].vbc.toString()) + parseFloat(data[0].vca.toString()))/3;
-					  var avgV2 = (parseFloat(data[1].vab.toString()) + parseFloat(data[1].vbc.toString()) + parseFloat(data[1].vca.toString()))/3;
-					  var avgV3 = (parseFloat(data[2].vab.toString()) + parseFloat(data[2].vbc.toString()) + parseFloat(data[2].vca.toString()))/3;
-
-					  var avgI1 = (parseFloat(data[0].ia.toString()) + parseFloat(data[0].ib.toString()) + parseFloat(data[0].ic.toString()))/3;
-					  var avgI2 = (parseFloat(data[1].ia.toString()) + parseFloat(data[1].ib.toString()) + parseFloat(data[1].ic.toString()))/3;
-					  var avgI3 = (parseFloat(data[2].ia.toString()) + parseFloat(data[2].ib.toString()) + parseFloat(data[2].ic.toString()))/3;
-
-					  var avgpf1 = (parseFloat(data[0].pfa.toString()) + parseFloat(data[0].pfb.toString()) + parseFloat(data[0].pfc.toString()))/3;
-					  var avgpf2 = (parseFloat(data[1].pfa.toString()) + parseFloat(data[1].pfb.toString()) + parseFloat(data[1].pfc.toString()))/3;
-					  var avgpf3 = (parseFloat(data[2].pfa.toString()) + parseFloat(data[2].pfb.toString()) + parseFloat(data[2].pfc.toString()))/3;
-
-					  document.getElementById('avgV1').innerHTML = avgV1.toFixed(4).toString().bold();
-					  document.getElementById('avgV2').innerHTML = avgV2.toFixed(4).toString().bold();
-					  document.getElementById('avgV3').innerHTML = avgV3.toFixed(4).toString().bold();
-
-					  if (avgI1>=3954){
-					  		document.getElementById('avgI1').style.background='red';
-					  }else{
-					  		document.getElementById('avgI1').style.background='white';
-					  }
-					  if (avgI2>=3954){
-					  		document.getElementById('avgI2').style.background='red';
-					  }else{
-					  		document.getElementById('avgI2').style.background='white';
-					  }
-					  if (avgI3>=3954){
-					  		document.getElementById('avgI3').style.background='red';
-					  }else{
-					  		document.getElementById('avgI3').style.background='white';
-					  }
-					  document.getElementById('avgI1').innerHTML = avgI1.toFixed(4).toString().bold();
-					  document.getElementById('avgI2').innerHTML = avgI2.toFixed(4).toString().bold();
-					  document.getElementById('avgI3').innerHTML = avgI3.toFixed(4).toString().bold();
-
-					  document.getElementById('avgpf1').innerHTML = avgpf1.toFixed(4).toString().bold();
-					  document.getElementById('avgpf2').innerHTML = avgpf2.toFixed(4).toString().bold();
-					  document.getElementById('avgpf3').innerHTML = avgpf3.toFixed(4).toString().bold();
-
-					  document.getElementById('avgpw').innerHTML = avgpw.toFixed(4).toString().bold();
-					  document.getElementById('avgqvar').innerHTML = avgqvar.toFixed(4).toString().bold();
-					  document.getElementById('avgpf').innerHTML = avgpf.toFixed(4).toString().bold();
-					  document.getElementById('avgV').innerHTML = avgV.toFixed(4).toString().bold();
-					  document.getElementById('avgI').innerHTML = avgI.toFixed(4).toString().bold();
-
-					  con_flag = 0;
-					}catch{
-						//<!--console.log(data);-->
-						var start_hh = document.getElementById("start_hh").value;
-						if (start_hh<10){
-							start_hh = '0'+start_hh.toString();
-						}
-						var end_hh = document.getElementById("end_hh").value;
-						if (end_hh<10){
-							end_hh = '0'+end_hh.toString();
-						}			
-						var start_mm = document.getElementById("start_mm").value;
-						if (start_mm<10){
-							start_mm = '0'+start_mm.toString();
-						}
-						var end_mm = document.getElementById("end_mm").value;
-						if (end_mm<10){
-							end_mm = '0'+end_mm.toString();
-						}
-						var start_ss = document.getElementById("start_ss").value;
-						if (start_ss<10){
-							start_ss = '0'+start_ss.toString();
-						}
-						var end_ss = document.getElementById("end_ss").value;
-						if (end_ss<10){
-							end_ss = '0'+end_ss.toString();
-						}
-
-						const startingtime = start_hh.toString()+':'+start_mm.toString()+':'+start_ss.toString();
-						const endingtime = end_hh.toString()+':'+end_mm.toString()+':'+end_ss.toString();
-						
-
-						
-						var newdata=[{
-							ID:0,
-							date:0,
-							energy1: 0,
-							energy2: 0,
-							energy3: 0,
-							freq1: 0,
-							freq2: 0,
-							freq3: 0,
-							ia1: 0,
-							ia2: 0,
-							ia3: 0,
-							ib1: 0,
-							ib2: 0,
-							ib3: 0,
-							ic1: 0,
-							ic2: 0,
-							ic3: 0,
-							mvar: 0,
-							mvar1: 0,
-							mvar2: 0,
-							mvar3: 0,
-							mw: 0,
-							mw1: 0,
-							mw2: 0,
-							mw3: 0,
-							pfa1: 0,
-							pfa2: 0,
-							pfa3: 0,
-							pfb1: 0,
-							pfb2: 0,
-							pfb3: 0,
-							pfc1: 0,
-							pfc2: 0,
-							pfc3: 0,
-							time: 0,
-							vab1: 0,
-							vab2: 0,
-							vab3: 0,
-							vbc1: 0,
-							vbc2: 0,
-							vbc3: 0,
-							vca1: 0,
-							vca2: 0,
-							vca3: 0
-						}];
-						var r = 0;
-						var flag_start = 0;
-						var flag_end = 0;
-
-						//console.log(startingtime);
-						//console.log(data[0].time.toString());
-						//console.log(data);
-						for (let i=0; i<data.length;i++){
-							if (startingtime==data[i].time.toString()){
-								flag_start = 1;
-								
-							}
-							if (endingtime==data[i].time.toString()){
-								flag_end = 1;
-							}
-
-							if (flag_start==1 && flag_end==0){
-								newdata[r] = Object.assign({},data[i]);
-								r++;
-							}
-							if (flag_start==1 && flag_end==1){
-								newdata[r] = Object.assign({},data[i]);
-								break;
-							}
-						}
-
-						//console.log(newdata);
-						
-						
-						const csvData =  objectTOCsv(newdata);
-						
-						download(csvData);
-						setTimeout(displayloading,1000);
-						alert('Report File Downloaded!\nPlease view your download folder...');
-
-						window.open('/viewdata.html', '_blank');
-						
-						
 
 					}
 
 				};
-			function displayloading(){
-				document.getElementById('loadingscrn').style.display = 'none';
-			}
+		
+			
+			
+		</script>
+		
+		
+		<script>
+		$(document).ready(function() {
+		    $("#exampleRadios1").click(function(){
+				document.getElementById('dateinputdiv').style.display = 'block';
+		    });
+			$("#exampleRadios2").click(function(){
+				document.getElementById('dateinputdiv').style.display = 'none';
+		    });
+			$("#exampleRadios3").click(function(){
+				document.getElementById('dateinputdiv').style.display = 'none';
+		    });
+			$("#exampleRadios4").click(function(){
+				document.getElementById('dateinputdiv').style.display = 'none';
+		    });
+		});
 				
 		</script>
-			
+		
+		<script>
+		$(document).ready(function() {
+			$("#opendata").click(function(){
+				
+				var val = document.querySelector('input[name="exampleRadios"]:checked').value;
+				var dateselected = document.getElementById('dateInput').value;
+				//console.log(dateselected);
+				var strpath = "/reports/Pulangi IV HEP - Daily Operations Report_"+dateselected+".xlsx";
+				
+				switch (val){
+					case 'option1':
+					//Insert Code here to Open File // should open "/reports/Pulangi IV HEP - Daily Operations Report_+.xlsx"
+					alert("Daily Operations Report Created!");
+					break;
+					case 'option2':
+					//Insert Code here to Open File  // should open "/reports/Pulangi IV HEP - Operational Highlights_2025.xlsx"
+					alert("Operational Report Created!");
+					break;
+					case 'option3':
+					//Insert Code here to Open File // should open "/reports/Pulangi IV HEP - Generation Data - RAW.xlsx"
+					alert("Generation Data Created!");
+					break;
+					
+					case 'option4':
+					//Insert Code here to Open File // should open "/reports/Pulangi IV HEP - Outage Report.xlsx"
+					alert("Outage Report Created!");
+					break;
+					
+					default:
+					//do nothing!
+				}
+		    });
+		
+		
+		});
+		
+		</script>
 	
 	
 </head>
@@ -649,42 +286,75 @@
 					<div class="panel-heading">
 					
 					<ul class="nav nav-pills">
-						<li><a href="https://localhost:8000/pulangi.html">Real-Time Data</a></li>
-						<li class="active"><a href="https://localhost:8000/reports.html">Reports</a></li>
-						<li><a href="https://localhost:8000/datapoints.html">Data Points</a></li>
-						<li ><a href="https://localhost:8000/pulangi.html"><strike>Connection Status</strike></a></li>
+						<li><a href="https://5.0.0.121:8000/pulangi.html">Real-Time Data</a></li>
+						<li class="active"><a href="https://5.0.0.121:8000/reports.html">Reports</a></li>
+						<li><a href="https://5.0.0.121:8000/datapoints.html">Data Points</a></li>
+						<li ><a href="https://5.0.0.121:8000/pulangi.html"><strike>Connection Status</strike></a></li>
 					</ul>
 					</div>
-					<div class="row">
-							<div style="align:center;background-color:#526B9C;padding-bottom:0px;width:100%">
-							   
-							 <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-								<div style="align:center;">
-									<button id="opendata" type="button" class="btn btn-primary" style="margin-left:42%;margin-top:45px;margin-bottom:10px;width:200px;padding:10px;background-color:white;color:black;font-size:25px;">Open Report</button>
-								</div>
+					
+					<div class="container-fluid">
+							<div style="align:center;background-color:#526B9C;padding-bottom:0px;width:100%;height:600px">
+							  <br><br>
+							  
+							    <div style="height:550px;width:50%; background-color: white; align:center; margin-left:30%;padding: 15px; margin-top:-1%;">
+									
+
+									<div class="form-check" style="margin-top:30px">
+										  <input class="form-check-input"  type="radio" name="exampleRadios" id="exampleRadios1" value="option1" checked>								  
+										  <label class="form-check-label" for="exampleRadios1" style="font-size:25px;">
+											Daily Operations Report
+										  </label>
+  									</div>
+															   
+										   
+										<div class="form-check">
+										  <input class="form-check-input" type="radio" name="exampleRadios" id="exampleRadios2" value="option2">
+										  <label class="form-check-label" for="exampleRadios2" style="font-size:25px;">
+											Operational Report
+										  </label>
+										</div>
+										<div class="form-check disabled">
+										  <input class="form-check-input" type="radio" name="exampleRadios" id="exampleRadios3" value="option3">
+										  <label class="form-check-label" for="exampleRadios3" style="font-size:25px;">
+											Generation Data
+										  </label>
+										</div>
+										<div class="form-check disabled">
+										  <input class="form-check-input" type="radio" name="exampleRadios" id="exampleRadios4" value="option4">
+										  <label class="form-check-label" for="exampleRadios3" style="font-size:25px;">
+											Outage Report
+										  </label>
+										  
+										  <div style="align:center;">
+												<button id="opendata" type="button" class="btn btn-primary" style="margin-left:2%;margin-top:30%;margin-bottom:10px;width:200px;padding:10px;background-color:white;color:black;font-size:25px;">Open Report</button>
+										  </div>
+										  
+										   </div>
+										    <div id="dateinputdiv" class="container mt-5" style="margin-top:-63%;margin-left:48%;">
+												<div class="row justify-content-center">
+													<div class="col-md-4">
+														<div class="card shadow-sm">
+															<div class="card-body">
+																<label for="dateInput" class="form-label fw-bold">Select Date</label>
+																<input type="date" class="form-control" id="dateInput" name="date">
+															</div>
+														</div>
+													</div>
+												</div>
+											</div>
+							
 							</div>
 
-					</div>	
+					
+					</div>
 
     
 
     </div>
   
-  
 
-	<div id="loadingscrn" class="Center" style="display:none">
-		<div class="loader"></div>
-	</div>
 
-	<div id="status_unit1" class="unitstatus1" style="display:none">
-		<img src="/offline_stat.png">
-	</div>
-	<div id="status_unit2" class="unitstatus2" style="display:none">
-		<img src="/offline_stat.png">
-	</div>
-	<div id="status_unit3" class="unitstatus3" style="display:none">
-		<img src="/offline_stat.png">
-	</div>
 	
 </div>
 

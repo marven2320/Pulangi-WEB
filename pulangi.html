@@ -15,64 +15,7 @@
 	<script src="/bootstrap/jquery-ui.js"></script>
 
 	<script src="/bootstrap/loader.js"></script>
-	
-
-
-	<script>
-	var timeRange = {
-	  "start_time": {
-	    "hour": [],
-	    "minute": [],
-	    "seconds": []    
-	  },
-	  "end_time": {
-	    "hour": [],
-	    "minute": [],
-	    "seconds": [] 
-	  }
-	};
-
-	for (let i = 0; i < 24; i++) {
-  		timeRange.start_time.hour[i] = (i+1).toString();
-  		timeRange.end_time.hour[i] = (i+1).toString();
-	}
-	for (let i = 0; i < 60; i++) {
-  		timeRange.start_time.minute[i] = (i+1).toString();
-  		timeRange.end_time.minute[i] = (i+1).toString();
-  		timeRange.start_time.seconds[i] = (i+1).toString();
-  		timeRange.end_time.seconds[i] = (i+1).toString();
-	}
-	
-	window.onload = function() {
-	  var start_hh = document.getElementById("start_hh");
-	  var start_mm = document.getElementById("start_mm");
-	  var start_ss = document.getElementById("start_ss");
-	  var end_hh = document.getElementById("end_hh");
-	  var end_mm = document.getElementById("end_mm");
-	  var end_ss = document.getElementById("end_ss");
-	 
-	  	for (var y in timeRange.start_time.hour) {
-	      start_hh.options[start_hh.options.length] = new Option(y, y);
-	    }
-	    for (var y in timeRange.start_time.minute) {
-	      start_mm.options[start_mm.options.length] = new Option(y, y);
-	    }
-	    for (var y in timeRange.start_time.seconds) {
-	      start_ss.options[start_ss.options.length] = new Option(y, y);
-	    }
-	    for (var y in timeRange.end_time.hour) {
-	      end_hh.options[end_hh.options.length] = new Option(y, y);
-	    }
-	    for (var y in timeRange.end_time.minute) {
-	      end_mm.options[end_mm.options.length] = new Option(y, y);
-	    }
-	    for (var y in timeRange.end_time.seconds) {
-	      end_ss.options[end_ss.options.length] = new Option(y, y);
-	    }
-	}
-	</script>
-	
-	
+		
 	<style>
 	
 	.col-lg-9,.col-sm-3,.row{
@@ -199,44 +142,10 @@
 		}
 
 	    $(document).ready(function() {
-		    $("#xportdata").click(function(){
-		        var datepick1 = document.getElementById("datepicker1").value;
-		        var datepick2 = document.getElementById("datepicker2").value;
-		        var start_hh = document.getElementById("start_hh").value;
-		        var end_hh = document.getElementById("end_hh").value;
-		        var start_mm = document.getElementById("start_mm").value;
-		        var end_mm = document.getElementById("end_mm").value;
-		        var start_ss = document.getElementById("start_ss").value;
-		        var end_ss = document.getElementById("end_ss").value;
-		        //<!-- console.log(start_hh); -->
-		        if ((!datepick1)||(!datepick2)||(!start_hh)||(!end_hh)||(!start_mm)||(!end_mm)||(!start_ss)||(!end_ss)){
-		        	//check for empty or incorrect input
-		        	alert("Invalid START or END Date/Time for reports!");
-		        }else{
-		        	
-		        	if (parseInt(end_hh)<parseInt(start_hh)){
-		        		alert("Invalid START and END Time for reports!");
-
-		        	}else{
-				       userdata =  [{startdate:reformatDateString(datepick1),enddate:reformatDateString(datepick2)}];
-				       document.getElementById('loadingscrn').style.display = 'block';
-				       webSocket.send(JSON.stringify(userdata));
-				        //<!--console.log(JSON.stringify(userdata));-->
-   						
-   						//window.open('/viewdata.html', '_blank');
-				       
-				   }
-
-					    
-		        }
+		    $("#RefDisplay").click(function(){
+				window.location.reload(true);
+		    });
  
-		    });
-
-		    $("#statusbtn").click(function(){
-		        
-		       alert("System is Connected!");
-		        
-		    });
 		});
 
 		</script>
@@ -244,13 +153,14 @@
 
 
 		<script>
+	
 
 		var meter_data = {p1:0,p2:0,p3:0};
 		var con_flag = 0;
-		var webSocket = new WebSocket('https://localhost:8000/','echo-protocol');
+		var webSocket = new WebSocket('https://5.0.0.121:8000/','echo-protocol');
 		
 
-		
+		/*
 
 		const download = function(data){
 
@@ -285,7 +195,7 @@
 			}
 
 			return csvRows.join('\n');
-		};
+		};*/
 
 		$(document).ready(function(){
 		
@@ -616,7 +526,7 @@
 
 						//console.log(newdata);
 						
-						
+						/*
 						const csvData =  objectTOCsv(newdata);
 						
 						download(csvData);
@@ -624,7 +534,7 @@
 						alert('Report File Downloaded!\nPlease view your download folder...');
 
 						window.open('/viewdata.html', '_blank');
-						
+						*/
 						
 
 					}
@@ -649,10 +559,10 @@
 					<div class="panel-heading">
 					
 					<ul class="nav nav-pills">
-						<li class="active"><a href="https://localhost:8000/pulangi.html">Real-Time Data</a></li>
-						<li><a href="https://localhost:8000/reports.html">Reports</a></li>
-						<li><a href="https://localhost:8000/datapoints.html">Data Points</a></li>
-						<li ><a href="https://localhost:8000/pulangi.html"><strike>Connection Status</strike></a></li>
+						<li class="active"><a href="https://5.0.0.121:8000/pulangi.html">Real-Time Data</a></li>
+						<li><a href="https://5.0.0.121:8000/reports.html">Reports</a></li>
+						<li><a href="https://5.0.0.121:8000/datapoints.html">Data Points</a></li>
+						<li ><a href="https://5.0.0.121:8000/pulangi.html"><strike>Connection Status</strike></a></li>
 					</ul>
 					</div>
 						<div class="panel-body" style="padding:1px 1px 0px 1px;background-color:#526B9C">
@@ -916,18 +826,9 @@
 				<div class="row">
 					<div id="dattime" class="col-lg-10" style="margin-top:5px;font-size:35px;color:yellow;"></div>
 
-					
-								
-								
-					
-						
-					
-					
-					
-					
 					<div class="col-sm-1">
-							<button id="RefDisplay" type="button" class="btn btn-primary" style="margin-left:10px;margin-bottom:15px;width:200px;padding:10px;background-color:white;color:black;font-size:25px;">Refresh Display</button>
-					</div>
+							<button id="RefDisplay" type="button" class="btn btn-primary" style="margin-left:10px;margin-top:5px;margin-bottom:10px;width:250px;background-color:white;color:black;font-size:25px;">Refresh Display</button>
+					</div
 				</div>
 			</div>
 					

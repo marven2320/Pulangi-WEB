@@ -247,9 +247,9 @@
 
 		var meter_data = {p1:0,p2:0,p3:0};
 		var con_flag = 0;
-		var webSocket = new WebSocket('https://localhost:8000/','echo-protocol');
+		var webSocket = new WebSocket('https://5.0.0.121:8000/','echo-protocol');
 		
-
+		
 		
 
 		const download = function(data){
@@ -649,16 +649,24 @@
 					<div class="panel-heading">
 					
 					<ul class="nav nav-pills">
-						<li><a href="https://localhost:8000/pulangi.html">Real-Time Data</a></li>
-						<li><a href="https://localhost:8000/reports.html">Reports</a></li>
-						<li class="active"><a href="https://localhost:8000/datapoints.html">Data Points</a></li>
-						<li ><a href="https://localhost:8000/pulangi.html"><strike>Connection Status</strike></a></li>
+						<li><a href="https://5.0.0.121:8000/pulangi.html">Real-Time Data</a></li>
+						<li><a href="https://5.0.0.121:8000/reports.html">Reports</a></li>
+						<li class="active"><a href="https://5.0.0.121:8000/datapoints.html">Data Points</a></li>
+						<li ><a href="https://5.0.0.121:8000/pulangi.html"><strike>Connection Status</strike></a></li>
 					</ul>
 					</div>
 						<div class="row">
 							<div style="align:center;background-color:#526B9C;padding-bottom:0px;width:100%">
 							   
-							 <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+							 <br><br>
+							 <div style="align:center;">
+							 
+							 </div>
+							 
+							 
+							 <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+							 
+							 
 								<div style="align:center;">
 									<button id="gendata" type="button" class="btn btn-primary" style="margin-left:42%;margin-top:45px;margin-bottom:10px;width:200px;padding:10px;background-color:white;color:black;font-size:25px;">Generate Data</button>
 								</div>
