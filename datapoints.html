@@ -247,7 +247,7 @@
 
 		var meter_data = {p1:0,p2:0,p3:0};
 		var con_flag = 0;
-		var webSocket = new WebSocket('https://5.0.0.121:8000/','echo-protocol');
+		var webSocket = new WebSocket('https://localhost:8000/','echo-protocol');
 		
 		
 		
@@ -623,7 +623,7 @@
 						setTimeout(displayloading,1000);
 						alert('Report File Downloaded!\nPlease view your download folder...');
 
-						window.open('/viewdata.html', '_blank');
+						document.location.href="https://localhost:8000/pulangi.html";
 						
 						
 
@@ -649,27 +649,146 @@
 					<div class="panel-heading">
 					
 					<ul class="nav nav-pills">
-						<li><a href="https://5.0.0.121:8000/pulangi.html">Real-Time Data</a></li>
-						<li><a href="https://5.0.0.121:8000/reports.html">Reports</a></li>
-						<li class="active"><a href="https://5.0.0.121:8000/datapoints.html">Data Points</a></li>
-						<li ><a href="https://5.0.0.121:8000/pulangi.html"><strike>Connection Status</strike></a></li>
+						<li><a href="https://localhost:8000/pulangi.html">Real-Time Data</a></li>
+						<li><a href="https://localhost:8000/reports.html">Reports</a></li>
+						<li class="active"><a href="https://localhost:8000/datapoints.html">Data Points</a></li>
+						<li ><a href="https://localhost:8000/pulangi.html"><strike>Connection Status</strike></a></li>
 					</ul>
 					</div>
 						<div class="row">
 							<div style="align:center;background-color:#526B9C;padding-bottom:0px;width:100%">
 							   
 							 <br><br>
-							 <div style="align:center;">
-							 
-							 </div>
 							 
 							 
-							 <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
 							 
 							 
-								<div style="align:center;">
-									<button id="gendata" type="button" class="btn btn-primary" style="margin-left:42%;margin-top:45px;margin-bottom:10px;width:200px;padding:10px;background-color:white;color:black;font-size:25px;">Generate Data</button>
-								</div>
+							 <div class ="container-fluid" style="margin-top:20px;">
+  
+  <div class="panel panel-default" >
+			<div class="panel-body" style="align:center;background-color:#526B9C;padding-bottom:0px;">
+				<div class="row">
+					
+
+					
+					<div class="col-sm-4" style="margin-left:-10%;margin-top:8px;padding-top:20px;text-align:right;font-size:28px;color:white;"><b>Date & Time<br>RANGE</b></div>
+						
+							
+						<div class="col-sm-2">
+								<div style="color:white">START DATE</div>
+								<div style="font-size:20px;">
+								<p><input type="text" id="datepicker1" size="20" dataformat="YYYY-MM-DD"></p> </div>
+								<div style="color:white">END DATE</div>
+								<div style="font-size:20px;">
+								<p><input type="text" id="datepicker2" size="20"></p></div>
+								
+						</div>
+
+						<div class="col-sm-5">
+							<br>
+								<div class="row" >
+									<div class="col-sm-3" style="color:white;font-size:18px;">START TIME:</div>
+									<div class="col-sm-1" style="margin-left:2%;margin-top:3px;">
+										<select id="start_hh" >
+	    									<option value="" selected="selected">HH</option>
+	  									</select>
+	  								</div>
+	  									<div class="col-sm-1" style="margin-left:2%;margin-top:3px;" >
+
+										<select id="start_mm" >
+	    									<option value="" selected="selected">MM</option>
+	  									</select>
+	  								</div>
+
+	  								<div class="col-sm-1" style="margin-left:2%;margin-top:3px;" >
+
+										<select id="start_ss">
+	    									<option value="" selected="selected">SS</option>
+	  									</select>
+	  								</div>
+	  								
+  								</div>
+								
+								
+								
+						</div>
+						<br><br>
+
+						<div class="row" style="margin-top:20px">
+									<div class="col-sm-2" style="margin-left:22px;color:white;font-size:18px;" >END TIME:</div>
+									<div class="col-sm-1" style="margin-left:-6.5%;margin-top:3px;" >
+
+										<select id="end_hh">
+	    									<option value="" selected="selected">HH</option>
+	  									</select>
+	  								</div>
+	  									<div class="col-sm-1" style="margin-left:-4%;margin-top:3px;">
+
+										<select id="end_mm">
+	    									<option value="" selected="selected">MM</option>
+	  									</select>
+	  								</div>
+
+	  								<div class="col-sm-1" style="margin-left:-4.2%;margin-top:3px;">
+
+										<select id="end_ss">
+	    									<option value="" selected="selected">SS</option>
+	  									</select>
+	  								</div>
+	  								
+	  					<div class="col-sm-2">
+							<button id="xportdata" type="button" class="btn btn-primary" style="margin-left:50%;margin-top:-15%;width:100%;padding:10px;background-color:white;color:black;font-size:25px;">Export Data</button>
+						</div>
+  						</div>
+						
+						
+
+					
+					</div>
+					
+
+					</div>
+					
+				
+			</div>
+			
+	</div>
+  
+  </div>
+							 
+							 
+							 
+							 
+							 
+							 
+							 
+							 
+							 
+							 
+							 
+							 
+							 
+							 
+							 
+							 
+							 
+							 
+							 
+							 
+							 
+							 
+							 
+							 
+							 
+							 
+							 
+							 
+							 
+							 
+							 
+							 
+							 
+								
 							</div>
 							
 							
