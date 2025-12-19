@@ -247,7 +247,7 @@
 
 		var meter_data = {p1:0,p2:0,p3:0};
 		var con_flag = 0;
-		var webSocket = new WebSocket('https://localhost:8000/','echo-protocol');
+		var webSocket = new WebSocket('https://5.0.0.121:8000/','echo-protocol');
 		
 		
 		
@@ -623,7 +623,7 @@
 						setTimeout(displayloading,1000);
 						alert('Report File Downloaded!\nPlease view your download folder...');
 
-						document.location.href="https://localhost:8000/pulangi.html";
+						document.location.href="https://5.0.0.121:8000/pulangi.html";
 						
 						
 
@@ -649,10 +649,10 @@
 					<div class="panel-heading">
 					
 					<ul class="nav nav-pills">
-						<li><a href="https://localhost:8000/pulangi.html">Real-Time Data</a></li>
-						<li><a href="https://localhost:8000/reports.html">Reports</a></li>
-						<li class="active"><a href="https://localhost:8000/datapoints.html">Data Points</a></li>
-						<li ><a href="https://localhost:8000/pulangi.html"><strike>Connection Status</strike></a></li>
+						<li><a href="https://5.0.0.121:8000/pulangi.html">Real-Time Data</a></li>
+						<li><a href="https://5.0.0.121:8000/reports.html">Reports</a></li>
+						<li class="active"><a href="https://5.0.0.121:8000/datapoints.html">Data Points</a></li>
+						<li ><a href="https://5.0.0.121:8000/pulangi.html"><strike>Connection Status</strike></a></li>
 					</ul>
 					</div>
 						<div class="row">
@@ -816,4 +816,5 @@
 </body>
 
 </html>
+
 
