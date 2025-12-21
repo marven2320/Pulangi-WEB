@@ -5,7 +5,8 @@ const cron = require('node-cron');
 
 // --- CONFIGURATION ---
 const OUTPUT_DIR = path.join(__dirname, 'reports');
-const SUMMARY_TEMPLATE = path.join(__dirname, '/reports/Pulangi IV HEP - Monthly Operations Report Template.xlsx');
+// Ensure this path matches your actual file structure
+const SUMMARY_TEMPLATE = path.join(__dirname, 'reports', 'Pulangi IV HEP - Monthly Operations Report Template.xlsx');
 
 if (!fs.existsSync(OUTPUT_DIR)) fs.mkdirSync(OUTPUT_DIR);
 
@@ -22,25 +23,33 @@ const MONTHLY_DATA_POINTS = [
     { colLetter: "K", destCellMax: "L14", destCellMin: "L15" }
 ];
 
-// B. Special Point Q
+// B. Special Point Q (Min at Start, Max at End)
 const MONTHLY_COL_Q = {
     colLetter: "Q",
-    destCellMax: "L43", // Max Value (Last Row of Data)
-    destCellMin: "L40"  // Min Value (Start Row of Data)
+    destCellMax: "L43",
+    destCellMin: "L40"
+};
+
+// ** C. NEW: Spillage Data (Column AW) **
+const MONTHLY_COL_AW = {
+    colLetter: "AW",
+    destCellAvg: "L46",   // <--- CHANGE THIS to your desired cell for Average
+    destCellTotal: "L47"  // <--- CHANGE THIS to your desired cell for Total
 };
 
 // ==========================================
-// 2. SHIFT LOG (Updated Cycle & Columns)
+// 2. SHIFT LOG 
 // ==========================================
 const getShiftLogFilename = (year) => `Pulangi IV HEP - Generation Data - RAW_${year}.xlsx`;
-// Assuming Shift Data starts at Row 4 (Change if headers are different)
 const SHIFT_START_ROW = 4;
 
-// Configuration for Columns C, E, G
 const SHIFT_DATA_POINTS = [
-    { colLetter: "C", destCell: "J16" }, // Overall 1
-    { colLetter: "E", destCell: "K16" }, // Overall 2
-    { colLetter: "G", destCell: "L16" }  // Overall 3
+    { colLetter: "I", destCell: "J16" },
+    { colLetter: "J", destCell: "J18" },
+    { colLetter: "L", destCell: "K16" },
+    { colLetter: "M", destCell: "K18" },
+    { colLetter: "O", destCell: "L16" },
+    { colLetter: "P", destCell: "L18" }
 ];
 
 // ==========================================
@@ -92,13 +101,11 @@ function getCycleContext(date) {
         fileYear = cycleStartYear;
     }
 
-    // Standard Hourly Cycle (26th 00:00 to 26th 00:00)
     const monthlyStartDate = new Date(cycleStartYear, cycleStartMonth, 26, 0, 0, 0);
     const monthlyEndDate = new Date(cycleStartYear, cycleStartMonth + 1, 26, 0, 0, 0);
 
-    // Shift Log Cycle (26th 12:00 PM to 26th 00:00 AM next month)
-    const shiftStartDate = new Date(cycleStartYear, cycleStartMonth, 26, 12, 0, 0); // 12:00 NN
-    const shiftEndDate = new Date(cycleStartYear, cycleStartMonth + 1, 26, 0, 0, 0);   // 12:00 AM (Midnight)
+    const shiftStartDate = new Date(cycleStartYear, cycleStartMonth, 26, 12, 0, 0);
+    const shiftEndDate = new Date(cycleStartYear, cycleStartMonth + 1, 26, 0, 0, 0);
 
     return {
         sheetIndex, fileYear,
@@ -146,13 +153,14 @@ async function generateMonthlySummary() {
             if (sheet) {
                 const sheetName = sheet.name();
 
-                // Calculate Hourly Rows
                 const diffMs = monthlyEndDate - monthlyStartDate;
                 const totalHours = Math.round(diffMs / (1000 * 60 * 60));
 
                 const dataEndRow = MONTHLY_START_ROW + totalHours;
+
+                // Rows for Standard Points (C, G, K)
                 const summaryMaxRow = dataEndRow + 1;
-                const summaryMinRow = dataEndRow + 2;
+                const summaryMinRow = dataEndRow + 3;
 
                 // 1. Standard Columns
                 MONTHLY_DATA_POINTS.forEach(point => {
@@ -162,47 +170,42 @@ async function generateMonthlySummary() {
                     monthlyFormulas.push({ cell: point.destCellMin, formula: fMin });
                 });
 
-                // 2. Special Column Q
+                // 2. Special Column Q (Min at Start, Max at End)
                 const fQMin = `'[${monthlyFilename}]${sheetName}'!${MONTHLY_COL_Q.colLetter}${MONTHLY_START_ROW}`;
                 const fQMax = `'[${monthlyFilename}]${sheetName}'!${MONTHLY_COL_Q.colLetter}${dataEndRow}`;
                 monthlyFormulas.push({ cell: MONTHLY_COL_Q.destCellMin, formula: fQMin });
                 monthlyFormulas.push({ cell: MONTHLY_COL_Q.destCellMax, formula: fQMax });
+
+                // 3. NEW: Special Column AW (Spillage)
+                // Average is 2 rows after end
+                // Total is 4 rows after end
+                const rowAvg = dataEndRow + 2;
+                const rowTotal = dataEndRow + 4;
+
+                const fAwAvg = `'[${monthlyFilename}]${sheetName}'!${MONTHLY_COL_AW.colLetter}${rowAvg}/3600`;
+                const fAwTotal = `'[${monthlyFilename}]${sheetName}'!${MONTHLY_COL_AW.colLetter}${rowTotal}/1000000`;
+
+                monthlyFormulas.push({ cell: MONTHLY_COL_AW.destCellAvg, formula: fAwAvg });
+                monthlyFormulas.push({ cell: MONTHLY_COL_AW.destCellTotal, formula: fAwTotal });
             }
         }
 
-        // --- STEP B: SHIFT LOG (Twice Daily Calculation) ---
+        // --- STEP B: SHIFT LOG ---
         if (fs.existsSync(shiftPath)) {
             console.log(`   [Processing] Shift Log References...`);
             const wb = await XlsxPopulate.fromFileAsync(shiftPath);
             const sheet = wb.sheet(sheetIndex);
             if (sheet) {
                 const sheetName = sheet.name();
-
-                // 1. Calculate Shift Rows
-                // Difference between Start (Noon) and End (Midnight)
                 const diffMs = shiftEndDate - shiftStartDate;
                 const totalHours = diffMs / (1000 * 60 * 60);
-
-                // 2. Calculate Number of Logs (Every 12 hours)
-                // We assume there is a row for the start time.
-                // Number of intervals = Total Hours / 12
-                // Rows = Intervals + 1 (Start Row) or Intervals? 
-                // Usually logs include the start time, so we add 1? 
-                // Let's assume strict interval count mapping to rows:
                 const numberOfLogs = Math.round(totalHours / 12);
 
-                // 3. Determine Summary Row
-                // "The row is directly after the last data log"
-                // Last Data Row = Start Row + numberOfLogs
-                // Summary Row   = Last Data Row + 1
                 const lastDataRow = SHIFT_START_ROW + numberOfLogs;
                 const summaryRow = lastDataRow + 1;
 
-                console.log(`     Shift Start: ${shiftStartDate.toLocaleString()} | End: ${shiftEndDate.toLocaleString()}`);
-                console.log(`     Shift Hours: ${totalHours} | Logs: ${numberOfLogs}`);
                 console.log(`     Shift Summary Row: ${summaryRow}`);
 
-                // 4. Map Columns C, E, G
                 SHIFT_DATA_POINTS.forEach(point => {
                     const formula = `'[${shiftFilename}]${sheetName}'!${point.colLetter}${summaryRow}`;
                     shiftFormulas.push({ cell: point.destCell, formula: formula });
@@ -247,16 +250,13 @@ async function generateMonthlySummary() {
         }
 
         console.log(`   Writing to Destination Sheet: Index ${sheetIndex} (${destSheet.name()})`);
-        // Apply Monthly Formulas
+
         monthlyFormulas.forEach(item => destSheet.cell(item.cell).formula(item.formula));
-
-        // Apply Shift Formulas
         shiftFormulas.forEach(item => destSheet.cell(item.cell).formula(item.formula));
-
-        // Apply Downtime Formulas
         downtimeFormulas.forEach(item => {
             destSheet.cell(item.cell).formula(item.formula).style("numberFormat", "0.00");
         });
+
         destSheet.cell("H7").value(monthlyStartDate.toLocaleDateString());
         destSheet.cell("K7").value(monthlyEndDate.toLocaleDateString());
 
