@@ -60,7 +60,7 @@ function getSheetContext(date) {
 
     if (day >= 26) {
         // If Dec 26, it is Sheet 0 (Jan) of Next Year
-        if (month === 11) return { index: 0, targetYear: year + 1 };
+        if (month === 11) return { sheetIndex: 0, targetYear: year + 1 };
         return { sheetIndex: month + 1, targetYear: year };
     } else {
         return { sheetIndex: month, targetYear: year };
@@ -175,4 +175,5 @@ appendCurrentHourData();
 
 app.listen(PORT, () => {
     console.log(`Server running.`);
+
 });
