@@ -270,8 +270,9 @@ async function generateDailyReport() {
 }
 
 // --- SCHEDULE ---
-cron.schedule('1 7 * * *', () => {
+cron.schedule('1 0,7 * * *', () => {
     generateDailyReport();
 });
+
 
 generateDailyReport();
