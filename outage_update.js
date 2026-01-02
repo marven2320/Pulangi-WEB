@@ -6,7 +6,7 @@ const fs = require('fs');
 
 // --- CONFIGURATION ---
 const OUTPUT_DIR = path.join(__dirname, 'reports');
-const TEMPLATE_PATH = path.join(__dirname, '/reports/Pulangi IV HEP - Outage Report Template.xlsx');
+const TEMPLATE_PATH = path.join(__dirname, '/templates/Pulangi IV HEP - Outage Report Template.xlsx');
 
 const UNITS = [
     { name: 1, col: 'mw1', ref: 'freq1' },
@@ -148,7 +148,16 @@ async function processCycle(startDate, endDate, label) {
             }
         });
 
-        console.log(`   Found ${allEvents.length} events.`);
+        // --- SORTING LOGIC ADDED HERE ---
+        // Sort by Unit Number (Ascending), then by Start Time
+        allEvents.sort((a, b) => {
+            if (a.unitName !== b.unitName) {
+                return a.unitName - b.unitName; // Unit 1, then 2, then 3
+            }
+            return a.start - b.start; // Within same unit, sort by date
+        });
+
+        console.log(`   Found ${allEvents.length} events (Sorted by Unit).`);
 
         // 4. Update Excel
         const fileName = `Pulangi IV HEP - Outage Report_${targetYear}.xlsx`;
