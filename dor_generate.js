@@ -5,9 +5,11 @@ const cron = require('node-cron');
 
 // --- CONFIGURATION ---
 const REPORTS_DIR = path.join(__dirname, 'reports');
-const MONTHLY_LOG_DIR = path.join(__dirname, 'reports');
-const DAILY_TEMPLATE_PATH = path.join(__dirname, '/reports/Pulangi IV HEP - Daily Operations Report Template.xlsx');
+// Source files are in 'rawdata'
+const MONTHLY_LOG_DIR = path.join(__dirname, 'rawdata');
+const DAILY_TEMPLATE_PATH = path.join(__dirname, 'templates', 'Pulangi IV HEP - Daily Operations Report Template.xlsx');
 
+// Create output directory if it doesn't exist
 if (!fs.existsSync(REPORTS_DIR)) fs.mkdirSync(REPORTS_DIR);
 
 // --- HELPER FUNCTIONS ---
@@ -23,6 +25,12 @@ function getSheetContext(date) {
     } else {
         return { sheetIndex: month, targetYear: year };
     }
+}
+
+// ** NEW HELPER **: Creates formula with full absolute path
+// Returns: 'C:\Path\To\rawdata\[File.xlsx]Sheet'!Cell
+function createAbsFormula(directory, filename, sheetName, cellRef) {
+    return `'${directory}/[${filename}]${sheetName}'!${cellRef}`;
 }
 
 // --- THE TASK ---
@@ -44,6 +52,7 @@ async function generateDailyReport() {
         // 1. Identify Source File Context
         const { sheetIndex, targetYear } = getSheetContext(targetDate);
         const sourceFilename = `Pulangi IV HEP - Operational Highlights - RAW_${targetYear}.xlsx`;
+        // Reads from rawdata folder
         const sourcePath = path.join(MONTHLY_LOG_DIR, sourceFilename);
 
         if (!fs.existsSync(sourcePath)) {
@@ -63,6 +72,10 @@ async function generateDailyReport() {
         const sourceSheetName = sourceSheet.name();
 
         // 3. Open Destination Template
+        if (!fs.existsSync(DAILY_TEMPLATE_PATH)) {
+            console.error(`[Error] Template file missing: ${DAILY_TEMPLATE_PATH}`);
+            return;
+        }
         const destWorkbook = await XlsxPopulate.fromFileAsync(DAILY_TEMPLATE_PATH);
         const destSheet = destWorkbook.sheet(0);
 
@@ -75,58 +88,29 @@ async function generateDailyReport() {
         const diffHours = Math.round(diffMs / (1000 * 60 * 60));
 
         let sourceRow = 4 + diffHours; // Row in Monthly Log
-        let destRow = 17;               // Row in Daily Report
+        let sourceRowSpillage = 4 + diffHours; //Row in Monthly Log
+        let destRow = 17;              // Row in Daily Report
 
         // 5. Generate Formulas Loop (24 Hours)
         for (let i = 0; i < 24; i++) {
 
-            // --- Construct Formulas ---
-            // Syntax: '[Filename]SheetName'!Cell
-
-            // Column B (Daily) links to Column C (Monthly)
-            const formulaB = `'[${sourceFilename}]${sourceSheetName}'!C${sourceRow}`;
-
-            // Column C (Daily) links to Column D (Monthly)
-            const formulaC = `'[${sourceFilename}]${sourceSheetName}'!G${sourceRow}`;
-
-            // Column D (Daily) links to Column E (Monthly)
-            const formulaD = `'[${sourceFilename}]${sourceSheetName}'!K${sourceRow}`;
-
-            // Column F (Daily) links to Column F (Monthly)
-            const formulaF = `'[${sourceFilename}]${sourceSheetName}'!Q${sourceRow}`;
-
-            // Column G (Daily) links to Column F (Monthly)
-            const formulaG = `'[${sourceFilename}]${sourceSheetName}'!S${sourceRow}`;
-
-            // Column H (Daily) links to Column F (Monthly)
-            const formulaH = `'[${sourceFilename}]${sourceSheetName}'!V${sourceRow}`;
-
-            // Column I (Daily) links to Column F (Monthly)
-            const formulaI = `'[${sourceFilename}]${sourceSheetName}'!Y${sourceRow}`;
-
-            // Column J (Daily) links to Column F (Monthly)
-            const formulaJ = `'[${sourceFilename}]${sourceSheetName}'!AB${sourceRow}`;
-
-            // Column K(Daily) links to Column F (Monthly)
-            const formulaK = `'[${sourceFilename}]${sourceSheetName}'!AE${sourceRow}`;
-
-            // Column L (Daily) links to Column F (Monthly)
-            const formulaL = `'[${sourceFilename}]${sourceSheetName}'!AH${sourceRow}`;
-
-            // Column M (Daily) links to Column F (Monthly)
-            const formulaM = `'[${sourceFilename}]${sourceSheetName}'!AK${sourceRow}`;
-
-            // Column N (Daily) links to Column F (Monthly)
-            const formulaN = `'[${sourceFilename}]${sourceSheetName}'!AN${sourceRow}`;
-
-            // Column O (Daily) links to Column F (Monthly)
-            const formulaO = `'[${sourceFilename}]${sourceSheetName}'!AQ${sourceRow}`;
-
-            // Column P (Daily) links to Column F (Monthly)
-            const formulaP = `'[${sourceFilename}]${sourceSheetName}'!AT${sourceRow}`;
+            // --- Construct Formulas with FULL PATH ---
+            const formulaB = createAbsFormula(MONTHLY_LOG_DIR, sourceFilename, sourceSheetName, `C${sourceRow}`);
+            const formulaC = createAbsFormula(MONTHLY_LOG_DIR, sourceFilename, sourceSheetName, `G${sourceRow}`);
+            const formulaD = createAbsFormula(MONTHLY_LOG_DIR, sourceFilename, sourceSheetName, `K${sourceRow}`);
+            const formulaF = createAbsFormula(MONTHLY_LOG_DIR, sourceFilename, sourceSheetName, `Q${sourceRow}`);
+            const formulaG = createAbsFormula(MONTHLY_LOG_DIR, sourceFilename, sourceSheetName, `S${sourceRow}`);
+            const formulaH = createAbsFormula(MONTHLY_LOG_DIR, sourceFilename, sourceSheetName, `V${sourceRow}`);
+            const formulaI = createAbsFormula(MONTHLY_LOG_DIR, sourceFilename, sourceSheetName, `Y${sourceRow}`);
+            const formulaJ = createAbsFormula(MONTHLY_LOG_DIR, sourceFilename, sourceSheetName, `AB${sourceRow}`);
+            const formulaK = createAbsFormula(MONTHLY_LOG_DIR, sourceFilename, sourceSheetName, `AE${sourceRow}`);
+            const formulaL = createAbsFormula(MONTHLY_LOG_DIR, sourceFilename, sourceSheetName, `AH${sourceRow}`);
+            const formulaM = createAbsFormula(MONTHLY_LOG_DIR, sourceFilename, sourceSheetName, `AK${sourceRow}`);
+            const formulaN = createAbsFormula(MONTHLY_LOG_DIR, sourceFilename, sourceSheetName, `AN${sourceRow}`);
+            const formulaO = createAbsFormula(MONTHLY_LOG_DIR, sourceFilename, sourceSheetName, `AQ${sourceRow}`);
+            const formulaP = createAbsFormula(MONTHLY_LOG_DIR, sourceFilename, sourceSheetName, `AT${sourceRow}`);
 
             // Column E (Daily) is the SUM of the local columns B, C, D
-            // Syntax: SUM(B2:D2)
             const formulaSum = `SUM(B${destRow}:D${destRow})`;
 
             // --- Apply Formulas & Styles ---
@@ -150,12 +134,18 @@ async function generateDailyReport() {
             sourceRow++;
             destRow++;
         }
+        //H2O SPILLAGE
+        sourceRow--;
+        const cellSpillage = `AW${sourceRowSpillage}:AW${sourceRow}`;
+        console.log(createAbsFormula(MONTHLY_LOG_DIR, sourceFilename, sourceSheetName, cellSpillage));
+        destSheet.cell("Q47").formula(`SUM('${MONTHLY_LOG_DIR}/[${sourceFilename}]${sourceSheetName}'!${cellSpillage})`);
 
         // ============================================================
         //  NEW SECTION: REFERENCE DATA FROM SHIFT LOGGER (12AM & 12NN)
         // ============================================================
 
         const shiftLogFilename = `Pulangi IV HEP - Generation Data - RAW_${targetYear}.xlsx`;
+        // Reads from rawdata folder
         const shiftLogPath = path.join(MONTHLY_LOG_DIR, shiftLogFilename);
 
         if (fs.existsSync(shiftLogPath)) {
@@ -168,22 +158,19 @@ async function generateDailyReport() {
             if (shiftSheet) {
                 const shiftSheetName = shiftSheet.name();
 
-                // 1. Determine Cycle Start for Shift Log (Starts on 26th at 12:00 PM)
-                // Note: This must match the logic in shiftLogger.js exactly
+                // 1. Determine Cycle Start for Shift Log
                 const shiftCycleStart = new Date(targetYear, sheetIndex - 1, 26, 12, 0, 0);
 
                 // 2. Calculate Row for 12:00 AM (Midnight)
-                // Date Object for Yesterday 00:00:00
                 const midnightDate = new Date(targetDate);
                 midnightDate.setDate(midnightDate.getDate() + 1)
                 midnightDate.setHours(0, 0, 0, 0);
 
                 const diffMsMidnight = midnightDate - shiftCycleStart;
                 const diffShiftsMidnight = Math.round(diffMsMidnight / (1000 * 60 * 60 * 12));
-                const midnightRow = 5 + diffShiftsMidnight; // Assuming Row 5 is start in Shift Log
+                const midnightRow = 5 + diffShiftsMidnight;
 
                 // 3. Calculate Row for 12:00 PM (Noon)
-                // Date Object for Yesterday 12:00:00
                 const noonDate = new Date(targetDate);
                 noonDate.setHours(12, 0, 0, 0);
 
@@ -191,21 +178,20 @@ async function generateDailyReport() {
                 const diffShiftsNoon = Math.round(diffMsNoon / (1000 * 60 * 60 * 12));
                 const noonRow = 5 + diffShiftsNoon;
 
-                // 4. Inject Formulas
-                // Syntax: '[ShiftLog_2025.xlsx]SheetName'!CellReference
-
-                // Example: Linking Column C from Shift Log to Daily Report
-                // *** UPDATE THESE CELL REFERENCES (destSheet.cell) TO MATCH YOUR TEMPLATE ***
+                // 4. Inject Formulas with FULL PATH
 
                 // -- 12:00 AM DATA --
-                destSheet.cell("D44").formula(`'[${shiftLogFilename}]${shiftSheetName}'!I${midnightRow}`);
-                destSheet.cell("D45").formula(`'[${shiftLogFilename}]${shiftSheetName}'!L${midnightRow}`);
-                destSheet.cell("D46").formula(`'[${shiftLogFilename}]${shiftSheetName}'!O${midnightRow}`);
+                destSheet.cell("D44").formula(createAbsFormula(MONTHLY_LOG_DIR, shiftLogFilename, shiftSheetName, `I${midnightRow}`));
+                destSheet.cell("D45").formula(createAbsFormula(MONTHLY_LOG_DIR, shiftLogFilename, shiftSheetName, `L${midnightRow}`));
+                destSheet.cell("D46").formula(createAbsFormula(MONTHLY_LOG_DIR, shiftLogFilename, shiftSheetName, `O${midnightRow}`));
+                destSheet.cell("B50").formula(createAbsFormula(MONTHLY_LOG_DIR, shiftLogFilename, shiftSheetName, `J${midnightRow}`));
+                destSheet.cell("C50").formula(createAbsFormula(MONTHLY_LOG_DIR, shiftLogFilename, shiftSheetName, `M${midnightRow}`));
+                destSheet.cell("D50").formula(createAbsFormula(MONTHLY_LOG_DIR, shiftLogFilename, shiftSheetName, `P${midnightRow}`));
 
                 // -- 12:00 PM DATA --
-                destSheet.cell("E44").formula(`'[${shiftLogFilename}]${shiftSheetName}'!I${noonRow}`);
-                destSheet.cell("E45").formula(`'[${shiftLogFilename}]${shiftSheetName}'!L${noonRow}`);
-                destSheet.cell("E46").formula(`'[${shiftLogFilename}]${shiftSheetName}'!O${noonRow}`);
+                destSheet.cell("E44").formula(createAbsFormula(MONTHLY_LOG_DIR, shiftLogFilename, shiftSheetName, `I${noonRow}`));
+                destSheet.cell("E45").formula(createAbsFormula(MONTHLY_LOG_DIR, shiftLogFilename, shiftSheetName, `L${noonRow}`));
+                destSheet.cell("E46").formula(createAbsFormula(MONTHLY_LOG_DIR, shiftLogFilename, shiftSheetName, `O${noonRow}`));
 
                 //Write dates
                 destSheet.cell("Q5").value(dateStr);
@@ -213,7 +199,6 @@ async function generateDailyReport() {
                 const currentDate = new Date(today);
                 const currentdateStr = currentDate.toLocaleDateString('en-CA');
                 destSheet.cell("G54").value(currentdateStr);
-
 
                 console.log(`[Success] Added Shift References for Rows ${midnightRow} (12AM) and ${noonRow} (12NN)`);
             } else {
@@ -234,26 +219,18 @@ async function generateDailyReport() {
         console.log(`[Daily Report] Processing Current Day 7AM Reference...`);
 
         // 1. Calculate Target: TODAY at 7:00 AM
-        // Note: 'today' variable is already set to the current execution time.
-        // We force it to 7:00:00 AM.
         const current7AM = new Date(today);
         current7AM.setHours(7, 0, 0, 0);
 
         // 2. Calculate Row in the MONTHLY LOG (Hourly)
-        // We reuse 'cycleStartDate' and 'sourceFilename' from the main logic
         const diffMs7AM = current7AM - cycleStartDate;
         const diffHours7AM = Math.round(diffMs7AM / (1000 * 60 * 60));
-
-        // Row 4 is assumed Start Row in Monthly Log based on your previous code
         const row7AM = 4 + diffHours7AM;
 
-        // 3. Inject Formula
-        // *** UPDATE "B47", "C47", "D47" TO YOUR ACTUAL TARGET CELLS ***
-
-        // Example: If you need Column C, G, K from Monthly Log for 7AM
-        destSheet.cell("F60").formula(`'[${sourceFilename}]${sourceSheetName}'!C${row7AM}`);
-        destSheet.cell("F61").formula(`'[${sourceFilename}]${sourceSheetName}'!G${row7AM}`);
-        destSheet.cell("F62").formula(`'[${sourceFilename}]${sourceSheetName}'!K${row7AM}`);
+        // 3. Inject Formula with FULL PATH
+        destSheet.cell("F60").formula(createAbsFormula(MONTHLY_LOG_DIR, sourceFilename, sourceSheetName, `C${row7AM}`));
+        destSheet.cell("F61").formula(createAbsFormula(MONTHLY_LOG_DIR, sourceFilename, sourceSheetName, `G${row7AM}`));
+        destSheet.cell("F62").formula(createAbsFormula(MONTHLY_LOG_DIR, sourceFilename, sourceSheetName, `K${row7AM}`));
 
         console.log(`[Success] Added 7AM Reference pointing to Row ${row7AM}`);
 
@@ -273,6 +250,5 @@ async function generateDailyReport() {
 cron.schedule('1 0,7 * * *', () => {
     generateDailyReport();
 });
-
 
 generateDailyReport();
