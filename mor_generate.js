@@ -44,7 +44,7 @@ const MONTHLY_COL_AW = {
 // 2. SHIFT LOG (Source: rawdata)
 // ==========================================
 const getShiftLogFilename = (year) => `Pulangi IV HEP - Generation Data - RAW_${year}.xlsx`;
-const SHIFT_START_ROW = 4;
+const SHIFT_START_ROW = 5;
 
 const SHIFT_DATA_POINTS = [
     { colLetter: "I", destCell: "J16" },
@@ -224,7 +224,7 @@ async function generateMonthlySummary() {
                 const totalHours = diffMs / (1000 * 60 * 60);
                 const numberOfLogs = Math.round(totalHours / 12);
                 const lastDataRow = SHIFT_START_ROW + numberOfLogs;
-                const summaryRow = lastDataRow + 1;
+                const summaryRow = lastDataRow + 2;
 
                 console.log(`     Shift Summary Row: ${summaryRow}`);
 
