@@ -7,6 +7,7 @@ const fs = require('fs');
 // --- CONFIGURATION ---
 const OUTPUT_DIR = path.join(__dirname, 'reports');
 const TEMPLATE_PATH = path.join(__dirname, '/templates/Pulangi IV HEP - Outage Report Template.xlsx');
+const DAILY_LOG_FILE = path.join(OUTPUT_DIR, 'daily_outage_log.json');
 
 const UNITS = [
     { name: 1, col: 'mw1', ref: 'freq1' },
@@ -30,7 +31,17 @@ const dbConfig = {
 
 // --- HELPER FUNCTIONS ---
 
+// Keep this as YYYY-MM-DD for Database and Logic (Sorting/Filtering)
 const formatDateString = (date) => date.toLocaleDateString('en-CA');
+
+// ** NEW: Specific format for Excel Output (dd-MMM-yy) **
+const formatExcelDate = (date) => {
+    return date.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: '2-digit'
+    }).replace(/ /g, '-');
+};
 
 const formatTimeString = (date) => {
     return date.toLocaleTimeString('en-US', {
@@ -40,12 +51,14 @@ const formatTimeString = (date) => {
     });
 };
 
-// Map a Cycle Start Date to the correct Excel Sheet (Month)
+const formatTime24 = (date) => {
+    return date.toTimeString().split(' ')[0]; // HH:MM:SS
+};
+
 function getSheetContext(cycleStartDate) {
     const startMonth = cycleStartDate.getMonth();
     const startYear = cycleStartDate.getFullYear();
 
-    // If cycle starts in Dec (11), it belongs to next year's Jan (0) sheet
     if (startMonth === 11) {
         return { sheetIndex: 0, targetYear: startYear + 1 };
     } else {
@@ -53,27 +66,68 @@ function getSheetContext(cycleStartDate) {
     }
 }
 
+// Helper to read existing JSON log safely
+function readJsonLog() {
+    if (!fs.existsSync(DAILY_LOG_FILE)) return [];
+    try {
+        return JSON.parse(fs.readFileSync(DAILY_LOG_FILE));
+    } catch (e) {
+        return [];
+    }
+}
+
 // --- CORE PROCESSING FUNCTION ---
-// This function handles the logic for ONE specific date range.
-async function processCycle(startDate, endDate, label) {
+async function processCycle(startDate, endDate, label, forceClose = false, generateDailyJson = false) {
     console.log(`\n[Processing ${label}]`);
 
-    // 1. Identify Target Excel File/Sheet
     const { sheetIndex, targetYear } = getSheetContext(startDate);
-
     const startDateStr = formatDateString(startDate);
+    const startTimeStr = "00:00:00";
     const endDateStr = formatDateString(endDate);
-    const endTimeStr = formatTimeString(endDate); // Useful log for "Current" cycle
 
-    console.log(`   Range: ${startDateStr} to ${endDateStr} ${endTimeStr}`);
-    console.log(`   Target: Year ${targetYear}, Sheet Index ${sheetIndex}`);
+    // Captured logs for this specific cycle run
+    const cycleDailyLogs = [];
 
     let connection;
     try {
-        // 2. Fetch Data
+        connection = await mysql.createConnection(dbConfig);
         const targetCols = UNITS.map(u => u.col).join(', ');
         const refCols = UNITS.map(u => u.ref).join(', ');
 
+        const allEvents = [];
+        const ongoingEvents = {};
+        UNITS.forEach(u => ongoingEvents[u.col] = null);
+
+        // --- STEP A: CHECK PREVIOUS STATE ---
+        const prevQuery = `
+            SELECT ${targetCols}, ${refCols}
+            FROM pulangi 
+            WHERE ${DATE_COL} < ? 
+               OR (${DATE_COL} = ? AND ${TIME_COL} < ?)
+            ORDER BY ${DATE_COL} DESC, ${TIME_COL} DESC
+            LIMIT 1
+        `;
+        const [prevRows] = await connection.execute(prevQuery, [startDateStr, startDateStr, startTimeStr]);
+
+        if (prevRows.length > 0) {
+            const prevRow = prevRows[0];
+            for (const unit of UNITS) {
+                const val = Number(prevRow[unit.col]);
+                const refVal = Number(prevRow[unit.ref]);
+                const wasDown = ((val === 0 || val < 1) && refVal !== 0);
+
+                if (wasDown) {
+                    ongoingEvents[unit.col] = {
+                        unitName: unit.name,
+                        start: startDate,
+                        end: null,
+                        isOngoing: false
+                    };
+                }
+            }
+        }
+
+        // --- STEP B: FETCH CURRENT CYCLE DATA ---
         const query = `
             SELECT 
                 DATE_FORMAT(${DATE_COL}, '%Y-%m-%d') as date_str, 
@@ -85,19 +139,13 @@ async function processCycle(startDate, endDate, label) {
             ORDER BY ${DATE_COL} ASC, ${TIME_COL} ASC
         `;
 
-        connection = await mysql.createConnection(dbConfig);
         const [rows] = await connection.execute(query, [startDateStr, endDateStr]);
 
-        // 3. Identify Events
-        const allEvents = [];
-        const ongoingEvents = {};
-        UNITS.forEach(u => ongoingEvents[u.col] = null);
-
+        // --- STEP C: PROCESS LOGS ---
         for (const row of rows) {
             const dateTimeString = `${row.date_str} ${row.time_str}`;
             const timestamp = new Date(dateTimeString);
 
-            // Strict Time Filtering
             if (timestamp < startDate || timestamp >= endDate) continue;
 
             for (const unit of UNITS) {
@@ -110,18 +158,19 @@ async function processCycle(startDate, endDate, label) {
                         ongoingEvents[unit.col] = {
                             unitName: unit.name,
                             start: timestamp,
-                            end: null
+                            end: null,
+                            isOngoing: false
                         };
                     }
                 } else {
                     if (ongoingEvents[unit.col] && !!val) {
                         const event = ongoingEvents[unit.col];
                         event.end = timestamp;
+                        event.isOngoing = false;
 
                         const diffMs = event.end - event.start;
                         const durationHrs = diffMs / (1000 * 60 * 60);
 
-                        // Noise Filter
                         if (durationHrs > NOISE_THRESHOLD_HOURS) {
                             event.duration = durationHrs;
                             allEvents.push(event);
@@ -132,11 +181,12 @@ async function processCycle(startDate, endDate, label) {
             }
         }
 
-        // Close ongoing events at the exact End Date (or "Now")
+        // --- STEP D: HANDLE UNFINISHED EVENTS ---
         UNITS.forEach(unit => {
             if (ongoingEvents[unit.col]) {
                 const event = ongoingEvents[unit.col];
                 event.end = endDate;
+                event.isOngoing = !forceClose;
 
                 const diffMs = event.end - event.start;
                 const durationHrs = diffMs / (1000 * 60 * 60);
@@ -148,18 +198,40 @@ async function processCycle(startDate, endDate, label) {
             }
         });
 
-        // --- SORTING LOGIC ADDED HERE ---
-        // Sort by Unit Number (Ascending), then by Start Time
         allEvents.sort((a, b) => {
-            if (a.unitName !== b.unitName) {
-                return a.unitName - b.unitName; // Unit 1, then 2, then 3
-            }
-            return a.start - b.start; // Within same unit, sort by date
+            if (a.unitName !== b.unitName) return a.unitName - b.unitName;
+            return a.start - b.start;
         });
 
-        console.log(`   Found ${allEvents.length} events (Sorted by Unit).`);
+        // --- STEP E: COLLECT DAILY JSON LOGS (IN MEMORY) ---
+        if (generateDailyJson) {
+            const todayStr = formatDateString(new Date());
 
-        // 4. Update Excel
+            allEvents.forEach(event => {
+                const evtStartStr = formatDateString(event.start);
+                const evtEndStr = event.end ? formatDateString(event.end) : null;
+
+                if (evtStartStr === todayStr) {
+                    cycleDailyLogs.push({
+                        unit: event.unitName,
+                        type: 'OUT',
+                        date: evtStartStr,
+                        time: formatTime24(event.start)
+                    });
+                }
+
+                if (evtEndStr === todayStr && !event.isOngoing) {
+                    cycleDailyLogs.push({
+                        unit: event.unitName,
+                        type: 'IN',
+                        date: evtEndStr,
+                        time: formatTime24(event.end)
+                    });
+                }
+            });
+        }
+
+        // --- STEP F: UPDATE EXCEL ---
         const fileName = `Pulangi IV HEP - Outage Report_${targetYear}.xlsx`;
         const filePath = path.join(OUTPUT_DIR, fileName);
 
@@ -172,86 +244,97 @@ async function processCycle(startDate, endDate, label) {
         }
 
         const sheet = workbook.sheet(sheetIndex);
-        if (!sheet) {
-            console.error(`   [Error] Sheet index ${sheetIndex} missing.`);
-            return;
+        if (sheet) {
+            let currentRow = 10;
+            for (const event of allEvents) {
+                sheet.row(currentRow).cell(1).value(event.unitName);
+                // USE formatExcelDate for DD-MMM-YY format
+                sheet.row(currentRow).cell(3).value(formatExcelDate(event.start));
+                sheet.row(currentRow).cell(4).value(formatTimeString(event.start));
+
+                if (!event.isOngoing) {
+                    // USE formatExcelDate for DD-MMM-YY format
+                    sheet.row(currentRow).cell(5).value(formatExcelDate(event.end));
+                    sheet.row(currentRow).cell(6).value(formatTimeString(event.end));
+                } else {
+                    sheet.row(currentRow).cell(5).value(null);
+                    sheet.row(currentRow).cell(6).value(null);
+                }
+                currentRow = currentRow + 2;
+            }
+            await workbook.toFileAsync(filePath);
+            console.log(`   [Success] Updated Excel: ${fileName}`);
         }
-
-        // Clear Old Data (Columns A-F only)
-        // We scan 500 rows to ensure we remove any data from previous runs that might be obsolete
-        //sheet.range("A2:F500").value(null);
-
-        // Write New Data
-        let currentRow = 10; // Start data row
-        for (const event of allEvents) {
-            sheet.row(currentRow).cell(1).value(event.unitName);
-            sheet.row(currentRow).cell(3).value(formatDateString(event.start));
-            sheet.row(currentRow).cell(4).value(formatTimeString(event.start));
-            sheet.row(currentRow).cell(5).value(formatDateString(event.end));
-            sheet.row(currentRow).cell(6).value(formatTimeString(event.end));
-            //sheet.row(currentRow).cell(6).value(event.duration).style("numberFormat", "0.00");
-            currentRow = currentRow + 2;
-        }
-
-        await workbook.toFileAsync(filePath);
-        console.log(`   [Success] Updated ${fileName} (Sheet ${sheetIndex})`);
 
     } catch (error) {
         console.error('   [Error]', error);
     } finally {
         if (connection) await connection.end();
     }
+
+    return cycleDailyLogs;
 }
 
 // --- MAIN EXECUTION ---
 
 async function runDualUpdate() {
     const today = new Date();
+    const todayStr = formatDateString(today);
+
+    // Calculate Report Date (Yesterday)
+    const reportDate = new Date(today);
+    reportDate.setDate(today.getDate() - 1);
+    const reportDateStr = formatDateString(reportDate);
+
+    console.log(`[Job Start] Today: ${todayStr}, Report Date: ${reportDateStr}`);
+
+    // --- 1. MANAGE EXISTING JSON LOGS ---
+    let existingLogs = readJsonLog();
+
+    let filteredLogs = existingLogs.filter(log => {
+        return (log.date >= reportDateStr) && (log.date !== todayStr);
+    });
+
+    console.log(`[JSON Buffer] Retained ${filteredLogs.length} entries from previous days.`);
+
+    // --- 2. DETERMINE CYCLES ---
     const day = today.getDate();
     const month = today.getMonth();
     const year = today.getFullYear();
-
-    console.log(`[Job Start] Current Date: ${formatDateString(today)}`);
-
-    let prevCycleStart, prevCycleEnd;
-    let currCycleStart, currCycleEnd;
-
-    // LOGIC: Determine the two cycles
+    let prevCycleStart, prevCycleEnd, currCycleStart, currCycleEnd;
 
     if (day < 26) {
-        // SCENARIO: Today is Dec 20
-        // Previous Cycle: Oct 26 - Nov 26
-        // Current Cycle: Nov 26 - Dec 20 (Now)
-
         prevCycleStart = new Date(year, month - 2, 26, 0, 0, 0);
         prevCycleEnd = new Date(year, month - 1, 26, 0, 0, 0);
-
         currCycleStart = new Date(year, month - 1, 26, 0, 0, 0);
-        currCycleEnd = today; // Up to NOW
+        currCycleEnd = today;
     } else {
-        // SCENARIO: Today is Dec 27
-        // Previous Cycle: Nov 26 - Dec 26
-        // Current Cycle: Dec 26 - Dec 27 (Now)
-
         prevCycleStart = new Date(year, month - 1, 26, 0, 0, 0);
         prevCycleEnd = new Date(year, month, 26, 0, 0, 0);
-
         currCycleStart = new Date(year, month, 26, 0, 0, 0);
-        currCycleEnd = today; // Up to NOW
+        currCycleEnd = today;
     }
 
-    // 1. Process Previous Cycle (Full Month)
-    await processCycle(prevCycleStart, prevCycleEnd, "Previous Cycle");
+    // --- 3. RUN CYCLES & COLLECT NEW LOGS ---
+    const logs1 = await processCycle(prevCycleStart, prevCycleEnd, "Previous Cycle", true, true);
+    const logs2 = await processCycle(currCycleStart, currCycleEnd, "Current Active Cycle", false, true);
 
-    // 2. Process Current Cycle (Partial Month)
-    await processCycle(currCycleStart, currCycleEnd, "Current Active Cycle");
+    // --- 4. MERGE & SAVE ---
+    const finalLogs = [...filteredLogs, ...logs1, ...logs2];
+
+    finalLogs.sort((a, b) => {
+        if (a.date !== b.date) return a.date.localeCompare(b.date);
+        return a.time.localeCompare(b.time);
+    });
+
+    fs.writeFileSync(DAILY_LOG_FILE, JSON.stringify(finalLogs, null, 2));
+    console.log(`[JSON Buffer] Updated file with ${finalLogs.length} entries.`);
 
     console.log(`\n[Job Complete]`);
 }
 
 // --- SCHEDULE ---
-// Run at 00:00 (Midnight) and 12:00 (Noon)
-cron.schedule('1 0,12 * * *', () => {
+cron.schedule('*/5 * * * *', () => {
     runDualUpdate();
 });
 
