@@ -79,37 +79,54 @@ const DOWNTIME_UNITS = [
 
 // --- HELPER FUNCTIONS ---
 
-function getCycleContext(date) {
+function getPreviousCycleContext(date) {
     const day = date.getDate();
     const month = date.getMonth();
     const year = date.getFullYear();
 
-    let cycleStartYear = year;
-    let cycleStartMonth = month;
+    // Logic to calculate the "Current" Cycle based on today's date
+    let currentCycleStartYear = year;
+    let currentCycleStartMonth = month;
 
     if (day < 26) {
-        cycleStartMonth = month - 1;
-        if (cycleStartMonth < 0) {
-            cycleStartMonth = 11;
-            cycleStartYear = year - 1;
+        currentCycleStartMonth = month - 1;
+        if (currentCycleStartMonth < 0) {
+            currentCycleStartMonth = 11;
+            currentCycleStartYear = year - 1;
         }
     }
 
-    let sheetIndex, fileYear;
-    if (cycleStartMonth === 11) {
-        sheetIndex = 0;
-        fileYear = cycleStartYear + 1;
-    } else {
-        sheetIndex = cycleStartMonth + 1;
-        fileYear = cycleStartYear;
+    // *** MODIFICATION FOR PREVIOUS CYCLE ***
+    // Subtract 1 month from the Calculated Current Cycle Start
+    let prevCycleStartMonth = currentCycleStartMonth - 1;
+    let prevCycleStartYear = currentCycleStartYear;
+
+    if (prevCycleStartMonth < 0) {
+        prevCycleStartMonth = 11;
+        prevCycleStartYear = prevCycleStartYear - 1;
     }
 
-    const monthlyStartDate = new Date(cycleStartYear, cycleStartMonth, 26, 0, 0, 0);
-    const monthlyEndDate = new Date(cycleStartYear, cycleStartMonth + 1, 26, 0, 0, 0);
-    const monthlyEndDate_report = new Date(cycleStartYear, cycleStartMonth + 1, 25, 0, 0, 0);
+    // Determine Sheet Index and File Year based on this Previous Cycle
+    let sheetIndex, fileYear;
+    if (prevCycleStartMonth === 11) {
+        sheetIndex = 0; // Dec cycle belongs to Jan sheet of next year
+        fileYear = prevCycleStartYear + 1;
+    } else {
+        sheetIndex = prevCycleStartMonth + 1; // Jan(0) -> Sheet 1
+        fileYear = prevCycleStartYear;
+    }
 
-    const shiftStartDate = new Date(cycleStartYear, cycleStartMonth, 26, 12, 0, 0);
-    const shiftEndDate = new Date(cycleStartYear, cycleStartMonth + 1, 26, 0, 0, 0);
+    // Start: 26th of Previous Cycle Month
+    const monthlyStartDate = new Date(prevCycleStartYear, prevCycleStartMonth, 26, 0, 0, 0);
+    // End: 26th of Next Month (Start of next cycle)
+    const monthlyEndDate = new Date(prevCycleStartYear, prevCycleStartMonth + 1, 26, 0, 0, 0);
+    // Report End: 25th
+    const monthlyEndDate_report = new Date(prevCycleStartYear, prevCycleStartMonth + 1, 25, 0, 0, 0);
+
+    const shiftStartDate = new Date(prevCycleStartYear, prevCycleStartMonth, 26, 12, 0, 0);
+    const shiftEndDate = new Date(prevCycleStartYear, prevCycleStartMonth + 1, 26, 0, 0, 0);
+
+    console.log(`   [Context] Generating for Previous Cycle: ${monthlyStartDate.toDateString()} - ${monthlyEndDate.toDateString()}`);
 
     return {
         sheetIndex, fileYear,
@@ -118,7 +135,7 @@ function getCycleContext(date) {
     };
 }
 
-// ** NEW HELPER **: Creates formula with full absolute path based on directory
+// Helper: Creates formula with full absolute path based on directory
 function createAbsFormula(directory, filename, sheetName, cellRef) {
     return `'${directory}/[${filename}]${sheetName}'!${cellRef}`;
 }
@@ -126,14 +143,15 @@ function createAbsFormula(directory, filename, sheetName, cellRef) {
 // --- CORE TASK ---
 
 async function generateMonthlySummary() {
-    console.log(`\n[Monthly Summary] Starting generation...`);
+    console.log(`\n[Monthly Summary] Starting generation for PREVIOUS MONTH...`);
 
     const today = new Date();
+    // ** CHANGED FUNCTION CALL **
     const {
         sheetIndex, fileYear,
         monthlyStartDate, monthlyEndDate, monthlyEndDate_report,
         shiftStartDate, shiftEndDate
-    } = getCycleContext(today);
+    } = getPreviousCycleContext(today);
 
     // File Names
     const monthlyFilename = getMonthlyLogFilename(fileYear);
@@ -141,10 +159,8 @@ async function generateMonthlySummary() {
     const downtimeFilename = getDowntimeLogFilename(fileYear);
 
     // Full Paths
-    // Monthly & Shift logs are in RAW_DATA_DIR
     const monthlyPath = path.join(RAW_DATA_DIR, monthlyFilename);
     const shiftPath = path.join(RAW_DATA_DIR, shiftFilename);
-    // Downtime log is in REPORTS_DIR
     const downtimePath = path.join(REPORTS_DIR, downtimeFilename);
 
     const summaryFilename = `Pulangi IV HEP - Monthly Operations Report_${fileYear}.xlsx`;
@@ -168,7 +184,7 @@ async function generateMonthlySummary() {
                 const dataEndRow = MONTHLY_START_ROW + totalHours;
 
                 const summaryMaxRow = dataEndRow + 1;
-                const summaryMinRow = dataEndRow + 3; // +3 as per your logic
+                const summaryMinRow = dataEndRow + 3;
 
                 // 1. Standard Columns
                 MONTHLY_DATA_POINTS.forEach(point => {
@@ -179,7 +195,7 @@ async function generateMonthlySummary() {
                 });
 
                 // 2. Special Column Q
-                const fQMin = createAbsFormula(RAW_DATA_DIR, monthlyFilename, sheetName, `${MONTHLY_COL_Q.colLetter}${MONTHLY_START_ROW}`);
+                const fQMin = createAbsFormula(RAW_DATA_DIR, monthlyFilename, sheetName, `${MONTHLY_COL_Q.colLetter}${MONTHLY_START_ROW + 1}`);
                 const fQMax = createAbsFormula(RAW_DATA_DIR, monthlyFilename, sheetName, `${MONTHLY_COL_Q.colLetter}${dataEndRow}`);
                 monthlyFormulas.push({ cell: MONTHLY_COL_Q.destCellMin, formula: fQMin });
                 monthlyFormulas.push({ cell: MONTHLY_COL_Q.destCellMax, formula: fQMax });
@@ -284,8 +300,11 @@ async function generateMonthlySummary() {
 }
 
 // --- SCHEDULE ---
+// Run immediately on start
 generateMonthlySummary();
 
+// Schedule: Run on the 26th of every month at 12:01 PM
+// This ensures the previous cycle is fully complete.
 cron.schedule('1 12 26 * *', () => {
     generateMonthlySummary();
 });
