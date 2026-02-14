@@ -16,6 +16,7 @@ var reboot_counter = 180; //30mins
 var query_counter = 0;
 var send_loop;
 var rawdata = [0, 0, 0];
+var opening = [0, 0, 0];
   
 /**Startup I2C **/
 const i2c = require('i2c-bus');
@@ -123,24 +124,66 @@ clientWebSocket.on('connect', function(connection)
 		{
 			if (flag == 1)
 			{
-				var d = new Date();
-				actdtime = Date.now().toString();
-				var client_data = {
-					id: "pulangi",
-					unitnum: 0,
-					tag: 1,
-					mw: null,
-					mvar: null,
-					energy: null,
-					freq: null,
-					wlevel: wlevel,
-					temp: 0,
-					actTime: d.toTimeString().split(' ')[0],
-					mydate: d.toISOString().split('T')[0]
-					};
-				connection.send(JSON.stringify(client_data));
-				console.log(JSON.stringify(client_data));
-				flag = 0;
+				if (query_counter == 0){
+					var d = new Date();
+					actdtime = Date.now().toString();
+					var client_data = {
+						id: "pulangi",
+						unitnum: 1,
+						tag: 1,
+						mw: null,
+						mvar: null,
+						energy: null,
+						freq: null,
+						opening: opening[query_counter],
+						temp: 0,
+						actTime: d.toTimeString().split(' ')[0],
+						mydate: d.toISOString().split('T')[0]
+						};
+					connection.send(JSON.stringify(client_data));
+					console.log(JSON.stringify(client_data));
+					flag = 0;
+				}else if (query_counter == 1){
+					var d = new Date();
+					actdtime = Date.now().toString();
+					var client_data = {
+						id: "pulangi",
+						unitnum: 2,
+						tag: 1,
+						mw: null,
+						mvar: null,
+						energy: null,
+						freq: null,
+						opening: opening[query_counter],
+						temp: 0,
+						actTime: d.toTimeString().split(' ')[0],
+						mydate: d.toISOString().split('T')[0]
+						};
+					connection.send(JSON.stringify(client_data));
+					console.log(JSON.stringify(client_data));
+					flag = 0;
+				}else if (query_counter == 2){
+					var d = new Date();
+					actdtime = Date.now().toString();
+					var client_data = {
+						id: "pulangi",
+						unitnum: 3,
+						tag: 1,
+						mw: null,
+						mvar: null,
+						energy: null,
+						freq: null,
+						opening: opening[query_counter],
+						temp: 0,
+						actTime: d.toTimeString().split(' ')[0],
+						mydate: d.toISOString().split('T')[0]
+						};
+					connection.send(JSON.stringify(client_data));
+					console.log(JSON.stringify(client_data));
+					flag = 0;
+					query_counter = -1;
+				}
+				query_counter++;
 			}
 		}
 	},5000);
@@ -191,6 +234,7 @@ setInterval(function()
   	  i2c1.i2cWriteSync(DS1115_ADDR,3,Buffer.from([CONFIG_REG, mux[i], 0xA3])); 
       rawdata[i] = i2c1.readWordSync(DS1115_ADDR, CONVERSION_REG);
       voltage[i] = toVoltage(rawdata[i]);
+	  opening[i] = voltage[i]*10; //percent opening
       console.log(voltage[i] + 'V');
       i2c1.closeSync();
     },500);
