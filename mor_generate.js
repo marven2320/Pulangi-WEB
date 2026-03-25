@@ -146,7 +146,6 @@ async function generateMonthlySummary() {
     console.log(`\n[Monthly Summary] Starting generation for PREVIOUS MONTH...`);
 
     const today = new Date();
-    // ** CHANGED FUNCTION CALL **
     const {
         sheetIndex, fileYear,
         monthlyStartDate, monthlyEndDate, monthlyEndDate_report,
@@ -248,7 +247,6 @@ async function generateMonthlySummary() {
                 DOWNTIME_UNITS.forEach(unit => {
                     const sourceRow = unit.sourceFixedRow;
                     DOWNTIME_METRICS.forEach(metric => {
-                        // ** USING REPORTS_DIR HERE **
                         const formula = createAbsFormula(REPORTS_DIR, downtimeFilename, sheetName, `${metric.sourceCol}${sourceRow}`);
                         const destCell = `${unit.destCol}${metric.destRow}`;
                         downtimeFormulas.push({ cell: destCell, formula: formula });
@@ -263,7 +261,13 @@ async function generateMonthlySummary() {
         console.log(`   [Generating] Summary Report...`);
 
         let destWb;
-        if (fs.existsSync(SUMMARY_TEMPLATE)) {
+        // ** MODIFIED LOGIC HERE **
+        // Check if the output file already exists. If yes, update it. If not, use the template.
+        if (fs.existsSync(summaryPath)) {
+            console.log(`   [Info] Output file exists. Updating: ${summaryFilename}`);
+            destWb = await XlsxPopulate.fromFileAsync(summaryPath);
+        } else if (fs.existsSync(SUMMARY_TEMPLATE)) {
+            console.log(`   [Info] Creating new file from template: ${summaryFilename}`);
             destWb = await XlsxPopulate.fromFileAsync(SUMMARY_TEMPLATE);
         } else {
             console.error(`   [Error] Template file missing: ${SUMMARY_TEMPLATE}`);
@@ -272,7 +276,7 @@ async function generateMonthlySummary() {
 
         const destSheet = destWb.sheet(sheetIndex);
         if (!destSheet) {
-            console.error(`   [Error] Sheet index ${sheetIndex} does not exist in the template.`);
+            console.error(`   [Error] Sheet index ${sheetIndex} does not exist in the workbook.`);
             return;
         }
 
@@ -284,8 +288,10 @@ async function generateMonthlySummary() {
             destSheet.cell(item.cell).formula(item.formula).style("numberFormat", "0.00");
         });
 
-        destSheet.cell("H7").value(monthlyStartDate.toLocaleDateString());
-        destSheet.cell("K7").value(monthlyEndDate_report.toLocaleDateString());
+        // Use standard JS Date string conversion based on locale if preferred, 
+        // or formatting it exactly if you have a specific requirement (like the dd-MMM-yy from previous files).
+        destSheet.cell("H7").value(monthlyStartDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }).replace(/ /g, '-'));
+        destSheet.cell("K7").value(monthlyEndDate_report.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }).replace(/ /g, '-'));
 
         //Forebay lookup
         destSheet.cell("L41").formula(`VLOOKUP(L40, '${RAW_DATA_DIR}/[FOREBAY.xlsx]ELEV'!$B$7:$C$137,2,FALSE)`);
@@ -303,9 +309,8 @@ async function generateMonthlySummary() {
 // Run immediately on start
 generateMonthlySummary();
 
-// Schedule: Run on the 26th of every month at 12:01 PM
-// This ensures the previous cycle is fully complete.
-cron.schedule('1 12 26 * *', () => {
+// Schedule: Run on the 26th of every month at 12:01 AM
+cron.schedule('1 0 26 * *', () => {
     generateMonthlySummary();
 });
 
