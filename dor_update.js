@@ -2,6 +2,7 @@ const mysql = require('mysql2/promise');
 const cron = require('node-cron');
 const path = require('path');
 const fs = require('fs');
+const XlsxPopulate = require('xlsx-populate'); 
 
 const dbConfig = {
     host: 'localhost',
@@ -22,9 +23,12 @@ if (!fs.existsSync(OUTPUT_DIR)) {
 // --- HELPER FUNCTIONS ---
 
 const formatDate = (date) => date.toLocaleDateString('en-CA');
-const formatQueryTime = (date) => {
-    const hh = String(date.getHours()).padStart(2, '0');
-    return `${hh}:00:00`;
+
+// Helper to get time string "HH:MM:SS"
+const formatTimeWithSeconds = (date, secondsOffset = 0) => {
+    const d = new Date(date);
+    d.setSeconds(d.getSeconds() + secondsOffset);
+    return d.toTimeString().split(' ')[0]; // Returns "HH:MM:SS"
 };
 
 const toFixedNumber = (val) => {
@@ -34,7 +38,7 @@ const toFixedNumber = (val) => {
 
 function getSheetContext(date) {
     const day = date.getDate();
-    const month = date.getMonth();
+    const month = date.getMonth(); 
     const year = date.getFullYear();
 
     if (day >= 26) {
@@ -63,19 +67,20 @@ function saveBuffer(data) {
     fs.writeFileSync(BUFFER_FILE, JSON.stringify(data, null, 2));
 }
 
-// --- THE LOGGING TASK ---
+// --- DB FETCHING HELPER (With Retry Logic) ---
+// Fetches a single hour of data. If null, retries by incrementing seconds.
+async function fetchDataForDate(connection, dateObj) {
+    const dateStr = formatDate(dateObj);
+    
+    // We try from 0 to 59 seconds
+    const MAX_RETRIES = 60; 
 
-async function logToBuffer() {
-    const now = new Date();
-    const currentDateStr = formatDate(now);
-    const currentTimeStr = formatQueryTime(now);
+    for (let sec = 0; sec < MAX_RETRIES; sec++) {
+        const timeStr = formatTimeWithSeconds(dateObj, sec);
 
-    console.log(`\n[Logger] Fetching DB Data for: ${currentDateStr} ${currentTimeStr}`);
+        // Only log the retry if it's not the first attempt
+        if (sec > 0) process.stdout.write(`.`); 
 
-    let connection;
-
-    try {
-        // 1. Fetch from DB
         const query = `
             SELECT 
                 mw1, (vab1+vbc1+vca1)/3 as v1, (pfa1+pfb1+pfc1)/3 as pf1, mvar1, 
@@ -87,58 +92,175 @@ async function logToBuffer() {
             LIMIT 1
         `;
 
+        const [rows] = await connection.execute(query, [dateStr, timeStr]);
+
+        if (rows.length > 0) {
+            if (sec > 0) console.log(` Found at ${timeStr}`); // Log success after retry
+            
+            const rawValues = [
+                rows[0].mw1, rows[0].v1, rows[0].pf1, rows[0].mvar1,
+                rows[0].mw2, rows[0].v2, rows[0].pf2, rows[0].mvar2,
+                rows[0].mw3, rows[0].v3, rows[0].pf3, rows[0].mvar3,
+                rows[0].mw, rows[0].mvar
+            ];
+            return rawValues.map(val => toFixedNumber(val));
+        }
+    }
+
+    // If loop finishes without finding data
+    if (MAX_RETRIES > 1) console.log(" No data found within search window.");
+    return null;
+}
+
+// --- THE LOGGING TASK ---
+
+async function logToBuffer() {
+    const now = new Date();
+    // Round down to current hour 00:00:00
+    now.setMinutes(0, 0, 0); 
+
+    const currentDateStr = formatDate(now);
+    // Initial display only shows the hour base
+    const displayTime = formatTimeWithSeconds(now, 0); 
+
+    console.log(`\n[Logger] Started. Current Target: ${currentDateStr} ${displayTime}`);
+
+    let connection;
+
+    try {
         connection = await mysql.createConnection(dbConfig);
-        const [rows] = await connection.execute(query, [currentDateStr, currentTimeStr]);
-
-        const rawValues = rows.length > 0 ? [
-            rows[0].mw1, rows[0].v1, rows[0].pf1, rows[0].mvar1,
-            rows[0].mw2, rows[0].v2, rows[0].pf2, rows[0].mvar2,
-            rows[0].mw3, rows[0].v3, rows[0].pf3, rows[0].mvar3,
-            rows[0].mw, rows[0].mvar
-        ] : new Array(14).fill('');
-
-        const formattedValues = rawValues.map(val => toFixedNumber(val));
-
-        // 2. Calculate Destination Context
+        
+        // --- PART 1: FETCH CURRENT HOUR (Standard) ---
+        const currentData = await fetchDataForDate(connection, now);
+        
         const { sheetIndex, targetYear } = getSheetContext(now);
         const fileName = `Pulangi IV HEP - Operational Highlights - RAW_${targetYear}.xlsx`;
         const filePath = path.join(OUTPUT_DIR, fileName);
-
+        
         const cycleStartDate = new Date(targetYear, sheetIndex - 1, 26, 0, 0, 0);
         const diffMs = now - cycleStartDate;
         const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
 
-        if (diffHours < 0) {
-            console.warn("[Logger] Time is before cycle start. Skipping.");
-            return;
+        let buffer = loadBuffer();
+
+        if (diffHours >= 0 && currentData) {
+            const targetRow = 4 + diffHours;
+            
+            // Add current hour to buffer
+            const newEntry = {
+                id: `${targetYear}-${sheetIndex}-${targetRow}`, // ID to prevent dupes in buffer
+                targetYear, filePath, sheetIndex, targetRow,
+                values: currentData,
+                timestamp: new Date().toISOString()
+            };
+
+            // Remove if exists, then push
+            buffer = buffer.filter(i => i.id !== newEntry.id);
+            buffer.push(newEntry);
+            console.log(`[Logger] Current hour buffered.`);
+
+            // =========================================================
+            // *** NEW BOUNDARY LOGIC ***
+            // Check if it is the start of a new cycle (26th exactly at 00:00)
+            // =========================================================
+            if (now.getDate() === 26 && now.getHours() === 0) {
+                // Determine the context for 1 hour ago (which falls in the PREVIOUS cycle)
+                const prevHourDate = new Date(now);
+                prevHourDate.setHours(now.getHours() - 1);
+                
+                const prevContext = getSheetContext(prevHourDate);
+                const prevFileName = `Pulangi IV HEP - Operational Highlights - RAW_${prevContext.targetYear}.xlsx`;
+                const prevFilePath = path.join(OUTPUT_DIR, prevFileName);
+                
+                // Calculate the row for the previous cycle
+                const prevCycleStart = new Date(prevContext.targetYear, prevContext.sheetIndex - 1, 26, 0, 0, 0);
+                const prevDiffMs = now - prevCycleStart;
+                const prevDiffHours = Math.floor(prevDiffMs / (1000 * 60 * 60));
+                const prevTargetRow = 4 + prevDiffHours;
+
+                const prevEntry = {
+                    id: `${prevContext.targetYear}-${prevContext.sheetIndex}-${prevTargetRow}`,
+                    targetYear: prevContext.targetYear,
+                    filePath: prevFilePath,
+                    sheetIndex: prevContext.sheetIndex,
+                    targetRow: prevTargetRow,
+                    values: currentData,
+                    timestamp: new Date().toISOString()
+                };
+
+                buffer = buffer.filter(i => i.id !== prevEntry.id);
+                buffer.push(prevEntry);
+                console.log(`[Logger] Cycle boundary detected. End of month buffered at Row ${prevTargetRow} of Sheet Index ${prevContext.sheetIndex}.`);
+            }
         }
-        const targetRow = 4 + diffHours;
 
-        // 3. Save to Buffer
-        const buffer = loadBuffer();
+        // --- PART 2: BACKFILL MISSING DATA (Scan Excel) ---
+        // We only attempt this if the file exists.
+        if (fs.existsSync(filePath)) {
+            console.log(`[Backfill] Scanning ${fileName} for blanks...`);
+            
+            try {
+                // Attempt to read Excel (This might fail if locked, which is fine)
+                const workbook = await XlsxPopulate.fromFileAsync(filePath);
+                const sheet = workbook.sheet(sheetIndex);
 
-        const newEntry = {
-            id: Date.now(), // Unique ID for tracking in merge script
-            targetYear,
-            filePath,
-            sheetIndex,
-            targetRow,
-            values: formattedValues,
-            timestamp: new Date().toISOString()
-        };
+                if (sheet) {
+                    const currentTargetRow = 4 + diffHours;
+                    
+                    // Scan from Row 4 up to Current Row
+                    for (let r = 4; r <= currentTargetRow; r++) {
+                        
+                        // Check if cell C (Column 3) is empty. (MW1 column)
+                        const cellVal = sheet.row(r).cell(3).value();
+                        
+                        // Check if it's "blank" (undefined, null, or empty string)
+                        if (cellVal === undefined || cellVal === null || cellVal === '') {
+                            
+                            // Reconstruct Date for this row
+                            const rowDate = new Date(cycleStartDate);
+                            rowDate.setHours(cycleStartDate.getHours() + (r - 4));
 
-        // Update existing entry if same slot, otherwise push new
-        const uniqueBuffer = buffer.filter(item =>
-            !(item.filePath === filePath && item.sheetIndex === sheetIndex && item.targetRow === targetRow)
-        );
+                            const rowId = `${targetYear}-${sheetIndex}-${r}`;
 
-        uniqueBuffer.push(newEntry);
-        saveBuffer(uniqueBuffer);
+                            // Check 1: Is it already in the buffer?
+                            const inBuffer = buffer.some(i => i.id === rowId);
 
-        console.log(`[Logger] Data buffered. Total pending entries: ${uniqueBuffer.length}`);
+                            if (!inBuffer) {
+                                console.log(`[Backfill] Found gap at Row ${r} (${rowDate.toLocaleString()}). Searching DB...`);
+                                
+                                // Check 2: Fetch from DB (With Retry Loop)
+                                const missedData = await fetchDataForDate(connection, rowDate);
+
+                                if (missedData) {
+                                    const backfillEntry = {
+                                        id: rowId,
+                                        targetYear, filePath, sheetIndex, 
+                                        targetRow: r,
+                                        values: missedData,
+                                        timestamp: new Date().toISOString()
+                                    };
+                                    buffer.push(backfillEntry);
+                                    console.log(`[Backfill] Recovered data for Row ${r}.`);
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (fileErr) {
+                if (fileErr.code === 'EBUSY' || fileErr.code === 'EPERM' || fileErr.code === 'EACCES') {
+                    console.warn(`[Backfill] Skipped scan: Excel file is OPEN/LOCKED.`);
+                } else {
+                    console.error(`[Backfill] Error reading Excel:`, fileErr.message);
+                }
+            }
+        }
+
+        // --- SAVE BUFFER ---
+        saveBuffer(buffer);
+        console.log(`[Logger] Complete. Buffer size: ${buffer.length}`);
 
     } catch (error) {
-        console.error('[Logger] Error:', error);
+        console.error('[Logger] Critical Error:', error);
     } finally {
         if (connection) await connection.end();
     }
