@@ -34,7 +34,7 @@ const dbConfig = {
 // Keep this as YYYY-MM-DD for Database and Logic (Sorting/Filtering)
 const formatDateString = (date) => date.toLocaleDateString('en-CA');
 
-// ** NEW: Specific format for Excel Output (dd-MMM-yy) **
+// Specific format for Excel Output (dd-MMM-yy)
 const formatExcelDate = (date) => {
     return date.toLocaleDateString('en-GB', {
         day: '2-digit',
@@ -248,12 +248,10 @@ async function processCycle(startDate, endDate, label, forceClose = false, gener
             let currentRow = 10;
             for (const event of allEvents) {
                 sheet.row(currentRow).cell(1).value(event.unitName);
-                // USE formatExcelDate for DD-MMM-YY format
                 sheet.row(currentRow).cell(3).value(formatExcelDate(event.start));
                 sheet.row(currentRow).cell(4).value(formatTimeString(event.start));
 
                 if (!event.isOngoing) {
-                    // USE formatExcelDate for DD-MMM-YY format
                     sheet.row(currentRow).cell(5).value(formatExcelDate(event.end));
                     sheet.row(currentRow).cell(6).value(formatTimeString(event.end));
                 } else {
@@ -277,7 +275,7 @@ async function processCycle(startDate, endDate, label, forceClose = false, gener
 
 // --- MAIN EXECUTION ---
 
-async function runDualUpdate() {
+async function runUpdate() {
     const today = new Date();
     const todayStr = formatDateString(today);
 
@@ -297,30 +295,25 @@ async function runDualUpdate() {
 
     console.log(`[JSON Buffer] Retained ${filteredLogs.length} entries from previous days.`);
 
-    // --- 2. DETERMINE CYCLES ---
+    // --- 2. DETERMINE CURRENT CYCLE ONLY ---
     const day = today.getDate();
     const month = today.getMonth();
     const year = today.getFullYear();
-    let prevCycleStart, prevCycleEnd, currCycleStart, currCycleEnd;
+    let currCycleStart, currCycleEnd;
 
     if (day < 26) {
-        prevCycleStart = new Date(year, month - 2, 26, 0, 0, 0);
-        prevCycleEnd = new Date(year, month - 1, 26, 0, 0, 0);
         currCycleStart = new Date(year, month - 1, 26, 0, 0, 0);
         currCycleEnd = today;
     } else {
-        prevCycleStart = new Date(year, month - 1, 26, 0, 0, 0);
-        prevCycleEnd = new Date(year, month, 26, 0, 0, 0);
         currCycleStart = new Date(year, month, 26, 0, 0, 0);
         currCycleEnd = today;
     }
 
-    // --- 3. RUN CYCLES & COLLECT NEW LOGS ---
-    const logs1 = await processCycle(prevCycleStart, prevCycleEnd, "Previous Cycle", true, true);
-    const logs2 = await processCycle(currCycleStart, currCycleEnd, "Current Active Cycle", false, true);
+    // --- 3. RUN CURRENT CYCLE & COLLECT NEW LOGS ---
+    const currentLogs = await processCycle(currCycleStart, currCycleEnd, "Current Active Cycle", false, true);
 
     // --- 4. MERGE & SAVE ---
-    const finalLogs = [...filteredLogs, ...logs1, ...logs2];
+    const finalLogs = [...filteredLogs, ...currentLogs];
 
     finalLogs.sort((a, b) => {
         if (a.date !== b.date) return a.date.localeCompare(b.date);
@@ -334,9 +327,9 @@ async function runDualUpdate() {
 }
 
 // --- SCHEDULE ---
-cron.schedule('*/5 * * * *', () => {
-    runDualUpdate();
+cron.schedule('*/1 * * * *', () => {
+    runUpdate();
 });
 
 // Run
-runDualUpdate();
+runUpdate();
