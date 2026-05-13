@@ -33,6 +33,15 @@ function createAbsFormula(directory, filename, sheetName, cellRef) {
     return `'${directory}/[${filename}]${sheetName}'!${cellRef}`;
 }
 
+// ** NEW HELPER **: Formats date to dd-Mmm-yyyy (e.g., 26-Jan-2026)
+function formatExcelDate(date) {
+    return date.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric' // 'numeric' outputs 4-digit year
+    }).replace(/ /g, '-');
+}
+
 // --- THE TASK ---
 
 async function generateDailyReport() {
@@ -52,6 +61,7 @@ async function generateDailyReport() {
         // 1. Identify Source File Context
         const { sheetIndex, targetYear } = getSheetContext(targetDate);
         const sourceFilename = `Pulangi IV HEP - Operational Highlights - RAW_${targetYear}.xlsx`;
+        const outageFilename = `Pulangi IV HEP - Outage Report_${targetYear}.xlsx`;
         // Reads from rawdata folder
         const sourcePath = path.join(MONTHLY_LOG_DIR, sourceFilename);
 
@@ -140,9 +150,20 @@ async function generateDailyReport() {
         console.log(createAbsFormula(MONTHLY_LOG_DIR, sourceFilename, sourceSheetName, cellSpillage));
         destSheet.cell("Q47").formula(`SUM('${MONTHLY_LOG_DIR}/[${sourceFilename}]${sourceSheetName}'!${cellSpillage})`);
 
+        //OUTAGE IN/OUT
+        //1
+        destSheet.cell("H44").formula(`IF(INDIRECT(ADDRESS(MATCH(1,'${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}'!A10:A1000,1)+9,3,1,1,"${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}"))=H13,INDIRECT(ADDRESS(MATCH(1,'${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}'!A10:A1000,1)+9,4,1,1,"${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}")),"")`);
+        destSheet.cell("J44").formula(`IF(INDIRECT(ADDRESS(MATCH(1,'${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}'!A10:A1000,1)+9,5,1,1,"${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}"))=H13,INDIRECT(ADDRESS(MATCH(1,'${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}'!A10:A1000,1)+9,6,1,1,"${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}")),"")`);
+        //2
+        destSheet.cell("H45").formula(`IF(INDIRECT(ADDRESS(MATCH(2,'${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}'!A10:A1000,1)+9,3,1,1,"${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}"))=H13,INDIRECT(ADDRESS(MATCH(2,'${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}'!A10:A1000,1)+9,4,1,1,"${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}")),"")`);
+        destSheet.cell("J45").formula(`IF(INDIRECT(ADDRESS(MATCH(2,'${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}'!A10:A1000,1)+9,5,1,1,"${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}"))=H13,INDIRECT(ADDRESS(MATCH(2,'${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}'!A10:A1000,1)+9,6,1,1,"${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}")),"")`);
+        //3
+        destSheet.cell("H46").formula(`IF(INDIRECT(ADDRESS(MATCH(3,'${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}'!A10:A1000,1)+9,3,1,1,"${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}"))=H13,INDIRECT(ADDRESS(MATCH(3,'${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}'!A10:A1000,1)+9,4,1,1,"${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}")),"")`);
+        destSheet.cell("J46").formula(`IF(INDIRECT(ADDRESS(MATCH(3,'${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}'!A10:A1000,1)+9,5,1,1,"${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}"))=H13,INDIRECT(ADDRESS(MATCH(3,'${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}'!A10:A1000,1)+9,6,1,1,"${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}")),"")`);
+
         // ============================================================
         //  NEW SECTION: REFERENCE DATA FROM SHIFT LOGGER (12AM & 12NN)
-        // ============================================================
+        // ============================================================)
 
         const shiftLogFilename = `Pulangi IV HEP - Generation Data - RAW_${targetYear}.xlsx`;
         // Reads from rawdata folder
@@ -194,11 +215,12 @@ async function generateDailyReport() {
                 destSheet.cell("E46").formula(createAbsFormula(MONTHLY_LOG_DIR, shiftLogFilename, shiftSheetName, `O${noonRow}`));
 
                 //Write dates
-                destSheet.cell("Q5").value(dateStr);
-                destSheet.cell("H13").value(dateStr);
-                const currentDate = new Date(today);
-                const currentdateStr = currentDate.toLocaleDateString('en-CA');
-                destSheet.cell("G54").value(currentdateStr);
+                const reportDateFormatted = formatExcelDate(targetDate);
+                const todayFormatted = formatExcelDate(today);
+
+                destSheet.cell("Q5").value(reportDateFormatted);
+                destSheet.cell("H13").value(reportDateFormatted);
+                destSheet.cell("G54").value(todayFormatted);
 
                 console.log(`[Success] Added Shift References for Rows ${midnightRow} (12AM) and ${noonRow} (12NN)`);
             } else {
