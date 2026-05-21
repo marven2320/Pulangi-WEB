@@ -8,6 +8,8 @@ const REPORTS_DIR = path.join(__dirname, 'reports');
 // Source files are in 'rawdata'
 const MONTHLY_LOG_DIR = path.join(__dirname, 'rawdata');
 const DAILY_TEMPLATE_PATH = path.join(__dirname, 'templates', 'Pulangi IV HEP - Daily Operations Report Template.xlsx');
+// Path to the Daily Outage Log JSON
+const DAILY_OUTAGE_LOG_PATH = path.join(REPORTS_DIR, 'daily_outage_log.json');
 
 // Create output directory if it doesn't exist
 if (!fs.existsSync(REPORTS_DIR)) fs.mkdirSync(REPORTS_DIR);
@@ -27,19 +29,63 @@ function getSheetContext(date) {
     }
 }
 
-// ** NEW HELPER **: Creates formula with full absolute path
+// Creates formula with full absolute path
 // Returns: 'C:\Path\To\rawdata\[File.xlsx]Sheet'!Cell
 function createAbsFormula(directory, filename, sheetName, cellRef) {
     return `'${directory}/[${filename}]${sheetName}'!${cellRef}`;
 }
 
-// ** NEW HELPER **: Formats date to dd-Mmm-yyyy (e.g., 26-Jan-2026)
+// Formats date to dd-Mmm-yyyy (e.g., 26-Jan-2026)
 function formatExcelDate(date) {
     return date.toLocaleDateString('en-GB', {
         day: '2-digit',
         month: 'short',
-        year: 'numeric' // 'numeric' outputs 4-digit year
+        year: 'numeric'
     }).replace(/ /g, '-');
+}
+
+// Convert "14:30:00" to "02:30 PM"
+function formatTimeAMPM(time24) {
+    if (!time24) return null;
+    const [hours, minutes] = time24.split(':');
+    let h = parseInt(hours, 10);
+    const m = minutes;
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12;
+    h = h ? h : 12; // the hour '0' should be '12'
+    return `${h.toString().padStart(2, '0')}:${m} ${ampm}`;
+}
+
+// Read Outage Logs from JSON and filter by Date
+function getLatestOutageTimes(targetDateStr) {
+    if (!fs.existsSync(DAILY_OUTAGE_LOG_PATH)) return {};
+
+    try {
+        const rawData = fs.readFileSync(DAILY_OUTAGE_LOG_PATH);
+        const logs = JSON.parse(rawData);
+
+        const unitTimes = {
+            1: { out: null, in: null },
+            2: { out: null, in: null },
+            3: { out: null, in: null }
+        };
+
+        // Filter for events matching the TARGET DATE
+        logs.forEach(log => {
+            if (log.date === targetDateStr && unitTimes[log.unit]) {
+                if (log.type === 'OUT') {
+                    unitTimes[log.unit].out = formatTimeAMPM(log.time);
+                } else if (log.type === 'IN') {
+                    unitTimes[log.unit].in = formatTimeAMPM(log.time);
+                }
+            }
+        });
+
+        return unitTimes;
+    } catch (e) {
+        console.error("[Error] Failed to read outage log:", e.message);
+        return {};
+    }
 }
 
 // --- THE TASK ---
@@ -51,6 +97,7 @@ async function generateDailyReport() {
     const targetDate = new Date(today);
     targetDate.setDate(today.getDate() - 1);
 
+    // Keep en-CA (YYYY-MM-DD) strictly for querying the JSON and generating the File Name
     const dateStr = targetDate.toLocaleDateString('en-CA');
     const outputFilename = `Pulangi IV HEP - Daily Operations Report_${dateStr}.xlsx`;
     const outputPath = path.join(REPORTS_DIR, outputFilename);
@@ -61,7 +108,6 @@ async function generateDailyReport() {
         // 1. Identify Source File Context
         const { sheetIndex, targetYear } = getSheetContext(targetDate);
         const sourceFilename = `Pulangi IV HEP - Operational Highlights - RAW_${targetYear}.xlsx`;
-        const outageFilename = `Pulangi IV HEP - Outage Report_${targetYear}.xlsx`;
         // Reads from rawdata folder
         const sourcePath = path.join(MONTHLY_LOG_DIR, sourceFilename);
 
@@ -147,23 +193,36 @@ async function generateDailyReport() {
         //H2O SPILLAGE
         sourceRow--;
         const cellSpillage = `AW${sourceRowSpillage}:AW${sourceRow}`;
-        console.log(createAbsFormula(MONTHLY_LOG_DIR, sourceFilename, sourceSheetName, cellSpillage));
         destSheet.cell("Q47").formula(`SUM('${MONTHLY_LOG_DIR}/[${sourceFilename}]${sourceSheetName}'!${cellSpillage})`);
 
-        //OUTAGE IN/OUT
-        //1
-        destSheet.cell("H44").formula(`IF(INDIRECT(ADDRESS(MATCH(1,'${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}'!A10:A1000,1)+9,3,1,1,"${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}"))=H13,INDIRECT(ADDRESS(MATCH(1,'${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}'!A10:A1000,1)+9,4,1,1,"${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}")),"")`);
-        destSheet.cell("J44").formula(`IF(INDIRECT(ADDRESS(MATCH(1,'${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}'!A10:A1000,1)+9,5,1,1,"${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}"))=H13,INDIRECT(ADDRESS(MATCH(1,'${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}'!A10:A1000,1)+9,6,1,1,"${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}")),"")`);
-        //2
-        destSheet.cell("H45").formula(`IF(INDIRECT(ADDRESS(MATCH(2,'${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}'!A10:A1000,1)+9,3,1,1,"${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}"))=H13,INDIRECT(ADDRESS(MATCH(2,'${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}'!A10:A1000,1)+9,4,1,1,"${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}")),"")`);
-        destSheet.cell("J45").formula(`IF(INDIRECT(ADDRESS(MATCH(2,'${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}'!A10:A1000,1)+9,5,1,1,"${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}"))=H13,INDIRECT(ADDRESS(MATCH(2,'${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}'!A10:A1000,1)+9,6,1,1,"${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}")),"")`);
-        //3
-        destSheet.cell("H46").formula(`IF(INDIRECT(ADDRESS(MATCH(3,'${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}'!A10:A1000,1)+9,3,1,1,"${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}"))=H13,INDIRECT(ADDRESS(MATCH(3,'${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}'!A10:A1000,1)+9,4,1,1,"${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}")),"")`);
-        destSheet.cell("J46").formula(`IF(INDIRECT(ADDRESS(MATCH(3,'${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}'!A10:A1000,1)+9,5,1,1,"${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}"))=H13,INDIRECT(ADDRESS(MATCH(3,'${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}'!A10:A1000,1)+9,6,1,1,"${REPORTS_DIR}/[${outageFilename}]${sourceSheetName}")),"")`);
+        // ============================================================
+        //  NEW SECTION: OUTAGE LOGS (IN/OUT) for PREVIOUS DAY
+        // ============================================================
+        console.log(`[Daily Report] Processing Outage Logs for ${dateStr}...`);
+
+        // Read JSON and match against today's target date string
+        const outageTimes = getLatestOutageTimes(dateStr);
+
+        // Unit 1
+        if (outageTimes[1]) {
+            if (outageTimes[1].out) destSheet.cell("H44").value(outageTimes[1].out);
+            if (outageTimes[1].in) destSheet.cell("J44").value(outageTimes[1].in);
+        }
+        // Unit 2
+        if (outageTimes[2]) {
+            if (outageTimes[2].out) destSheet.cell("H45").value(outageTimes[2].out);
+            if (outageTimes[2].in) destSheet.cell("J45").value(outageTimes[2].in);
+        }
+        // Unit 3
+        if (outageTimes[3]) {
+            if (outageTimes[3].out) destSheet.cell("H46").value(outageTimes[3].out);
+            if (outageTimes[3].in) destSheet.cell("J46").value(outageTimes[3].in);
+        }
+        console.log(`[Success] Outage times populated from JSON.`);
 
         // ============================================================
         //  NEW SECTION: REFERENCE DATA FROM SHIFT LOGGER (12AM & 12NN)
-        // ============================================================)
+        // ============================================================
 
         const shiftLogFilename = `Pulangi IV HEP - Generation Data - RAW_${targetYear}.xlsx`;
         // Reads from rawdata folder
@@ -214,11 +273,13 @@ async function generateDailyReport() {
                 destSheet.cell("E45").formula(createAbsFormula(MONTHLY_LOG_DIR, shiftLogFilename, shiftSheetName, `L${noonRow}`));
                 destSheet.cell("E46").formula(createAbsFormula(MONTHLY_LOG_DIR, shiftLogFilename, shiftSheetName, `O${noonRow}`));
 
-                //Write dates
+                // ==============================
+                // Write formatted dates to cells
+                // ==============================
                 const reportDateFormatted = formatExcelDate(targetDate);
                 const todayFormatted = formatExcelDate(today);
 
-                destSheet.cell("Q5").value(reportDateFormatted);
+                destSheet.cell("Q5").value(todayFormatted);
                 destSheet.cell("H13").value(reportDateFormatted);
                 destSheet.cell("G54").value(todayFormatted);
 
