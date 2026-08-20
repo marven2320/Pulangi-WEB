@@ -93,18 +93,6 @@
 		margin:0px;
 		height:100%;
 	}
-	#chart_div{
-	margin-left:110px;
-	//background-color:red;
-	}
-	#chart_div2{
-	margin-left:110px;
-	//background-color:red;
-	}
-	#chart_div3{
-	margin-left:110px;
-	//background-color:red;
-	}
 	.led-box {
 		height: 30px;
 		width: 25%;
@@ -153,37 +141,6 @@
 			100% { transform: rotate(360deg); }
 		}
 
-	.unitstatus1{
-            width:300px;
-            height:150px;
-            position: fixed;
-            background-color: transparent;
-            margin-top: -700px;
-            margin-left: 100px;          
-     }
-     .unitstatus2{
-            width:300px;
-            height:150px;
-            position: fixed;
-            background-color: transparent;
-            margin-top: -700px;
-            margin-left: 550px;          
-     }
-     .unitstatus3{
-            width:300px;
-            height:150px;
-            position: fixed;
-            background-color: transparent;
-            margin-top: -700px;
-            margin-left: 1000px;          
-     }
-     .img {
-    	max-width: 100%;
-    	max-height: 100%;
-    	float:left;
-    	background-repeat: no-repeat;	
-    	background-size: contain;
-	}
 	input[type=radio] {
     border: 0px;
     width: 10%;
@@ -193,30 +150,6 @@
 
 
 	</style>
-		
-		<script>
-
-		var meter_data = {p1:0,p2:0,p3:0};
-		var con_flag = 0;
-		var webSocket = new WebSocket('https://5.0.0.121:8000/','echo-protocol');
-		
-		
-			webSocket.onclose =  (event) => {
-				document.getElementById('statusbtn').style.background='red';
-				document.getElementById('statusbtn').innerHTML = 'DISCONNECTED';
-			};
-
-			webSocket.onmessage = (event) => {
-				  
-
-					}
-
-				};
-		
-			
-			
-		</script>
-		
 		
 		<script>
 		$(document).ready(function() {
@@ -233,10 +166,40 @@
 				document.getElementById('dateinputdiv').style.display = 'none';
 		    });
 		});
-				
+
 		</script>
 		
 		<script>
+		// Generation Data: just downloads the raw workbook dgr_merger.js already
+		// maintains server-side (rawdata/Pulangi IV HEP - Generation Data - RAW_<year>.xlsx)
+		// - no query/filtering here, matches the original intent for this option.
+		function downloadGenerationDataFile(){
+			fetch('/api/generation-data-file')
+				.then(function(response){
+					if (!response.ok){
+						return response.json().then(function(body){ throw new Error(body.error || 'Request failed'); });
+					}
+					var disposition = response.headers.get('Content-Disposition') || '';
+					var match = /filename="?([^"]+)"?/.exec(disposition);
+					var filename = match ? match[1] : 'Pulangi IV HEP - Generation Data - RAW.xlsx';
+					return response.blob().then(function(blob){ return {blob: blob, filename: filename}; });
+				})
+				.then(function(result){
+					var url = window.URL.createObjectURL(result.blob);
+					var a = document.createElement('a');
+					a.setAttribute('hidden', '');
+					a.setAttribute('href', url);
+					a.setAttribute('download', result.filename);
+					document.body.appendChild(a);
+					a.click();
+					document.body.removeChild(a);
+					window.URL.revokeObjectURL(url);
+				})
+				.catch(function(err){
+					alert('Failed to open Generation Data report: '+err.message);
+				});
+		}
+
 		$(document).ready(function() {
 			$("#opendata").click(function(){
 				
@@ -255,8 +218,7 @@
 					alert("Operational Report Created!");
 					break;
 					case 'option3':
-					//Insert Code here to Open File // should open "/reports/Pulangi IV HEP - Generation Data - RAW.xlsx"
-					alert("Generation Data Created!");
+					downloadGenerationDataFile();
 					break;
 					
 					case 'option4':
@@ -357,7 +319,6 @@
 
 	
 </div>
-
 
 
 </body>

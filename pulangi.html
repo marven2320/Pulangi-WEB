@@ -29,17 +29,9 @@
 		margin:0px;
 		height:100%;
 	}
-	#chart_div{
-	margin-left:110px;
-	//background-color:red;
-	}
-	#chart_div2{
-	margin-left:110px;
-	//background-color:red;
-	}
-	#chart_div3{
-	margin-left:110px;
-	//background-color:red;
+	#chart_div, #chart_div2, #chart_div3{
+	display:flex;
+	justify-content:center;
 	}
 	.led-box {
 		height: 30px;
@@ -89,35 +81,26 @@
 			100% { transform: rotate(360deg); }
 		}
 
-	.unitstatus1{
-            width:300px;
-            height:150px;
-            position: fixed;
-            background-color: transparent;
-            margin-top: -700px;
-            margin-left: 100px;          
+     .unit-col {
+            position: relative;
      }
-     .unitstatus2{
-            width:300px;
-            height:150px;
-            position: fixed;
-            background-color: transparent;
-            margin-top: -700px;
-            margin-left: 550px;          
+     .unit-offline-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(0,0,0,0.55);
+            z-index: 10;
+            padding: 10%;
+            box-sizing: border-box;
      }
-     .unitstatus3{
-            width:300px;
-            height:150px;
-            position: fixed;
-            background-color: transparent;
-            margin-top: -700px;
-            margin-left: 1000px;          
-     }
-     .img {
+     .unit-offline-overlay img {
     	max-width: 100%;
     	max-height: 100%;
-    	float:left;
-    	background-repeat: no-repeat;	
+    	width: auto;
+    	height: auto;
+    	background-repeat: no-repeat;
     	background-size: contain;
 	}
 
@@ -568,7 +551,10 @@
 						<div class="panel-body" style="padding:1px 1px 0px 1px;background-color:#526B9C">
 
       <div class="row">
-		<div class="col-sm-3">
+		<div class="col-sm-3 unit-col">
+		<div id="status_unit1" class="unit-offline-overlay" style="display:none">
+			<img src="/offline_stat.png">
+		</div>
 		<div class="panel panel-default" >
 		
 			<div class="panel-heading"><a><b>UNIT 1</b></a></div>
@@ -636,7 +622,10 @@
 		</div>
 		</div>
 		
-		<div class="col-sm-3">
+		<div class="col-sm-3 unit-col">
+		<div id="status_unit2" class="unit-offline-overlay" style="display:none">
+			<img src="/offline_stat.png">
+		</div>
 		<div class="panel panel-default" >
 		
 			<div class="panel-heading"><a><b>UNIT 2</b></a></div>
@@ -701,7 +690,10 @@
 		</div>
 		</div>
 		
-		<div class="col-sm-3">
+		<div class="col-sm-3 unit-col">
+		<div id="status_unit3" class="unit-offline-overlay" style="display:none">
+			<img src="/offline_stat.png">
+		</div>
 		<div class="panel panel-default" >
 		
 			<div class="panel-heading"><a><b>UNIT 3</b></a></div>
@@ -843,15 +835,6 @@
 		<div class="loader"></div>
 	</div>
 
-	<div id="status_unit1" class="unitstatus1" style="display:none">
-		<img src="/offline_stat.png">
-	</div>
-	<div id="status_unit2" class="unitstatus2" style="display:none">
-		<img src="/offline_stat.png">
-	</div>
-	<div id="status_unit3" class="unitstatus3" style="display:none">
-		<img src="/offline_stat.png">
-	</div>
 	
 </div>
 
