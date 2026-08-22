@@ -8,7 +8,7 @@
   <script src="/bootstrap/bootstrap.min.js"></script>
   <script type="text/javascript" src="/bootstrap/loader.js"></script>
   <link rel="stylesheet" href="/bootstrap/jquery-ui.css">
-  
+
   <script src="/bootstrap/jquery-3.7.1.js"></script>
   <script src="/bootstrap/jquery-ui.js"></script>
 
@@ -26,31 +26,40 @@
 <br>
 <br>
 
-
-<div style="margin: 10px 10px 25px 10px;"><input type="file" id="file" style="width: 700px;height: 45px;"></div>
+<div style="margin: 10px 10px 25px 10px; max-width:700px;">
+  <div class="row">
+    <div class="col-sm-4">
+      <label for="genDate" class="form-label fw-bold">Date</label>
+      <input type="date" class="form-control" id="genDate" name="genDate">
+    </div>
+    <div class="col-sm-4">
+      <label class="form-label fw-bold">Start Time</label><br>
+      <select id="start_hh"></select>:<select id="start_mm"></select>:<select id="start_ss"></select>
+    </div>
+    <div class="col-sm-4">
+      <label class="form-label fw-bold">End Time</label><br>
+      <select id="end_hh"></select>:<select id="end_mm"></select>:<select id="end_ss"></select>
+    </div>
+  </div>
+  <button id="loaddata" type="button" class="btn btn-primary" style="margin-top:15px;">Load Data</button>
+</div>
 
 <h2 style="margin-left:20px;"><b> UNIT 1 Visualization</b><h2>
-<h3 style="margin-left:20px;"><b> a) Frequency vs Time</b><h3>
+<h3 style="margin-left:20px;"><b> Power (MW) &amp; Frequency (Hz) vs Time</b><h3>
 <br>
-<div id="myChart1" style="padding-left:20px;margin-left:25px;width:100%; max-width:900px; height:350px; border: 1px solid black;padding:0;"></div>
+<div id="genChart1" style="padding-left:20px;margin-left:25px;width:100%; max-width:900px; height:350px; border: 1px solid black;padding:0;"></div>
+<br>
 
-<h3 style="margin-left:20px;"><b> b) Power vs Time</b><h3>
-<div id="mypow1" style="padding-left:20px;margin-left:25px; width:100%; max-width:900px; height:350px; border: 1px solid black;padding:0;"></div>
-<br>
 <h2 style="margin-left:20px;"><b>UNIT 2 Visualization</b><h2>
-<h3 style="margin-left:20px;"><b> a) Frequency vs Time</b><h3>
+<h3 style="margin-left:20px;"><b> Power (MW) &amp; Frequency (Hz) vs Time</b><h3>
 <br>
-<div id="myChart2" style="padding-left:20px;margin-left:25px;width:100%; max-width:900px; height:350px; border: 1px solid black;padding:0;"></div>
+<div id="genChart2" style="padding-left:20px;margin-left:25px;width:100%; max-width:900px; height:350px; border: 1px solid black;padding:0;"></div>
 <br>
-<h3 style="margin-left:20px;"><b> b) Power vs Time</b><h3>
-<div id="mypow2" style="padding-left:20px;margin-left:25px;width:100%; max-width:900px; height:350px; border: 1px solid black;padding:0;"></div>
-<br>
+
 <h2 style="margin-left:20px;"><b> UNIT 3 Visualization</b><h2>
-<h3 style="margin-left:20px;"><b> a) Frequency vs Time</b><h3><br>
-<div id="myChart3" style="padding-left:20px;margin-left:25px; width:100%; max-width:900px; height:350px; border: 1px solid black;padding:0;"></div>
+<h3 style="margin-left:20px;"><b> Power (MW) &amp; Frequency (Hz) vs Time</b><h3>
 <br>
-<h3 style="margin-left:20px;"><b> b) Power vs Time</b><h3>
-<div id="mypow3" style="padding-left:20px;margin-left:25px;width:100%; max-width:900px; height:350px; border: 1px solid black;padding:0;"></div>
+<div id="genChart3" style="padding-left:20px;margin-left:25px;width:100%; max-width:900px; height:350px; border: 1px solid black;padding:0;"></div>
 <br>
 <br>
 
@@ -84,185 +93,129 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
-  
-</style>>
+
+  .Center {
+        width:150px;
+        height:150px;
+        position: fixed;
+        background-color: transparent;
+        top: 50%;
+        left: 50%;
+        margin-top: -100px;
+        margin-left: -100px;
+  }
+
+</style>
 
 <script>
-    var i = document.getElementById('file');
-    var data = 0;
-   
-    i.addEventListener('change', function () {
-        if (!!i.files && i.files.length > 0) {
-           parseCSV(i.files[0]);
-           
-        }
-    });
+  // Time-range dropdown population (same convention used on reports.html):
+  // for..in over an Array yields index keys ("0".."23" / "0".."59"), which is
+  // exactly the 0-based range these selects need.
+  var timeRange = {
+    hour: [], minute: [], seconds: []
+  };
+  for (let i = 0; i < 24; i++) { timeRange.hour[i] = (i + 1).toString(); }
+  for (let i = 0; i < 60; i++) {
+    timeRange.minute[i] = (i + 1).toString();
+    timeRange.seconds[i] = (i + 1).toString();
+  }
 
-    function parseCSV(file) {
-        if (!file || !FileReader) {
+  window.onload = function () {
+    var start_hh = document.getElementById('start_hh');
+    var start_mm = document.getElementById('start_mm');
+    var start_ss = document.getElementById('start_ss');
+    var end_hh = document.getElementById('end_hh');
+    var end_mm = document.getElementById('end_mm');
+    var end_ss = document.getElementById('end_ss');
+
+    for (var y in timeRange.hour) { start_hh.options[start_hh.options.length] = new Option(y, y); }
+    for (var y in timeRange.minute) { start_mm.options[start_mm.options.length] = new Option(y, y); }
+    for (var y in timeRange.seconds) { start_ss.options[start_ss.options.length] = new Option(y, y); }
+    for (var y in timeRange.hour) { end_hh.options[end_hh.options.length] = new Option(y, y); }
+    for (var y in timeRange.minute) { end_mm.options[end_mm.options.length] = new Option(y, y); }
+    for (var y in timeRange.seconds) { end_ss.options[end_ss.options.length] = new Option(y, y); }
+  };
+
+  google.charts.load('current', {packages:['corechart']});
+
+  function padTime(v) {
+    v = parseInt(v, 10) || 0;
+    return (v < 10 ? '0' : '') + v;
+  }
+
+  function drawGenerationChart(containerId, rows, powerKey, freqKey) {
+    var dataArray = [['Time', 'Power (MW)', 'Frequency (Hz)']];
+    for (var i = 0; i < rows.length; i++) {
+      dataArray.push([
+        rows[i].time,
+        parseFloat(rows[i][powerKey]),
+        parseFloat(rows[i][freqKey])
+      ]);
+    }
+    var data = google.visualization.arrayToDataTable(dataArray);
+    var options = {
+      hAxis: {title: 'Time'},
+      series: {0: {targetAxisIndex: 0}, 1: {targetAxisIndex: 1}},
+      vAxes: {
+        0: {title: 'Power (MW)'},
+        1: {title: 'Frequency (Hz)'}
+      },
+      legend: {position: 'top'}
+    };
+    var chart = new google.visualization.LineChart(document.getElementById(containerId));
+    chart.draw(data, options);
+  }
+
+  function displayloading() {
+    document.getElementById('loadingscrn').style.display = 'none';
+  }
+
+  $(document).ready(function () {
+    $('#loaddata').click(function () {
+      var date = document.getElementById('genDate').value;
+      if (!date) {
+        alert('Please select a date.');
+        return;
+      }
+      var startTime = padTime(document.getElementById('start_hh').value) + ':' +
+                      padTime(document.getElementById('start_mm').value) + ':' +
+                      padTime(document.getElementById('start_ss').value);
+      var endTime = padTime(document.getElementById('end_hh').value) + ':' +
+                    padTime(document.getElementById('end_mm').value) + ':' +
+                    padTime(document.getElementById('end_ss').value);
+
+      document.getElementById('loadingscrn').style.display = 'block';
+
+      var params = new URLSearchParams({date: date, start: startTime, end: endTime});
+
+      fetch('/api/generation-data?' + params.toString())
+        .then(function (response) {
+          if (!response.ok) {
+            return response.json().then(function (body) { throw new Error(body.error || 'Request failed'); });
+          }
+          return response.json();
+        })
+        .then(function (body) {
+          var rows = body.rows || [];
+          if (rows.length === 0) {
+            displayloading();
+            alert('No generation data found for that date/time range.');
             return;
-        }
-
-        var reader = new FileReader();
-
-        reader.onload = function (e) {
-            document.getElementById('loadingscrn').style.display = 'block';
-            const mydata = e.target.result;
-
-            var forgraph1 = [];
-            var forgraph2 = [];
-            var forgraph3 = [];
-            var forgraph4 = [];
-            var forgraph5 = [];
-            var forgraph6 = [];
-            var myArray = [];
-            var stripper0 = [];
-            var stripper1 = [];
-            var finaldata1 = [];
-            var finaldata2 = [];
-            var finaldata3 = [];
-            var finaldata4 = [];
-            var finaldata5 = [];
-            var finaldata6 = [];
-
-            var myval = [];
-            var newdata =  mydata.split(/\r?\n/);
-
-            for (let i=0;i<newdata.length;i++){
-              myval[i]= newdata[i].split(",");
-              forgraph1[i] = myval[i][42].toString()+","+myval[i][39].toString();
-              forgraph2[i] = myval[i][42].toString()+","+myval[i][40].toString();
-              forgraph3[i] = myval[i][42].toString()+","+myval[i][41].toString();
-              forgraph4[i] = myval[i][42].toString()+","+myval[i][1].toString();
-              forgraph5[i] = myval[i][42].toString()+","+myval[i][2].toString();
-              forgraph6[i] = myval[i][42].toString()+","+myval[i][3].toString();
-              myArray = forgraph1[i].split(",");
-              stripper0 = myArray[0].replaceAll('"','');
-              stripper1 = myArray[1].replaceAll('"','');
-              if (i==0){
-                finaldata1[i] = [stripper0,stripper1];
-              }else{
-                finaldata1[i] = [stripper0,parseFloat(stripper1)];
-              }
-
-              myArray = forgraph2[i].split(",");
-              stripper0 = myArray[0].replaceAll('"','');
-              stripper1 = myArray[1].replaceAll('"','');
-              if (i==0){
-                finaldata2[i] = [stripper0,stripper1];
-              }else{
-                finaldata2[i] = [stripper0,parseFloat(stripper1)];
-              }
-
-              myArray = forgraph3[i].split(",");
-              stripper0 = myArray[0].replaceAll('"','');
-              stripper1 = myArray[1].replaceAll('"','');
-              if (i==0){
-                finaldata3[i] = [stripper0,stripper1];
-              }else{
-                finaldata3[i] = [stripper0,parseFloat(stripper1)];
-              }
-
-              myArray = forgraph4[i].split(",");
-              stripper0 = myArray[0].replaceAll('"','');
-              stripper1 = myArray[1].replaceAll('"','');
-              if (i==0){
-                finaldata4[i] = [stripper0,stripper1];
-              }else{
-                finaldata4[i] = [stripper0,parseFloat(stripper1)];
-              }
-
-              myArray = forgraph5[i].split(",");
-              stripper0 = myArray[0].replaceAll('"','');
-              stripper1 = myArray[1].replaceAll('"','');
-              if (i==0){
-                finaldata5[i] = [stripper0,stripper1];
-              }else{
-                finaldata5[i] = [stripper0,parseFloat(stripper1)];
-              }
-
-              myArray = forgraph6[i].split(",");
-              stripper0 = myArray[0].replaceAll('"','');
-              stripper1 = myArray[1].replaceAll('"','');
-              if (i==0){
-                finaldata6[i] = [stripper0,stripper1];
-              }else{
-                finaldata6[i] = [stripper0,parseFloat(stripper1)];
-              }
-
-
-
-            }
-
-            google.charts.load('current',{packages:['corechart']});
-            google.charts.setOnLoadCallback(drawChart);
-
-            function drawChart() {
-                /*finaldata[i] = [stripper0.toString(),parseFloat(stripper1)];
-                finaldata[i] = [stripper0.toString(),parseFloat(stripper1)];
-                finaldata[i] = [stripper0.toString(),parseFloat(stripper1)];*/
-            
-
-            const data1 = google.visualization.arrayToDataTable(finaldata1);
-            const data2= google.visualization.arrayToDataTable(finaldata2);
-            const data3= google.visualization.arrayToDataTable(finaldata3);
-            const data4 = google.visualization.arrayToDataTable(finaldata4);
-            const data5= google.visualization.arrayToDataTable(finaldata5);
-            const data6= google.visualization.arrayToDataTable(finaldata6);
-
-            // Set Options
-            const options1 = {
-              //title: 'Time vs. Frequency (UNIT 1)',
-              hAxis: {title: 'Time(s)'},
-              vAxis: {title: 'Frequency (Hz)'},
-              legend: 'none'
-            };
-            const options2 = {
-              //title: 'Time vs. Frequency (UNIT 1)',
-              hAxis: {title: 'Time(s)'},
-              vAxis: {title: 'Power (MW)'},
-              legend: 'none'
-            };
-
-            // Draw
-            const chart1 = new google.visualization.LineChart(document.getElementById('myChart1'));
-            chart1.draw(data1, options1);
-
-            const chart2 = new google.visualization.LineChart(document.getElementById('myChart2'));
-            chart2.draw(data2, options1);
-
-            const chart3 = new google.visualization.LineChart(document.getElementById('myChart3'));
-            chart3.draw(data3, options1);
-
-            const chart4 = new google.visualization.LineChart(document.getElementById('mypow1'));
-            chart4.draw(data4, options2);
-
-            const chart5 = new google.visualization.LineChart(document.getElementById('mypow2'));
-            chart5.draw(data5, options2);
-
-            const chart6 = new google.visualization.LineChart(document.getElementById('mypow3'));
-            chart6.draw(data6, options2);
-
-            setTimeout(displayloading,1000);
-
-
-
-            }
-
-
-
-        };
-
-        reader.readAsText(file);
-    }
-
-    function displayloading(){
-        document.getElementById('loadingscrn').style.display = 'none';
-    }
-    
+          }
+          google.charts.setOnLoadCallback(function () {
+            drawGenerationChart('genChart1', rows, 'mw1', 'freq1');
+            drawGenerationChart('genChart2', rows, 'mw2', 'freq2');
+            drawGenerationChart('genChart3', rows, 'mw3', 'freq3');
+            displayloading();
+          });
+        })
+        .catch(function (err) {
+          displayloading();
+          alert('Failed to load generation data: ' + err.message);
+        });
+    });
+  });
 </script>
-
-  
 
 </body>
 </html>

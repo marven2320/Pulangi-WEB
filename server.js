@@ -14,14 +14,6 @@ const options = {
 
 var app = express();
 
-app.use(serve(__dirname + '/'));
-
- var server = https.createServer(options, app);
- server.listen(8000, function() {
-    console.log((new Date()) + ' Server is listening on port 8000');
-});
-
-
 const mysql = require('mysql2');
 const pool = mysql.createPool({
     host: 'localhost',
@@ -30,6 +22,68 @@ const pool = mysql.createPool({
     database: 'pulangi_data',
     connectionLimit: 10
   });
+
+// GET /api/generation-data?date=YYYY-MM-DD&start=HH:MM:SS&end=HH:MM:SS
+// Returns per-timestamp power (mw1/mw2/mw3) and frequency (freq1/freq2/freq3)
+// readings for all 3 units, straight from the `pulangi` table - used by
+// viewdata.html's Power/Frequency dual-axis charts so it no longer needs a
+// manual CSV/Excel upload.
+// NOTE: this must be registered before app.use(serve(...)) below - the
+// express-static middleware does not call next() on a non-matching path,
+// it errors out instead, which would otherwise shadow this route entirely.
+app.get('/api/generation-data', (req, res) => {
+    const { date, start, end } = req.query;
+    const dateRe = /^\d{4}-\d{2}-\d{2}$/;
+    const timeRe = /^\d{2}:\d{2}:\d{2}$/;
+
+    if (!dateRe.test(date || '') || !timeRe.test(start || '') || !timeRe.test(end || '')) {
+        res.status(400).json({ error: 'date must be YYYY-MM-DD and start/end must be HH:MM:SS' });
+        return;
+    }
+
+    const sql = 'SELECT `time`, `mw1`, `mw2`, `mw3`, `freq1`, `freq2`, `freq3` ' +
+                'FROM `pulangi` WHERE `date` = ? AND `time` BETWEEN ? AND ? ORDER BY `time` ASC';
+
+    pool.query(sql, [date, start, end], (err, rows) => {
+        if (err) {
+            console.log((new Date()) + ' /api/generation-data query error: ' + err);
+            res.status(500).json({ error: 'database query failed' });
+            return;
+        }
+        res.json({ rows });
+    });
+});
+
+// GET /api/generation-data-file
+// Serves the current year's raw Generation Data workbook as-is for download -
+// this is the file dgr_merger.js maintains at
+// rawdata/Pulangi IV HEP - Generation Data - RAW_<year>.xlsx. Used by the
+// Reports page's "Generation Data" option (Open Report), which just opens
+// this file rather than querying/filtering anything itself.
+app.get('/api/generation-data-file', (req, res) => {
+    const year = new Date().getFullYear();
+    const fileName = `Pulangi IV HEP - Generation Data - RAW_${year}.xlsx`;
+    const filePath = path.join(__dirname, 'rawdata', fileName);
+
+    if (!fs.existsSync(filePath)) {
+        res.status(404).json({ error: `${fileName} not found` });
+        return;
+    }
+
+    res.download(filePath, fileName, (err) => {
+        if (err) {
+            console.log((new Date()) + ' /api/generation-data-file download error: ' + err);
+        }
+    });
+});
+
+app.use(serve(__dirname + '/'));
+
+ var server = https.createServer(options, app);
+ server.listen(8000, function() {
+    console.log((new Date()) + ' Server is listening on port 8000');
+});
+
 var table = [
     ['"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"']
 ];
