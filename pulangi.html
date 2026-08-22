@@ -18,11 +18,81 @@
 		
 	<style>
 	
+
+	:root {
+		--color-bg: #eef1f6;
+		--color-surface: #ffffff;
+		--color-primary: #0d2547;
+		--color-primary-soft: #4c6690;
+		--color-primary-softer: #6b84ab;
+		--color-accent: #2f6fed;
+		--color-border: #d7deea;
+		--color-text: #1b2430;
+		--color-text-muted: #6b7684;
+		--color-success: #23a35a;
+		--color-success-glow: #7be3a0;
+		--color-danger: #d64545;
+		--color-warning: #e0a721;
+		--radius-sm: 4px;
+		--radius-md: 8px;
+		--shadow-sm: 0 1px 3px rgba(13,37,71,0.12);
+		--shadow-md: 0 6px 20px rgba(13,37,71,0.18);
+		--font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+	}
+
+	body {
+		font-family: var(--font-sans);
+		background: var(--color-bg);
+		color: var(--color-text);
+	}
+
+	.nav-pills > li > a {
+		border-radius: var(--radius-sm);
+		font-weight: 600;
+		color: var(--color-primary-soft);
+		transition: background-color 0.15s ease, color 0.15s ease;
+	}
+	.nav-pills > li.active > a,
+	.nav-pills > li.active > a:hover,
+	.nav-pills > li.active > a:focus {
+		background-color: var(--color-primary);
+	}
+	.nav-pills > li > a:hover {
+		background-color: var(--color-border);
+	}
+
+	.btn-primary {
+		border-radius: var(--radius-sm);
+		border: 1px solid var(--color-primary-soft);
+		transition: filter 0.15s ease, box-shadow 0.15s ease;
+	}
+	.btn-primary:hover {
+		filter: brightness(0.95);
+		box-shadow: var(--shadow-sm);
+	}
+
+	.panel.panel-default {
+		border: none;
+		border-radius: var(--radius-md);
+		box-shadow: var(--shadow-md);
+		overflow: hidden;
+	}
+	.panel-heading {
+		background-color: var(--color-surface) !important;
+		border-bottom: 1px solid var(--color-border) !important;
+		font-weight: 700;
+		letter-spacing: 0.02em;
+	}
+	.progress {
+		border-radius: var(--radius-sm);
+		box-shadow: inset 0 1px 2px rgba(0,0,0,0.15);
+	}
+	.progress-bar-danger {
+		background-color: var(--color-accent);
+	}
 	.col-lg-9,.col-sm-3,.row{
 		padding:1px 1px 0px 1px;
 		margin:0px;
-		height:100%;
-		margin-bottom:-18px;
 	}
 	.col-lg-3{
 		padding:0px;
@@ -43,7 +113,7 @@
 	  margin: 0;
 	  width: 40px;
 	  height: 40px;
-	  background-color: #ABFF00;
+	  background-color: var(--color-success-glow);
 	  border-radius: 50%;
 	  box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 7px 1px, inset #304701 0 -1px 9px, #89FF00 0 2px 12px;
 	}
@@ -55,11 +125,11 @@
             background-color: transparent;
             top: 50%;
             left: 50%;
-            margin-top: -100px;
-            margin-left: -100px;
+            transform: translate(-50%, -50%);
      }
 
      .loader {
+			  box-sizing: border-box;
 			  border: 30px solid #f3f3f3;
 			  border-radius: 50%;
 			  border-top: 30px solid #3498db;
@@ -67,7 +137,6 @@
 			  height: 150px;
 			  -webkit-animation: spin 2s linear infinite; /* Safari */
 			  animation: spin 2s linear infinite;
-			  float:left;
 			}
 
 			/* Safari */
@@ -104,6 +173,56 @@
     	background-size: contain;
 	}
 
+	/* Parameter label/value rows - label is sized to its own text and never
+	   wraps; the value cell absorbs whatever space is left. If a label+value
+	   pair truly doesn't fit, the whole pair drops to its own line instead of
+	   text breaking mid-word inside a box. */
+	.param-row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+		margin-bottom: 5px;
+	}
+	.param-pair {
+		display: flex;
+		flex: 1 1 45%;
+		min-width: 130px;
+	}
+	.param-pair.full {
+		flex: 1 1 100%;
+		min-width: 0;
+	}
+	.param-label {
+		flex: 0 0 auto;
+		white-space: nowrap;
+		background-color: var(--color-primary);
+		color: white;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 3px 6px;
+		font-size: clamp(10px, 1.3vw, 15px);
+		box-sizing: border-box;
+	}
+	.param-value {
+		flex: 1 1 auto;
+		min-width: 0;
+		background-color: white;
+		color: #000;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 3px 6px;
+		font-size: clamp(10px, 1.3vw, 15px);
+		box-sizing: border-box;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.param-label.big, .param-value.big {
+		font-size: clamp(13px, 2vw, 22px);
+		min-height: 32px;
+	}
 
 	</style>
 		
@@ -128,7 +247,17 @@
 		    $("#RefDisplay").click(function(){
 				window.location.reload(true);
 		    });
- 
+
+			// Keep the date/time display ticking off the browser's own clock so
+			// it always shows something, independent of whether the live
+			// WebSocket telemetry connection (below) is actually up.
+			function updateDattime(){
+				var el = document.getElementById('dattime');
+				if (el) { el.innerHTML = new Date().toString().split('G')[0].bold(); }
+			}
+			updateDattime();
+			setInterval(updateDattime, 1000);
+
 		});
 
 		</script>
@@ -232,14 +361,14 @@
 		
 		});
 			webSocket.onclose =  (event) => {
-				document.getElementById('statusbtn').style.background='red';
+				document.getElementById('statusbtn').style.background='#d64545';
 				document.getElementById('statusbtn').innerHTML = 'DISCONNECTED';
 			};
 
 			webSocket.onmessage = (event) => {
 				  var data = JSON.parse(event.data);
 
-				  document.getElementById('statusbtn').style.background='LimeGreen';
+				  document.getElementById('statusbtn').style.background='#23a35a';
 				  document.getElementById('statusbtn').innerHTML = 'Connected';
 				  
 				  	  try{
@@ -548,7 +677,7 @@
 						<li ><a href="https://5.0.0.121:8000/pulangi.html"><strike>Connection Status</strike></a></li>
 					</ul>
 					</div>
-						<div class="panel-body" style="padding:1px 1px 0px 1px;background-color:#526B9C">
+						<div class="panel-body" style="padding:1px 1px 0px 1px;background-color:var(--color-primary-soft)">
 
       <div class="row">
 		<div class="col-sm-3 unit-col">
@@ -558,56 +687,83 @@
 		<div class="panel panel-default" >
 		
 			<div class="panel-heading"><a><b>UNIT 1</b></a></div>
-			<div class="panel-body" style="background-color:#526B9C" >
+			<div class="panel-body" style="background-color:var(--color-primary-soft)" >
 			
 				<div class="container-fluid" id="chart_div"></div>
 				
-				<div class="row">
-					<div class="col-sm-6" style="background-color:#08296E;color:white;height:30px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Frequency</b></p></div>
-					<div id="f1" class="col-sm-6" style="background-color:white;height:30px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
-				</div>
-				
-				<div class="row">
-					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>P(MW)</b></p></div>
-					<div id = 'pw1' class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
-					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Q(MVAR)</b></p></div>
-					<div id = 'qvar1' class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
-				</div>
-				<div class="row">
-					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Va(kV)</b></p></div>
-					<div id = 'Va1' class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
-					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ia(kA)</b></p></div>
-					<div id = 'Ia1' class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
-				</div>
-				<div class="row">
-					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Vb(kV)</b></p></div>
-					<div id = 'Vb1' class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
-					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ib(kA)</b></p></div>
-					<div id = 'Ib1' class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
-				</div>
-				<div class="row">
-					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Vc(kV)</b></p></div>
-					<div id = 'Vc1' class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
-					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ic(kA)</b></p></div>
-					<div id = 'Ic1' class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
+				<div class="param-row">
+					<div class="param-pair full">
+						<div class="param-label">Frequency</div>
+						<div class="param-value" id="f1"></div>
+					</div>
 				</div>
 
-				<div class="row">
-					<div class="col-sm-6" style="background-color:#08296E;color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>V(kV)</b></p></div>
-					<div id="avgV1" class="col-sm-6" style="background-color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
+				<div class="param-row">
+					<div class="param-pair">
+						<div class="param-label">P(MW)</div>
+						<div class="param-value" id="pw1"></div>
+					</div>
+					<div class="param-pair">
+						<div class="param-label">Q(MVAR)</div>
+						<div class="param-value" id="qvar1"></div>
+					</div>
 				</div>
 
-				<div class="row">
-					<div class="col-sm-6" style="background-color:#08296E;color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>I(kA)</b></p></div>
-					<div id="avgI1" class="col-sm-6" style="background-color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
+				<div class="param-row">
+					<div class="param-pair">
+						<div class="param-label">Va(kV)</div>
+						<div class="param-value" id="Va1"></div>
+					</div>
+					<div class="param-pair">
+						<div class="param-label">Ia(kA)</div>
+						<div class="param-value" id="Ia1"></div>
+					</div>
 				</div>
 
-				<div class="row">
-					<div class="col-sm-6" style="background-color:#08296E;color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>PF</b></p></div>
-					<div id="avgpf1" class="col-sm-6" style="background-color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
+				<div class="param-row">
+					<div class="param-pair">
+						<div class="param-label">Vb(kV)</div>
+						<div class="param-value" id="Vb1"></div>
+					</div>
+					<div class="param-pair">
+						<div class="param-label">Ib(kA)</div>
+						<div class="param-value" id="Ib1"></div>
+					</div>
 				</div>
 
-			<div style="text-align:center;color:white;margin-top: 30px;"><b>GATE OPENING</b></div>
+				<div class="param-row">
+					<div class="param-pair">
+						<div class="param-label">Vc(kV)</div>
+						<div class="param-value" id="Vc1"></div>
+					</div>
+					<div class="param-pair">
+						<div class="param-label">Ic(kA)</div>
+						<div class="param-value" id="Ic1"></div>
+					</div>
+				</div>
+
+				<div class="param-row">
+					<div class="param-pair full">
+						<div class="param-label big">V(kV)</div>
+						<div class="param-value big" id="avgV1"></div>
+					</div>
+				</div>
+
+				<div class="param-row">
+					<div class="param-pair full">
+						<div class="param-label big">I(kA)</div>
+						<div class="param-value big" id="avgI1"></div>
+					</div>
+				</div>
+
+				<div class="param-row">
+					<div class="param-pair full">
+						<div class="param-label big">PF</div>
+						<div class="param-value big" id="avgpf1"></div>
+					</div>
+				</div>
+
+			<div style="text-align:center;color:white;margin-top: 12px;"><b>GATE OPENING</b></div>
 				
 			
 			<div class="progress">
@@ -629,55 +785,82 @@
 		<div class="panel panel-default" >
 		
 			<div class="panel-heading"><a><b>UNIT 2</b></a></div>
-			<div class="panel-body" style="background-color:#526B9C" >
+			<div class="panel-body" style="background-color:var(--color-primary-soft)" >
 			
 				<div class="container-fluid" id="chart_div2"></div>
-				<div class="row">
-					<div class="col-sm-6" style="background-color:#08296E;color:white;height:30px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Frequency</b></p></div>
-					<div id="f2" class="col-sm-6" style="background-color:white;height:30px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
-				</div>
-				
-				<div class="row">
-					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>P(MW)</b></p></div>
-					<div id="pw2" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
-					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Q(MVAR)</b></p></div>
-					<div id="qvar2" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
-				</div>
-				<div class="row">
-					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Va(kV)</b></p></div>
-					<div id="Va2" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
-					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ia(kA)</b></p></div>
-					<div id="Ia2" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
-				</div>
-				<div class="row">
-					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Vb(kV)</b></p></div>
-					<div id="Vb2" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
-					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ib(kA)</b></p></div>
-					<div id="Ib2" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
-				</div>
-				<div class="row">
-					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Vc(kV)</b></p></div>
-					<div id="Vc2" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
-					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ic(kA)</b></p></div>
-					<div id="Ic2" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
+				<div class="param-row">
+					<div class="param-pair full">
+						<div class="param-label">Frequency</div>
+						<div class="param-value" id="f2"></div>
+					</div>
 				</div>
 
-				<div class="row">
-					<div class="col-sm-6" style="background-color:#08296E;color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>V(kV)</b></p></div>
-					<div id="avgV2" class="col-sm-6" style="background-color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
+				<div class="param-row">
+					<div class="param-pair">
+						<div class="param-label">P(MW)</div>
+						<div class="param-value" id="pw2"></div>
+					</div>
+					<div class="param-pair">
+						<div class="param-label">Q(MVAR)</div>
+						<div class="param-value" id="qvar2"></div>
+					</div>
 				</div>
 
-				<div class="row">
-					<div class="col-sm-6" style="background-color:#08296E;color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>I(kA)</b></p></div>
-					<div id="avgI2" class="col-sm-6" style="background-color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
+				<div class="param-row">
+					<div class="param-pair">
+						<div class="param-label">Va(kV)</div>
+						<div class="param-value" id="Va2"></div>
+					</div>
+					<div class="param-pair">
+						<div class="param-label">Ia(kA)</div>
+						<div class="param-value" id="Ia2"></div>
+					</div>
 				</div>
 
-				<div class="row">
-					<div class="col-sm-6" style="background-color:#08296E;color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>PF</b></p></div>
-					<div id="avgpf2" class="col-sm-6" style="background-color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
+				<div class="param-row">
+					<div class="param-pair">
+						<div class="param-label">Vb(kV)</div>
+						<div class="param-value" id="Vb2"></div>
+					</div>
+					<div class="param-pair">
+						<div class="param-label">Ib(kA)</div>
+						<div class="param-value" id="Ib2"></div>
+					</div>
 				</div>
 
-			<div style="text-align:center;color:white;margin-top: 30px;"><b>GATE OPENING</b></div>
+				<div class="param-row">
+					<div class="param-pair">
+						<div class="param-label">Vc(kV)</div>
+						<div class="param-value" id="Vc2"></div>
+					</div>
+					<div class="param-pair">
+						<div class="param-label">Ic(kA)</div>
+						<div class="param-value" id="Ic2"></div>
+					</div>
+				</div>
+
+				<div class="param-row">
+					<div class="param-pair full">
+						<div class="param-label big">V(kV)</div>
+						<div class="param-value big" id="avgV2"></div>
+					</div>
+				</div>
+
+				<div class="param-row">
+					<div class="param-pair full">
+						<div class="param-label big">I(kA)</div>
+						<div class="param-value big" id="avgI2"></div>
+					</div>
+				</div>
+
+				<div class="param-row">
+					<div class="param-pair full">
+						<div class="param-label big">PF</div>
+						<div class="param-value big" id="avgpf2"></div>
+					</div>
+				</div>
+
+			<div style="text-align:center;color:white;margin-top: 12px;"><b>GATE OPENING</b></div>
 				
 			<div class="progress">
 			  <div class="progress-bar progress-bar-danger progress-bar-striped active" role="progressbar"
@@ -697,55 +880,82 @@
 		<div class="panel panel-default" >
 		
 			<div class="panel-heading"><a><b>UNIT 3</b></a></div>
-			<div class="panel-body" style="background-color:#526B9C" >
+			<div class="panel-body" style="background-color:var(--color-primary-soft)" >
 			
 				<div class="container-fluid" id="chart_div3"></div>
 			
-				<div class="row">
-					<div class="col-sm-6" style="background-color:#08296E;color:white;height:30px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Frequency</b></p></div>
-					<div id="f3" class="col-sm-6" style="background-color:white;height:30px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
-				</div>
-				
-				<div class="row">
-					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>P(MW)</b></p></div>
-					<div id="pw3" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
-					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Q(MVAR)</b></p></div>
-					<div id="qvar3" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
-				</div>
-				<div class="row">
-					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Va(kV)</b></p></div>
-					<div id="Va3" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
-					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ia(kA)</b></p></div>
-					<div id="Ia3" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
-				</div>
-				<div class="row">
-					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Vb(kV)</b></p></div>
-					<div id="Vb3" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
-					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ib(kA)</b></p></div>
-					<div id="Ib3" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
-				</div>
-				<div class="row">
-					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Vc(kV)</b></p></div>
-					<div id="Vc3" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
-					<div class="col-sm-3" style="background-color:#08296E;color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>Ic(kA)</b></p></div>
-					<div id="Ic3" class="col-sm-3" style="background-color:white;height:28px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
+				<div class="param-row">
+					<div class="param-pair full">
+						<div class="param-label">Frequency</div>
+						<div class="param-value" id="f3"></div>
+					</div>
 				</div>
 
-				<div class="row">
-					<div class="col-sm-6" style="background-color:#08296E;color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>V(kV)</b></p></div>
-					<div id="avgV3" class="col-sm-6" style="background-color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
+				<div class="param-row">
+					<div class="param-pair">
+						<div class="param-label">P(MW)</div>
+						<div class="param-value" id="pw3"></div>
+					</div>
+					<div class="param-pair">
+						<div class="param-label">Q(MVAR)</div>
+						<div class="param-value" id="qvar3"></div>
+					</div>
 				</div>
 
-				<div class="row">
-					<div class="col-sm-6" style="background-color:#08296E;color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>I(kA)</b></p></div>
-					<div id="avgI3" class="col-sm-6" style="background-color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
+				<div class="param-row">
+					<div class="param-pair">
+						<div class="param-label">Va(kV)</div>
+						<div class="param-value" id="Va3"></div>
+					</div>
+					<div class="param-pair">
+						<div class="param-label">Ia(kA)</div>
+						<div class="param-value" id="Ia3"></div>
+					</div>
 				</div>
 
-				<div class="row">
-					<div class="col-sm-6" style="background-color:#08296E;color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b>PF</b></p></div>
-					<div id="avgpf3" class="col-sm-6" style="background-color:white;height:32px;margin-bottom:5px;text-align:center;padding-top:2px;font-size:18px"><p><b></b></p></div>
+				<div class="param-row">
+					<div class="param-pair">
+						<div class="param-label">Vb(kV)</div>
+						<div class="param-value" id="Vb3"></div>
+					</div>
+					<div class="param-pair">
+						<div class="param-label">Ib(kA)</div>
+						<div class="param-value" id="Ib3"></div>
+					</div>
 				</div>
-			<div style="text-align:center;color:white;margin-top: 30px;"><b>GATE OPENING</b></div>
+
+				<div class="param-row">
+					<div class="param-pair">
+						<div class="param-label">Vc(kV)</div>
+						<div class="param-value" id="Vc3"></div>
+					</div>
+					<div class="param-pair">
+						<div class="param-label">Ic(kA)</div>
+						<div class="param-value" id="Ic3"></div>
+					</div>
+				</div>
+
+				<div class="param-row">
+					<div class="param-pair full">
+						<div class="param-label big">V(kV)</div>
+						<div class="param-value big" id="avgV3"></div>
+					</div>
+				</div>
+
+				<div class="param-row">
+					<div class="param-pair full">
+						<div class="param-label big">I(kA)</div>
+						<div class="param-value big" id="avgI3"></div>
+					</div>
+				</div>
+
+				<div class="param-row">
+					<div class="param-pair full">
+						<div class="param-label big">PF</div>
+						<div class="param-value big" id="avgpf3"></div>
+					</div>
+				</div>
+			<div style="text-align:center;color:white;margin-top: 12px;"><b>GATE OPENING</b></div>
 			<div class="progress">
 			  <div class="progress-bar progress-bar-danger progress-bar-striped active" role="progressbar"
 			  aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width:60%">
@@ -761,82 +971,83 @@
 		
 				<div class="panel panel-default" padding-left:0px;>
 					<div class="panel-heading" style="font-size:14px"><b>Overall Data/RTU WESM/IEMOP Data</b></div>
-						<div class="panel-body" style="background-color:#526B9C">
+						<div class="panel-body" style="background-color:var(--color-primary-soft)">
 						<br>
-						<div class="row" style="margin-top:21px;">
-							<div class="col-sm-6" style="background-color:#08296E;color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b>P(MW)</b></p></div>
-							<div id="avgpw" class="col-sm-6" style="background-color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b></b></p></div>
+						<div class="param-row">
+							<div class="param-pair full">
+								<div class="param-label big">P(MW)</div>
+								<div class="param-value big" id="avgpw"></div>
+							</div>
 						</div>
-						
-						<div class="row">
-							<div class="col-sm-6" style="background-color:#08296E;color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b>Q(MVAR)</b></p></div>
-							<div id="avgqvar" class="col-sm-6" style="background-color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b></b></p></div>
+
+						<div class="param-row">
+							<div class="param-pair full">
+								<div class="param-label big">Q(MVAR)</div>
+								<div class="param-value big" id="avgqvar"></div>
+							</div>
 						</div>
-						
-						<div class="row">
-							<div class="col-sm-6" style="background-color:#08296E;color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b>PF</b></p></div>
-							<div id="avgpf" class="col-sm-6" style="background-color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b></b></p></div>
+
+						<div class="param-row">
+							<div class="param-pair full">
+								<div class="param-label big">PF</div>
+								<div class="param-value big" id="avgpf"></div>
+							</div>
 						</div>
-						
-						<br><br><br>
-						
-						<div class="row">
-							<div class="col-sm-6" style="background-color:#08296E;color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b>V(kV)</b></p></div>
-							<div id="avgV" class="col-sm-6" style="background-color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b></b></p></div>
+
+						<br>
+
+						<div class="param-row">
+							<div class="param-pair full">
+								<div class="param-label big">V(kV)</div>
+								<div class="param-value big" id="avgV"></div>
+							</div>
 						</div>
-						
-						<div class="row">
-							<div class="col-sm-6" style="background-color:#08296E;color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b>I(kA)</b></p></div>
-							<div id="avgI" class="col-sm-6" style="background-color:white;height:45px;margin-bottom:10px;text-align:center;padding-top:2px;font-size:30px"><p><b></b></p></div>
+
+						<div class="param-row">
+							<div class="param-pair full">
+								<div class="param-label big">I(kA)</div>
+								<div class="param-value big" id="avgI"></div>
+							</div>
 						</div>
 						
 						<div class="row">
 							<br>
-							<div class="col-sm-8" style="text-align:right;font-size:30px;padding:10px;margin:13px;color:white;"><b>AGC STATUS</b></div>
-							<div class="col-sm-2" style="text-align:center;font-size:30px;padding:10px;margin-top:15px;color:white;" >
+							<div class="col-sm-8" style="text-align:right;font-size:clamp(16px,2.4vw,30px);padding:10px;margin:8px 0;color:white;box-sizing:border-box;"><b>AGC STATUS</b></div>
+							<div class="col-sm-2" style="text-align:center;font-size:clamp(16px,2.4vw,30px);padding:10px;margin-top:15px;color:white;box-sizing:border-box;" >
 								<div class="led-box"><div class="led-green"></div></div>
-							
+
 							</div>
 						
 						</div>
 						<div>
-							<button id="statusbtn" type="button" class="btn btn-primary" style="width:100%; margin-top:36px;padding:10px;background-color:#00FF00;color:black;font-size:25px;">Connected</button>
+							<button id="statusbtn" type="button" class="btn btn-primary" style="width:100%; margin-top:36px;padding:10px;background-color:var(--color-success);color:white;font-size:25px;">Connected</button>
+							<button id="RefDisplay" type="button" class="btn btn-primary" style="width:100%;margin-top:10px;padding:10px;background-color:white;color:black;font-size:clamp(14px,1.8vw,25px);box-sizing:border-box;">Refresh Display</button>
 						</div>
 		
-	
+
 		</div>
-					
-				
+
+
+	</div>
+	<!-- closes .col-sm-3 wrapping the Overall Data panel -->
+	</div>
+
+	<div class="col-sm-12" style="margin-top:20px;background-color:var(--color-primary-soft);padding:8px 12px;box-sizing:border-box;">
+		<div id="dattime" style="min-width:200px;margin-top:5px;font-size:clamp(16px,2.6vw,35px);color:yellow;"></div>
 	</div>
 
   </div>
-  
-  <div class ="container-fluid" style="margin-top:20px;">
-  
-  <div class="panel panel-default" >
-			<div class="panel-body" style="align:center;background-color:#526B9C;padding-bottom:0px;">
-				<div class="row">
-					<div id="dattime" class="col-lg-10" style="margin-top:5px;font-size:35px;color:yellow;"></div>
-
-					<div class="col-sm-1">
-							<button id="RefDisplay" type="button" class="btn btn-primary" style="margin-left:10px;margin-top:5px;margin-bottom:10px;width:250px;background-color:white;color:black;font-size:25px;">Refresh Display</button>
-					</div
-				</div>
-			</div>
-					
-				
-			</div>
-			
-	</div>
-  
+  <!-- closes .row wrapping UNIT 1/2/3 + Overall Data columns + dattime -->
   </div>
+  <!-- closes .panel-body wrapping the Real-Time Data panel's content -->
+  </div>
+  <!-- closes .panel.panel-default (Real-Time Data panel) -->
+  </div>
+  <!-- closes the outer .container-fluid opened right after <body> -->
 
 	<div id="loadingscrn" class="Center" style="display:none">
 		<div class="loader"></div>
 	</div>
-
-	
-</div>
 
 
 

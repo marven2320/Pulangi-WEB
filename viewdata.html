@@ -12,67 +12,106 @@
   <script src="/bootstrap/jquery-3.7.1.js"></script>
   <script src="/bootstrap/jquery-ui.js"></script>
 
-
+  <style>
+	:root {
+		--color-bg: #eef1f6;
+		--color-surface: #ffffff;
+		--color-primary: #0d2547;
+		--color-primary-soft: #4c6690;
+		--color-primary-softer: #6b84ab;
+		--color-accent: #2f6fed;
+		--color-border: #d7deea;
+		--color-text: #1b2430;
+		--color-text-muted: #6b7684;
+		--color-success: #23a35a;
+		--color-success-glow: #7be3a0;
+		--color-danger: #d64545;
+		--color-warning: #e0a721;
+		--radius-sm: 4px;
+		--radius-md: 8px;
+		--shadow-sm: 0 1px 3px rgba(13,37,71,0.12);
+		--shadow-md: 0 6px 20px rgba(13,37,71,0.18);
+		--font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+	}
+	body {
+		font-family: var(--font-sans);
+		background: var(--color-bg);
+		color: var(--color-text);
+	}
+	.btn-primary {
+		border-radius: var(--radius-sm);
+		border: 1px solid var(--color-primary-soft);
+		transition: filter 0.15s ease, box-shadow 0.15s ease;
+	}
+	.btn-primary:hover {
+		filter: brightness(0.95);
+		box-shadow: var(--shadow-sm);
+	}
+  </style>
 
 <body>
 
-<div style="margin-left:20px; margin-top: 30px; width:120px;height:120px;"><img src="npclogo.png" style="width: 100%;height: 100%;object-fit: cover;"></div>
-<div style="margin-left:20px;margin-top: -5px;">
-  <h1 style="margin-left:20px;">National Power Corporation</h1>
-  <h2 style="margin-left:20px;margin-top: -5px;">Pulangi 4 Hydro Power Plant</h2>
-  <h3 style="margin-left:20px;margin-top: -5px;">P28F+683, Maramag, BukidnonMaramag, Bukidnon</h3>
+<div style="max-width:1000px;margin:0 auto;padding:30px 20px;box-sizing:border-box;">
+
+	<div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:30px;">
+		<img src="npclogo.png" style="width:100px;height:100px;object-fit:cover;flex:0 0 auto;">
+		<div>
+			<h1 style="margin:0;font-size:clamp(22px,3.5vw,36px);">National Power Corporation</h1>
+			<h2 style="margin:4px 0 0;font-size:clamp(16px,2.4vw,24px);color:var(--color-text-muted);">Pulangi 4 Hydro Power Plant</h2>
+			<h3 style="margin:2px 0 0;font-size:clamp(13px,1.8vw,18px);color:var(--color-text-muted);font-weight:normal;">P28F+683, Maramag, Bukidnon</h3>
+		</div>
+	</div>
+
+	<div style="background-color:var(--color-primary-soft);border-radius:6px;padding:20px;box-shadow:0 4px 16px rgba(0,0,0,0.2);margin-bottom:30px;box-sizing:border-box;">
+		<div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-end;">
+			<div>
+				<label for="genDate" class="form-label fw-bold" style="color:white;display:block;">Date</label>
+				<input type="date" class="form-control" id="genDate" name="genDate">
+			</div>
+			<div>
+				<label class="form-label fw-bold" style="color:white;display:block;">Start Time</label>
+				<select id="start_hh"></select>:<select id="start_mm"></select>:<select id="start_ss"></select>
+			</div>
+			<div>
+				<label class="form-label fw-bold" style="color:white;display:block;">End Time</label>
+				<select id="end_hh"></select>:<select id="end_mm"></select>:<select id="end_ss"></select>
+			</div>
+			<button id="loaddata" type="button" class="btn btn-primary" style="background-color:white;color:var(--color-primary);border:none;font-weight:bold;padding:8px 20px;">Load Data</button>
+		</div>
+	</div>
+
+	<div style="background-color:white;border:1px solid var(--color-border);border-radius:6px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:24px;box-sizing:border-box;">
+		<h2 style="margin:0 0 4px;font-size:clamp(18px,2.6vw,26px);">Unit 1 Visualization</h2>
+		<h3 style="margin:0 0 16px;font-size:clamp(13px,1.8vw,17px);color:var(--color-text-muted);font-weight:normal;">Power (MW) &amp; Frequency (Hz) vs Time</h3>
+		<div id="genChart1" style="width:100%;max-width:900px;height:350px;margin:0 auto;"></div>
+	</div>
+
+	<div style="background-color:white;border:1px solid var(--color-border);border-radius:6px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:24px;box-sizing:border-box;">
+		<h2 style="margin:0 0 4px;font-size:clamp(18px,2.6vw,26px);">Unit 2 Visualization</h2>
+		<h3 style="margin:0 0 16px;font-size:clamp(13px,1.8vw,17px);color:var(--color-text-muted);font-weight:normal;">Power (MW) &amp; Frequency (Hz) vs Time</h3>
+		<div id="genChart2" style="width:100%;max-width:900px;height:350px;margin:0 auto;"></div>
+	</div>
+
+	<div style="background-color:white;border:1px solid var(--color-border);border-radius:6px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:24px;box-sizing:border-box;">
+		<h2 style="margin:0 0 4px;font-size:clamp(18px,2.6vw,26px);">Unit 3 Visualization</h2>
+		<h3 style="margin:0 0 16px;font-size:clamp(13px,1.8vw,17px);color:var(--color-text-muted);font-weight:normal;">Power (MW) &amp; Frequency (Hz) vs Time</h3>
+		<div id="genChart3" style="width:100%;max-width:900px;height:350px;margin:0 auto;"></div>
+	</div>
+
+	<div style="margin-top:20px;">
+		<h3 style="margin-bottom:4px;">Prepared by:</h3>
+		<h3 style="margin:0;"><b><u>Engr. Wilfredo S. Busgano</u></b></h3>
+		<h4 style="margin-top:2px;"><b>Plant Shift Superintendent</b></h4>
+	</div>
+
 </div>
-<br>
-<br>
-<br>
-
-<div style="margin: 10px 10px 25px 10px; max-width:700px;">
-  <div class="row">
-    <div class="col-sm-4">
-      <label for="genDate" class="form-label fw-bold">Date</label>
-      <input type="date" class="form-control" id="genDate" name="genDate">
-    </div>
-    <div class="col-sm-4">
-      <label class="form-label fw-bold">Start Time</label><br>
-      <select id="start_hh"></select>:<select id="start_mm"></select>:<select id="start_ss"></select>
-    </div>
-    <div class="col-sm-4">
-      <label class="form-label fw-bold">End Time</label><br>
-      <select id="end_hh"></select>:<select id="end_mm"></select>:<select id="end_ss"></select>
-    </div>
-  </div>
-  <button id="loaddata" type="button" class="btn btn-primary" style="margin-top:15px;">Load Data</button>
-</div>
-
-<h2 style="margin-left:20px;"><b> UNIT 1 Visualization</b><h2>
-<h3 style="margin-left:20px;"><b> Power (MW) &amp; Frequency (Hz) vs Time</b><h3>
-<br>
-<div id="genChart1" style="padding-left:20px;margin-left:25px;width:100%; max-width:900px; height:350px; border: 1px solid black;padding:0;"></div>
-<br>
-
-<h2 style="margin-left:20px;"><b>UNIT 2 Visualization</b><h2>
-<h3 style="margin-left:20px;"><b> Power (MW) &amp; Frequency (Hz) vs Time</b><h3>
-<br>
-<div id="genChart2" style="padding-left:20px;margin-left:25px;width:100%; max-width:900px; height:350px; border: 1px solid black;padding:0;"></div>
-<br>
-
-<h2 style="margin-left:20px;"><b> UNIT 3 Visualization</b><h2>
-<h3 style="margin-left:20px;"><b> Power (MW) &amp; Frequency (Hz) vs Time</b><h3>
-<br>
-<div id="genChart3" style="padding-left:20px;margin-left:25px;width:100%; max-width:900px; height:350px; border: 1px solid black;padding:0;"></div>
-<br>
-<br>
-
-<h3>Prepared by:</h3><br>
-<h3><b><u>Engr. Wilfredo S. Busgano</b></u></h3>
-<br><h4 style="margin-top: -20px;"><b>Plant Shift Superintendent</b></h4>
-<br>
 
 <div id="loadingscrn" class="Center" style="display:none">
     <div class="loader"></div>
   </div>
 <style>
   .loader {
+        box-sizing: border-box;
         border: 30px solid #f3f3f3;
         border-radius: 50%;
         border-top: 30px solid #3498db;
@@ -80,7 +119,6 @@
         height: 150px;
         -webkit-animation: spin 2s linear infinite; /* Safari */
         animation: spin 2s linear infinite;
-        float:left;
       }
 
       /* Safari */
@@ -101,8 +139,7 @@
         background-color: transparent;
         top: 50%;
         left: 50%;
-        margin-top: -100px;
-        margin-left: -100px;
+        transform: translate(-50%, -50%);
   }
 
 </style>
