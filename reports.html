@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Pulangi HPP Power House Datalogger</title>
-   
+
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="/bootstrap/bootstrap.min.css">
@@ -10,33 +10,19 @@
 	<script src="/bootstrap/bootstrap.min.js"></script>
 	<script type="text/javascript" src="/bootstrap/loader.js"></script>
 	<link rel="stylesheet" href="/bootstrap/jquery-ui.css">
-	
+
 	<script src="/bootstrap/jquery-3.7.1.js"></script>
 	<script src="/bootstrap/jquery-ui.js"></script>
 
 	<script src="/bootstrap/loader.js"></script>
-	
-	
-
 
 	<script>
-	
-	
-	
-	
-	
-	
+	// Time-range dropdown population, shared by the Export Data range picker.
+	// for..in over an Array yields index keys ("0".."23" / "0".."59"), which
+	// is exactly the 0-based range these selects need.
 	var timeRange = {
-	  "start_time": {
-	    "hour": [],
-	    "minute": [],
-	    "seconds": []    
-	  },
-	  "end_time": {
-	    "hour": [],
-	    "minute": [],
-	    "seconds": [] 
-	  }
+	  "start_time": { "hour": [], "minute": [], "seconds": [] },
+	  "end_time": { "hour": [], "minute": [], "seconds": [] }
 	};
 
 	for (let i = 0; i < 24; i++) {
@@ -49,7 +35,7 @@
   		timeRange.start_time.seconds[i] = (i+1).toString();
   		timeRange.end_time.seconds[i] = (i+1).toString();
 	}
-	
+
 	window.onload = function() {
 	  var start_hh = document.getElementById("start_hh");
 	  var start_mm = document.getElementById("start_mm");
@@ -57,7 +43,7 @@
 	  var end_hh = document.getElementById("end_hh");
 	  var end_mm = document.getElementById("end_mm");
 	  var end_ss = document.getElementById("end_ss");
-	 
+
 	  	for (var y in timeRange.start_time.hour) {
 	      start_hh.options[start_hh.options.length] = new Option(y, y);
 	    }
@@ -78,10 +64,8 @@
 	    }
 	}
 	</script>
-	
-	
+
 	<style>
-	
 
 	:root {
 		--color-bg: #eef1f6;
@@ -170,7 +154,7 @@
 	  border-radius: 50%;
 	  box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 7px 1px, inset #304701 0 -1px 9px, #89FF00 0 2px 12px;
 	}
-	
+
 	.Center {
             width:150px;
             height:150px;
@@ -215,182 +199,391 @@
 		gap: 10px;
 	}
 
+	.report-card {
+		flex: 1 1 420px;
+		max-width: 520px;
+		background-color: white;
+		padding: 30px;
+		border-radius: var(--radius-md);
+		box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+		box-sizing: border-box;
+	}
+	.report-card h3 {
+		margin-top: 0;
+		margin-bottom: 20px;
+		font-size: 20px;
+	}
 
 	</style>
-		
-		<script>
-		$(document).ready(function() {
-		    $("#exampleRadios1").click(function(){
-				document.getElementById('dateinputdiv').style.display = 'block';
-		    });
-			$("#exampleRadios2").click(function(){
-				document.getElementById('dateinputdiv').style.display = 'none';
-		    });
-			$("#exampleRadios3").click(function(){
-				document.getElementById('dateinputdiv').style.display = 'none';
-		    });
-			$("#exampleRadios4").click(function(){
-				document.getElementById('dateinputdiv').style.display = 'none';
-		    });
-		});
 
-		</script>
-		
-		<script>
-		// Generation Data: just downloads the raw workbook dgr_merger.js already
-		// maintains server-side (rawdata/Pulangi IV HEP - Generation Data - RAW_<year>.xlsx)
-		// - no query/filtering here, matches the original intent for this option.
-		function downloadGenerationDataFile(){
-			fetch('/api/generation-data-file')
-				.then(function(response){
-					if (!response.ok){
-						return response.json().then(function(body){ throw new Error(body.error || 'Request failed'); });
+	<script>
+	$(document).ready(function() {
+	    $("#exampleRadios1").click(function(){
+			document.getElementById('dateinputdiv').style.display = 'block';
+	    });
+		$("#exampleRadios2").click(function(){
+			document.getElementById('dateinputdiv').style.display = 'none';
+	    });
+		$("#exampleRadios3").click(function(){
+			document.getElementById('dateinputdiv').style.display = 'none';
+	    });
+		$("#exampleRadios4").click(function(){
+			document.getElementById('dateinputdiv').style.display = 'none';
+	    });
+	});
+	</script>
+
+	<script>
+	// Generation Data: just downloads the raw workbook dgr_merger.js already
+	// maintains server-side (rawdata/Pulangi IV HEP - Generation Data - RAW_<year>.xlsx)
+	// - no query/filtering here, matches the original intent for this option.
+	function downloadGenerationDataFile(){
+		fetch('/api/generation-data-file')
+			.then(function(response){
+				if (!response.ok){
+					return response.json().then(function(body){ throw new Error(body.error || 'Request failed'); });
+				}
+				var disposition = response.headers.get('Content-Disposition') || '';
+				var match = /filename="?([^"]+)"?/.exec(disposition);
+				var filename = match ? match[1] : 'Pulangi IV HEP - Generation Data - RAW.xlsx';
+				return response.blob().then(function(blob){ return {blob: blob, filename: filename}; });
+			})
+			.then(function(result){
+				var url = window.URL.createObjectURL(result.blob);
+				var a = document.createElement('a');
+				a.setAttribute('hidden', '');
+				a.setAttribute('href', url);
+				a.setAttribute('download', result.filename);
+				document.body.appendChild(a);
+				a.click();
+				document.body.removeChild(a);
+				window.URL.revokeObjectURL(url);
+			})
+			.catch(function(err){
+				alert('Failed to open Generation Data report: '+err.message);
+			});
+	}
+
+	$(document).ready(function() {
+		$("#opendata").click(function(){
+
+			var val = document.querySelector('input[name="exampleRadios"]:checked').value;
+			var dateselected = document.getElementById('dateInput').value;
+			//console.log(dateselected);
+			var strpath = "/reports/Pulangi IV HEP - Daily Operations Report_"+dateselected+".xlsx";
+
+			switch (val){
+				case 'option1':
+				//Insert Code here to Open File // should open "/reports/Pulangi IV HEP - Daily Operations Report_+.xlsx"
+				alert("Daily Operations Report Created!");
+				break;
+				case 'option2':
+				//Insert Code here to Open File  // should open "/reports/Pulangi IV HEP - Operational Highlights_2025.xlsx"
+				alert("Operational Report Created!");
+				break;
+				case 'option3':
+				downloadGenerationDataFile();
+				break;
+
+				case 'option4':
+				//Insert Code here to Open File // should open "/reports/Pulangi IV HEP - Outage Report.xlsx"
+				alert("Outage Report Created!");
+				break;
+
+				default:
+				//do nothing!
+			}
+	    });
+	});
+	</script>
+
+	<script>
+	var today;
+	today = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+	$( function() {
+	    $( "#datepicker1" ).datepicker({minDate: new Date(2025, 1 -1, 1), maxDate: today});
+	});
+	$( function() {
+	    $( "#datepicker2" ).datepicker({minDate: new Date(2025, 1 -1, 1), maxDate: today});
+	});
+	var userdata = [{startdate:'',enddate:''}];
+
+	function reformatDateString(s) {
+		var b = s.split('/');
+		const dateformat = b[2]+'-'+b[0]+'-'+b[1];
+		return dateformat;
+	}
+
+	$(document).ready(function() {
+	    $("#xportdata").click(function(){
+	        var datepick1 = document.getElementById("datepicker1").value;
+	        var datepick2 = document.getElementById("datepicker2").value;
+	        var start_hh = document.getElementById("start_hh").value;
+	        var end_hh = document.getElementById("end_hh").value;
+	        var start_mm = document.getElementById("start_mm").value;
+	        var end_mm = document.getElementById("end_mm").value;
+	        var start_ss = document.getElementById("start_ss").value;
+	        var end_ss = document.getElementById("end_ss").value;
+	        if ((!datepick1)||(!datepick2)||(!start_hh)||(!end_hh)||(!start_mm)||(!end_mm)||(!start_ss)||(!end_ss)){
+	        	alert("Invalid START or END Date/Time for reports!");
+	        }else{
+	        	if (parseInt(end_hh)<parseInt(start_hh)){
+	        		alert("Invalid START and END Time for reports!");
+	        	}else{
+				       userdata = [{startdate:reformatDateString(datepick1),enddate:reformatDateString(datepick2)}];
+				       document.getElementById('loadingscrn').style.display = 'block';
+				       webSocket.send(JSON.stringify(userdata));
+				   }
+	        }
+	    });
+	});
+	</script>
+
+	<script>
+
+	var webSocket = new WebSocket('https://5.0.0.121:8000/','echo-protocol');
+
+	const download = function(data){
+		const blob = new Blob([data],{type:'text/csv'});
+		const url = window.URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.setAttribute('hidden','');
+		a.setAttribute('href',url);
+		a.setAttribute('download','report.csv');
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
+	};
+
+	const objectTOCsv = function(data){
+		const csvRows = [];
+		const headers = Object.keys(data[0]);
+		csvRows.push(headers.join(','));
+		for (const row of data){
+			const values = headers.map(header =>{
+				const escaped = (''+row[header]).replace(/"/g,'\\"');
+				return `"${escaped}"`;
+			});
+			csvRows.push(values.join(','));
+		}
+		return csvRows.join('\n');
+	};
+
+	// No live status indicator on this page - the connection itself is only
+	// used to request/receive the historical CSV export below.
+	webSocket.onclose = (event) => {
+		console.log('Export data socket closed.');
+	};
+
+	webSocket.onmessage = (event) => {
+		  var data = JSON.parse(event.data);
+
+		  	  try{
+				  // Live per-unit telemetry has no matching display on this page -
+				  // forcing the catch branch below, which handles the actual
+				  // date-range CSV export.
+				  throw new Error('no live-telemetry display on this page');
+				}catch{
+					var start_hh = document.getElementById("start_hh").value;
+					if (start_hh<10){ start_hh = '0'+start_hh.toString(); }
+					var end_hh = document.getElementById("end_hh").value;
+					if (end_hh<10){ end_hh = '0'+end_hh.toString(); }
+					var start_mm = document.getElementById("start_mm").value;
+					if (start_mm<10){ start_mm = '0'+start_mm.toString(); }
+					var end_mm = document.getElementById("end_mm").value;
+					if (end_mm<10){ end_mm = '0'+end_mm.toString(); }
+					var start_ss = document.getElementById("start_ss").value;
+					if (start_ss<10){ start_ss = '0'+start_ss.toString(); }
+					var end_ss = document.getElementById("end_ss").value;
+					if (end_ss<10){ end_ss = '0'+end_ss.toString(); }
+
+					const startingtime = start_hh.toString()+':'+start_mm.toString()+':'+start_ss.toString();
+					const endingtime = end_hh.toString()+':'+end_mm.toString()+':'+end_ss.toString();
+
+					var newdata=[{
+						ID:0, date:0,
+						energy1: 0, energy2: 0, energy3: 0,
+						freq1: 0, freq2: 0, freq3: 0,
+						ia1: 0, ia2: 0, ia3: 0,
+						ib1: 0, ib2: 0, ib3: 0,
+						ic1: 0, ic2: 0, ic3: 0,
+						mvar: 0, mvar1: 0, mvar2: 0, mvar3: 0,
+						mw: 0, mw1: 0, mw2: 0, mw3: 0,
+						pfa1: 0, pfa2: 0, pfa3: 0,
+						pfb1: 0, pfb2: 0, pfb3: 0,
+						pfc1: 0, pfc2: 0, pfc3: 0,
+						time: 0,
+						vab1: 0, vab2: 0, vab3: 0,
+						vbc1: 0, vbc2: 0, vbc3: 0,
+						vca1: 0, vca2: 0, vca3: 0
+					}];
+					var r = 0;
+					var flag_start = 0;
+					var flag_end = 0;
+
+					for (let i=0; i<data.length;i++){
+						if (startingtime==data[i].time.toString()){ flag_start = 1; }
+						if (endingtime==data[i].time.toString()){ flag_end = 1; }
+
+						if (flag_start==1 && flag_end==0){
+							newdata[r] = Object.assign({},data[i]);
+							r++;
+						}
+						if (flag_start==1 && flag_end==1){
+							newdata[r] = Object.assign({},data[i]);
+							break;
+						}
 					}
-					var disposition = response.headers.get('Content-Disposition') || '';
-					var match = /filename="?([^"]+)"?/.exec(disposition);
-					var filename = match ? match[1] : 'Pulangi IV HEP - Generation Data - RAW.xlsx';
-					return response.blob().then(function(blob){ return {blob: blob, filename: filename}; });
-				})
-				.then(function(result){
-					var url = window.URL.createObjectURL(result.blob);
-					var a = document.createElement('a');
-					a.setAttribute('hidden', '');
-					a.setAttribute('href', url);
-					a.setAttribute('download', result.filename);
-					document.body.appendChild(a);
-					a.click();
-					document.body.removeChild(a);
-					window.URL.revokeObjectURL(url);
-				})
-				.catch(function(err){
-					alert('Failed to open Generation Data report: '+err.message);
-				});
+
+					const csvData = objectTOCsv(newdata);
+
+					download(csvData);
+					setTimeout(displayloading,1000);
+					alert('Report File Downloaded!\nPlease view your download folder...');
+
+					document.location.href="https://5.0.0.121:8000/pulangi.html";
+
+				}
+
+			};
+		function displayloading(){
+			document.getElementById('loadingscrn').style.display = 'none';
 		}
 
-		$(document).ready(function() {
-			$("#opendata").click(function(){
-				
-				var val = document.querySelector('input[name="exampleRadios"]:checked').value;
-				var dateselected = document.getElementById('dateInput').value;
-				//console.log(dateselected);
-				var strpath = "/reports/Pulangi IV HEP - Daily Operations Report_"+dateselected+".xlsx";
-				
-				switch (val){
-					case 'option1':
-					//Insert Code here to Open File // should open "/reports/Pulangi IV HEP - Daily Operations Report_+.xlsx"
-					alert("Daily Operations Report Created!");
-					break;
-					case 'option2':
-					//Insert Code here to Open File  // should open "/reports/Pulangi IV HEP - Operational Highlights_2025.xlsx"
-					alert("Operational Report Created!");
-					break;
-					case 'option3':
-					downloadGenerationDataFile();
-					break;
-					
-					case 'option4':
-					//Insert Code here to Open File // should open "/reports/Pulangi IV HEP - Outage Report.xlsx"
-					alert("Outage Report Created!");
-					break;
-					
-					default:
-					//do nothing!
-				}
-		    });
-		
-		
-		});
-		
-		</script>
-	
-	
+	</script>
+
 </head>
 <body>
 
 <div class="container-fluid" style="background-color:white">
 
-	  
-   
 	<div class="panel panel-default">
-					<div class="panel-heading">
-					
-					<ul class="nav nav-pills">
-						<li><a href="https://5.0.0.121:8000/pulangi.html">Real-Time Data</a></li>
-						<li class="active"><a href="https://5.0.0.121:8000/reports.html">Reports</a></li>
-						<li><a href="https://5.0.0.121:8000/datapoints.html">Data Points</a></li>
-						<li ><a href="https://5.0.0.121:8000/pulangi.html"><strike>Connection Status</strike></a></li>
-					</ul>
-					</div>
-					
-					<div class="container-fluid">
-							<div style="background-color:var(--color-primary-soft);padding:40px 0;width:100%;box-sizing:border-box;">
+		<div class="panel-heading">
 
-							    <div style="width:90%;max-width:700px;background-color:white;margin:0 auto;padding:30px;box-sizing:border-box;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,0.2);">
+		<ul class="nav nav-pills">
+			<li><a href="https://5.0.0.121:8000/pulangi.html">Real-Time Data</a></li>
+			<li class="active"><a href="https://5.0.0.121:8000/reports.html">Reports</a></li>
+			<li><a href="https://5.0.0.121:8000/viewdata.html">Unit Visualization</a></li>
+			<li><a href="https://5.0.0.121:8000/pulangi.html"><strike>Connection Status</strike></a></li>
+		</ul>
+		</div>
 
-									<div style="display:flex;flex-wrap:wrap;gap:30px;align-items:flex-start;">
+		<div class="container-fluid">
+			<div style="background-color:var(--color-primary-soft);padding:40px 20px;width:100%;box-sizing:border-box;">
 
-										<div style="flex:1 1 260px;min-width:220px;">
+				<div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;justify-content:center;">
 
-											<div class="form-check" style="margin-top:10px">
-												  <input class="form-check-input"  type="radio" name="exampleRadios" id="exampleRadios1" value="option1" checked>
-												  <label class="form-check-label" for="exampleRadios1" style="font-size:25px;">
-													Daily Operations Report
-												  </label>
-											</div>
+					<!-- Left column: Reports -->
+					<div class="report-card">
+						<h3>Reports</h3>
 
-											<div class="form-check">
-											  <input class="form-check-input" type="radio" name="exampleRadios" id="exampleRadios2" value="option2">
-											  <label class="form-check-label" for="exampleRadios2" style="font-size:25px;">
-												Operational Report
-											  </label>
-											</div>
-											<div class="form-check disabled">
-											  <input class="form-check-input" type="radio" name="exampleRadios" id="exampleRadios3" value="option3">
-											  <label class="form-check-label" for="exampleRadios3" style="font-size:25px;">
-												Generation Data
-											  </label>
-											</div>
-											<div class="form-check disabled">
-											  <input class="form-check-input" type="radio" name="exampleRadios" id="exampleRadios4" value="option4">
-											  <label class="form-check-label" for="exampleRadios3" style="font-size:25px;">
-												Outage Report
-											  </label>
-											</div>
+						<div style="display:flex;flex-wrap:wrap;gap:30px;align-items:flex-start;">
 
-											<div style="text-align:center;margin-top:24px;">
-													<button id="opendata" type="button" class="btn btn-primary" style="width:100%;max-width:220px;padding:10px;background-color:white;color:black;font-size:25px;">Open Report</button>
-											</div>
+							<div style="flex:1 1 220px;min-width:200px;">
 
-										</div>
+								<div class="form-check" style="margin-top:10px">
+									  <input class="form-check-input"  type="radio" name="exampleRadios" id="exampleRadios1" value="option1" checked>
+									  <label class="form-check-label" for="exampleRadios1" style="font-size:20px;">
+										Daily Operations Report
+									  </label>
+								</div>
 
-										<div id="dateinputdiv" style="flex:1 1 220px;min-width:200px;">
-											<div class="card shadow-sm">
-												<div class="card-body">
-													<label for="dateInput" class="form-label fw-bold">Select Date</label>
-													<input type="date" class="form-control" id="dateInput" name="date">
-												</div>
-											</div>
-										</div>
+								<div class="form-check">
+								  <input class="form-check-input" type="radio" name="exampleRadios" id="exampleRadios2" value="option2">
+								  <label class="form-check-label" for="exampleRadios2" style="font-size:20px;">
+									Operational Report
+								  </label>
+								</div>
+								<div class="form-check disabled">
+								  <input class="form-check-input" type="radio" name="exampleRadios" id="exampleRadios3" value="option3">
+								  <label class="form-check-label" for="exampleRadios3" style="font-size:20px;">
+									Generation Data
+								  </label>
+								</div>
+								<div class="form-check disabled">
+								  <input class="form-check-input" type="radio" name="exampleRadios" id="exampleRadios4" value="option4">
+								  <label class="form-check-label" for="exampleRadios3" style="font-size:20px;">
+									Outage Report
+								  </label>
+								</div>
 
-									</div>
+								<div style="text-align:center;margin-top:24px;">
+										<button id="opendata" type="button" class="btn btn-primary" style="width:100%;max-width:220px;padding:10px;background-color:white;color:black;font-size:20px;">Generate Report</button>
+								</div>
 
 							</div>
 
+							<div id="dateinputdiv" style="flex:1 1 180px;min-width:180px;">
+								<div class="card shadow-sm">
+									<div class="card-body">
+										<label for="dateInput" class="form-label fw-bold">Select Date</label>
+										<input type="date" class="form-control" id="dateInput" name="date">
+									</div>
+								</div>
+							</div>
 
+						</div>
 					</div>
 
-    
+					<!-- Right column: Data Points (date/time range export) -->
+					<div class="report-card">
+						<h3>Export Data by Date &amp; Time Range</h3>
 
-    </div>
-  
+						<div style="display:flex;flex-wrap:wrap;gap:24px;">
+							<div style="flex:1 1 160px;min-width:160px;">
+								<label class="form-label fw-bold" style="display:block;">Start Date</label>
+								<input type="text" id="datepicker1" class="form-control" size="20" dataformat="YYYY-MM-DD">
+								<label class="form-label fw-bold" style="display:block;margin-top:12px;">End Date</label>
+								<input type="text" id="datepicker2" class="form-control" size="20">
+							</div>
 
+							<div style="flex:1 1 220px;min-width:220px;">
+								<label class="form-label fw-bold" style="display:block;margin-bottom:6px;">Start Time</label>
+								<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+									<select id="start_hh" class="form-control" style="width:auto;">
+    									<option value="" selected="selected">HH</option>
+  									</select>
+									<select id="start_mm" class="form-control" style="width:auto;">
+    									<option value="" selected="selected">MM</option>
+  									</select>
+									<select id="start_ss" class="form-control" style="width:auto;">
+    									<option value="" selected="selected">SS</option>
+  									</select>
+								</div>
 
+								<label class="form-label fw-bold" style="display:block;margin-bottom:6px;">End Time</label>
+								<div style="display:flex;gap:8px;flex-wrap:wrap;">
+									<select id="end_hh" class="form-control" style="width:auto;">
+    									<option value="" selected="selected">HH</option>
+  									</select>
+									<select id="end_mm" class="form-control" style="width:auto;">
+    									<option value="" selected="selected">MM</option>
+  									</select>
+									<select id="end_ss" class="form-control" style="width:auto;">
+    									<option value="" selected="selected">SS</option>
+  									</select>
+								</div>
+							</div>
+						</div>
+
+						<div style="text-align:center;margin-top:24px;">
+							<button id="xportdata" type="button" class="btn btn-primary" style="width:100%;max-width:220px;padding:10px;background-color:white;color:black;font-size:20px;">Export Data</button>
+						</div>
+					</div>
+
+				</div>
+
+			</div>
+		</div>
+
+	</div>
 
 </div>
 
+<div id="loadingscrn" class="Center" style="display:none">
+	<div class="loader"></div>
 </div>
 
 </body>
 
 </html>
-

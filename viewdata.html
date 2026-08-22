@@ -38,6 +38,20 @@
 		background: var(--color-bg);
 		color: var(--color-text);
 	}
+	.nav-pills > li > a {
+		border-radius: var(--radius-sm);
+		font-weight: 600;
+		color: var(--color-primary-soft);
+		transition: background-color 0.15s ease, color 0.15s ease;
+	}
+	.nav-pills > li.active > a,
+	.nav-pills > li.active > a:hover,
+	.nav-pills > li.active > a:focus {
+		background-color: var(--color-primary);
+	}
+	.nav-pills > li > a:hover {
+		background-color: var(--color-border);
+	}
 	.btn-primary {
 		border-radius: var(--radius-sm);
 		border: 1px solid var(--color-primary-soft);
@@ -50,6 +64,15 @@
   </style>
 
 <body>
+
+<div style="background-color:var(--color-surface);border-bottom:1px solid var(--color-border);padding:10px 20px;">
+	<ul class="nav nav-pills" style="margin:0;">
+		<li><a href="https://5.0.0.121:8000/pulangi.html">Real-Time Data</a></li>
+		<li><a href="https://5.0.0.121:8000/reports.html">Reports</a></li>
+		<li class="active"><a href="https://5.0.0.121:8000/viewdata.html">Unit Visualization</a></li>
+		<li><a href="https://5.0.0.121:8000/pulangi.html"><strike>Connection Status</strike></a></li>
+	</ul>
+</div>
 
 <div style="max-width:1000px;margin:0 auto;padding:30px 20px;box-sizing:border-box;">
 
