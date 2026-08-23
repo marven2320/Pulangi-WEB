@@ -23,6 +23,11 @@ const pool = mysql.createPool({
     connectionLimit: 10
   });
 
+// Shared with fetch-generation-data.js (the standalone CLI script) - same
+// validation + SQL, single source of truth for what viewdata.html's charts
+// and the CLI tool both see.
+const { getGenerationData, isValidParams } = require('./generation-data-query');
+
 // GET /api/generation-data?date=YYYY-MM-DD&start=HH:MM:SS&end=HH:MM:SS
 // Returns per-timestamp power (mw1/mw2/mw3) and frequency (freq1/freq2/freq3)
 // readings for all 3 units, straight from the `pulangi` table - used by
@@ -33,18 +38,13 @@ const pool = mysql.createPool({
 // it errors out instead, which would otherwise shadow this route entirely.
 app.get('/api/generation-data', (req, res) => {
     const { date, start, end } = req.query;
-    const dateRe = /^\d{4}-\d{2}-\d{2}$/;
-    const timeRe = /^\d{2}:\d{2}:\d{2}$/;
 
-    if (!dateRe.test(date || '') || !timeRe.test(start || '') || !timeRe.test(end || '')) {
+    if (!isValidParams(date, start, end)) {
         res.status(400).json({ error: 'date must be YYYY-MM-DD and start/end must be HH:MM:SS' });
         return;
     }
 
-    const sql = 'SELECT `time`, `mw1`, `mw2`, `mw3`, `freq1`, `freq2`, `freq3` ' +
-                'FROM `pulangi` WHERE `date` = ? AND `time` BETWEEN ? AND ? ORDER BY `time` ASC';
-
-    pool.query(sql, [date, start, end], (err, rows) => {
+    getGenerationData(pool, { date, start, end }, (err, rows) => {
         if (err) {
             console.log((new Date()) + ' /api/generation-data query error: ' + err);
             res.status(500).json({ error: 'database query failed' });
