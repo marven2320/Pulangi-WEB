@@ -1,4 +1,18 @@
 #!/usr/bin/env node
+
+// Safety net: this process controls the web server, the live WebSocket
+// broadcast, and DB logging all at once - none of that should go down just
+// because one Modbus meter times out or an async call somewhere rejects
+// unexpectedly. The specific connectTCP() call sites below are fixed
+// properly with .catch(); this is defense-in-depth for anything else, and
+// only logs - it deliberately does not swallow errors silently.
+process.on('uncaughtException', (err) => {
+    console.log((new Date()) + ' Uncaught exception (process kept alive): ' + (err && err.stack || err));
+});
+process.on('unhandledRejection', (reason) => {
+    console.log((new Date()) + ' Unhandled promise rejection (process kept alive): ' + reason);
+});
+
 var WebSocketServer = require('websocket').server;
 var http = require('https');
 const fs = require('fs');
@@ -183,10 +197,16 @@ var table = [
 for (let i = 0;i < ipcon.length; i++)
 {
     try{
-    client[i].connectTCP(ipcon[i], {port: 502});
+    // connectTCP() called with no callback returns a Promise - without a
+    // .catch() here, a connection timeout becomes an unhandled promise
+    // rejection, which crashes the whole process (web server, WebSocket,
+    // and DB logging included) on every meter that's briefly unreachable.
+    client[i].connectTCP(ipcon[i], {port: 502}).catch((err) => {
+        console.log((new Date()) + ' Modbus connectTCP failed for ' + ipcon[i] + ': ' + err);
+    });
     client[i].setTimeout(5000);
     }catch{
-        
+
     }
 }
 //------start-------- FOR MODBUS COMMUNICATION 
@@ -312,7 +332,12 @@ const getMeterValue = async (clientn) => {
         //return clientdata[clientn];
     } catch(e){
         // if error return -1
-        client[clientn].connectTCP(ipcon[clientn], {port: 502});
+        // Same unhandled-rejection risk as the initial connect loop above -
+        // this reconnect fires on every read failure, so without .catch()
+        // it's a crash waiting to happen on the very next timeout.
+        client[clientn].connectTCP(ipcon[clientn], {port: 502}).catch((err) => {
+            console.log((new Date()) + ' Modbus reconnect failed for ' + ipcon[clientn] + ': ' + err);
+        });
         client[clientn].setTimeout(5000);
         datacomplete[clientn] = 0;
         //console.log(e);
