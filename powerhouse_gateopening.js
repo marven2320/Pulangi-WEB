@@ -25,9 +25,10 @@ const i2c = require('i2c-bus');
 // Both ADS1115 devices live on the SAME physical I2C bus and are
 // distinguished by their address pin wiring (0x48 = ADDR->GND, 0x4B = ADDR->SCL).
 const I2C_BUS_NUM = 1;
-const ADS1115_ADDR_1 = 0x48; // gates 1 & 2: ch 0+1 and ch 2+3 (differential)
-const ADS1115_ADDR_2 = 0x4B; // gate 3: ch 0+1 (differential)
-const adc_pin = ['0+1', '2+3'];
+const ADS1115_ADDR_1 = 0x48; // gates 1: ch 0+1 (differential)
+const ADS1115_ADDR_2 = 0x4A; // gate 2: ch 0+1 (differential)
+const ADS1115_ADDR_3 = 0x4B; // gate 3: ch 0+1 (differential)
+const adc_pin = ['0+1'];
 
 let ads1115_48 = null;
 let ads1115_4B = null;
@@ -41,10 +42,13 @@ i2c.openPromisified(I2C_BUS_NUM).then(async (bus) => {
 	ads1115_48 = await ADS1115(bus, ADS1115_ADDR_1);
 	ads1115_48.gain = 2;
 
-	ads1115_4B = await ADS1115(bus, ADS1115_ADDR_2);
+	ads1115_4A = await ADS1115(bus, ADS1115_ADDR_2);
+	ads1115_4A.gain = 2;
+
+	ads1115_4B = await ADS1115(bus, ADS1115_ADDR_3);
 	ads1115_4B.gain = 2;
 
-	console.log('I2C bus ' + I2C_BUS_NUM + ' ready (0x48, 0x4B)');
+	console.log('I2C bus ' + I2C_BUS_NUM + ' ready (0x48, 0x4A, 0x4B)');
 }).catch((err) => {
 	console.log('Failed to open I2C bus ' + I2C_BUS_NUM + ': ' + err.message);
 });
@@ -192,7 +196,7 @@ setInterval(function(){
 			errflag1 = 0;
 			errflag2 = 0;
 			errflag3 = 0;
-			clientWebSocket.connect('ws://5.0.0.121:8000/','echo-protocol');
+			clientWebSocket.connect('wss://5.0.0.121:8000/', 'echo-protocol', null, null, { rejectUnauthorized: false });
 		}
 	}catch{}
 },10000);
@@ -211,8 +215,8 @@ setInterval(async function()
 		rawdata[0] = await ads1115_48.measure(adc_pin[0]);
 		opening[0] = toGateOpening(rawdata[0]);
 
-		// 0x48, ch 2+3 (differential) -> gate 2
-		rawdata[1] = await ads1115_48.measure(adc_pin[1]);
+		// 0x4A, ch 0+1 (differential) -> gate 2
+		rawdata[1] = await ads1115_4A.measure(adc_pin[0]);
 		opening[1] = toGateOpening(rawdata[1]);
 
 		// 0x4B, ch 0+1 (differential) -> gate 3
@@ -225,4 +229,4 @@ setInterval(async function()
 		console.log('I2C read error: ' + err.message);
 	}
 }, 2000);
-clientWebSocket.connect('ws://5.0.0.121:8000/','echo-protocol');
+clientWebSocket.connect('wss://5.0.0.121:8000/', 'echo-protocol', null, null, { rejectUnauthorized: false });
