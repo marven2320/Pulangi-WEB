@@ -16,6 +16,69 @@ const options = {
 
 var app = express();
 
+//MYSQL
+const mysql = require('mysql2');
+const pool = mysql.createPool({
+    host: 'localhost',
+    user: 'root',
+    password: 'KaRMSys2025!',
+    database: 'pulangi_data',
+    connectionLimit: 10
+  });
+
+// Shared with fetch-generation-data.js (the standalone CLI script) and
+// server.js - same validation + SQL, single source of truth for what
+// viewdata.html's charts, the CLI tool, and this server all see.
+const { getGenerationData, isValidParams } = require('./generation-data-query');
+
+// GET /api/generation-data?date=YYYY-MM-DD&start=HH:MM:SS&end=HH:MM:SS
+// Returns per-timestamp power (mw1/mw2/mw3) and frequency (freq1/freq2/freq3)
+// readings for all 3 units, straight from the `pulangi` table - used by
+// viewdata.html's Power/Frequency dual-axis charts.
+// NOTE: this must be registered before app.use(serve(...)) below - the
+// express-static middleware does not call next() on a non-matching path,
+// it errors out instead, which would otherwise shadow this route entirely.
+app.get('/api/generation-data', (req, res) => {
+    const { date, start, end } = req.query;
+
+    if (!isValidParams(date, start, end)) {
+        res.status(400).json({ error: 'date must be YYYY-MM-DD and start/end must be HH:MM:SS' });
+        return;
+    }
+
+    getGenerationData(pool, { date, start, end }, (err, rows) => {
+        if (err) {
+            console.log((new Date()) + ' /api/generation-data query error: ' + err);
+            res.status(500).json({ error: 'database query failed' });
+            return;
+        }
+        res.json({ rows });
+    });
+});
+
+// GET /api/generation-data-file
+// Serves the current year's raw Generation Data workbook as-is for download -
+// this is the file dgr_merger.js maintains at
+// rawdata/Pulangi IV HEP - Generation Data - RAW_<year>.xlsx. Used by the
+// Reports page's "Generation Data" option, which just opens this file
+// rather than querying/filtering anything itself.
+app.get('/api/generation-data-file', (req, res) => {
+    const year = new Date().getFullYear();
+    const fileName = `Pulangi IV HEP - Generation Data - RAW_${year}.xlsx`;
+    const filePath = path.join(__dirname, 'rawdata', fileName);
+
+    if (!fs.existsSync(filePath)) {
+        res.status(404).json({ error: `${fileName} not found` });
+        return;
+    }
+
+    res.download(filePath, fileName, (err) => {
+        if (err) {
+            console.log((new Date()) + ' /api/generation-data-file download error: ' + err);
+        }
+    });
+});
+
 app.use(serve(__dirname + '/'));
 
  var server = http.createServer(options, app);
@@ -80,16 +143,6 @@ var wsdata = [
         date: d.toISOString().split('T')[0]
     }
 ]
-
-//MYSQL
-const mysql = require('mysql2');
-const pool = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: 'KaRMSys2025!',
-    database: 'pulangi_data',
-    connectionLimit: 10
-  });
 
 //MODBUSRTU
 const ModbusRTU = require("modbus-serial");
@@ -360,30 +413,37 @@ wsServer.on('request', function(request) {
     //console.log(clientsIP);
     //console.log((new Date()) + ' Connection accepted.');
     connection.on('message', function(message) {
-		/*
-        if (message.type === 'utf8') {
-            //console.log('Received Message: ' + message.utf8Data);
-            connection.sendUTF(message.utf8Data);
-	    var data = JSON.parse(message.utf8Data);
-	    const sql = 'SELECT * from pulangi WHERE date BETWEEN\''+ data[0].startdate+ '\'' + ' AND \''+data[0].enddate+ '\''+' ORDER by date ASC';
-       	try {
-                  pool.query({sql},(err, result, fields) => {
-                  if (err instanceof Error) {
-                    console.log(err);
-                    return;
-                  }
-                  //console.log(result); // results contains rows returned by server
-                  connection.send(JSON.stringify(result));
-                  });
-            }catch (err) {
-                  console.log(err);
-            }
-	 	}
-        else if (message.type === 'binary') {
-            //console.log('Received Binary Message of ' + message.binaryData.length + ' bytes');
-            connection.sendBytes(message.binaryData);
+        // Handles reports.html's "Export Data" date-range request: client
+        // sends [{startdate, enddate}] and expects back every `pulangi` row
+        // in that date range (used to build the downloaded CSV). This was
+        // previously commented out, so Export Data never got a real
+        // response here - only the live-telemetry broadcast below ever
+        // reached the client.
+        if (message.type !== 'utf8') { return; }
+
+        var data;
+        try {
+            data = JSON.parse(message.utf8Data);
+        } catch (e) {
+            console.log((new Date()) + ' Export data request: invalid JSON - ' + e);
+            return;
         }
-		*/
+
+        var startdate = data && data[0] && data[0].startdate;
+        var enddate = data && data[0] && data[0].enddate;
+        if (!startdate || !enddate) {
+            console.log((new Date()) + ' Export data request missing startdate/enddate.');
+            return;
+        }
+
+        var sql = 'SELECT * FROM `pulangi` WHERE `date` BETWEEN ? AND ? ORDER BY `date` ASC';
+        pool.query(sql, [startdate, enddate], (err, result) => {
+            if (err) {
+                console.log((new Date()) + ' Export data query error: ' + err);
+                return;
+            }
+            connection.send(JSON.stringify(result));
+        });
     });
     connection.on('close', function(reasonCode, description) {
         //console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
