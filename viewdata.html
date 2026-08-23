@@ -250,10 +250,24 @@
 
       fetch('/api/generation-data?' + params.toString())
         .then(function (response) {
-          if (!response.ok) {
-            return response.json().then(function (body) { throw new Error(body.error || 'Request failed'); });
-          }
-          return response.json();
+          return response.text().then(function (text) {
+            var body;
+            try {
+              body = text ? JSON.parse(text) : {};
+            } catch (parseErr) {
+              // The server sent back something that isn't JSON at all - most
+              // likely an HTML error page from a proxy/static-file handler
+              // because /api/generation-data isn't being reached (e.g. the
+              // server isn't running the version of server.js that adds this
+              // endpoint). Surface that clearly instead of a raw parse error.
+              throw new Error('Server returned an unexpected (non-JSON) response for /api/generation-data. ' +
+                'Make sure server.js has been updated and restarted with this endpoint.');
+            }
+            if (!response.ok) {
+              throw new Error(body.error || 'Request failed');
+            }
+            return body;
+          });
         })
         .then(function (body) {
           var rows = body.rows || [];

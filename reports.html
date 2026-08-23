@@ -308,6 +308,13 @@
 	});
 	var userdata = [{startdate:'',enddate:''}];
 
+	// Guards the CSV export in webSocket.onmessage below - without this, the
+	// live telemetry the server broadcasts every second to any connected
+	// client (not just after a real export request) would be treated as an
+	// export result and trigger an unwanted CSV download + redirect on every
+	// single message, including right after the page loads.
+	var exportRequested = false;
+
 	function reformatDateString(s) {
 		var b = s.split('/');
 		const dateformat = b[2]+'-'+b[0]+'-'+b[1];
@@ -332,6 +339,7 @@
 	        	}else{
 				       userdata = [{startdate:reformatDateString(datepick1),enddate:reformatDateString(datepick2)}];
 				       document.getElementById('loadingscrn').style.display = 'block';
+				       exportRequested = true;
 				       webSocket.send(JSON.stringify(userdata));
 				   }
 	        }
@@ -376,6 +384,12 @@
 	};
 
 	webSocket.onmessage = (event) => {
+		  // Ignore the continuous live-telemetry broadcast the server sends to
+		  // every connected client - only act once an export was actually
+		  // requested via the Export Data button above.
+		  if (!exportRequested) { return; }
+		  exportRequested = false;
+
 		  var data = JSON.parse(event.data);
 
 		  	  try{
