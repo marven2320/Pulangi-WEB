@@ -19,64 +19,47 @@ var rawdata = [0, 0, 0];
 var opening = [0, 0, 0];
   
 /**Startup I2C **/
+const ADS1115 = require('ads1115');
 const i2c = require('i2c-bus');
-const { Buffer } = require('node:buffer');
-const DS1115_ADDR = 0x48;
-const CONVERSION_REG = 0x00;
-const CONFIG_REG = 0x01;
 
+// Both ADS1115 devices live on the SAME physical I2C bus and are
+// distinguished by their address pin wiring (0x48 = ADDR->GND, 0x4B = ADDR->SCL).
+const I2C_BUS_NUM = 1;
+const ADS1115_ADDR_1 = 0x48; // gates 1 & 2: ch 0+1 and ch 2+3 (differential)
+const ADS1115_ADDR_2 = 0x4B; // gate 3: ch 0+1 (differential)
+const adc_pin = ['0+1', '2+3'];
 
-setTimeout(function()
-{
-	const i2c1 = i2c.openSync(1);
-	console.log(i2c1.scanSync());
-	i2c1.closeSync();
-},500);
+let ads1115_48 = null;
+let ads1115_4B = null;
+let i2cBus = null;
 
-setTimeout(function()
-{
-	const i2c1 = i2c.openSync(1);
-	i2c1.i2cWriteSync(DS1115_ADDR,1,Buffer.from([CONFIG_REG])); //set read from config register
-	i2c1.closeSync();
-},500);
-setTimeout(function()
-{
-	const i2c1 = i2c.openSync(1);
-	let rawData = i2c1.readWordSync(DS1115_ADDR,CONFIG_REG); //read config register
-	console.log(rawData);
-	rawData = (rawData >> 8) + ((rawData & 0xff) << 8); //Switch MSB and LSB
-	console.log(rawData);
-	i2c1.closeSync();
-},500);
-setTimeout(function()
-{
-	const i2c1 = i2c.openSync(1);
-	i2c1.i2cWriteSync(DS1115_ADDR,1,Buffer.from([CONVERSION_REG])); //set read from conversion register
-	i2c1.closeSync();
-},500);
+// Open the bus once and create both device handles on it. Reused for every
+// read cycle instead of reopening/leaking a new file descriptor each tick.
+i2c.openPromisified(I2C_BUS_NUM).then(async (bus) => {
+	i2cBus = bus;
 
-const toVoltage = rawData => //Convert rawdata to voltage
-{
-  rawData = (rawData >> 8) + ((rawData & 0xff) << 8); //Switch MSB and LSB
-  //console.log(rawData);
-  let voltage = (rawData & 0xffff) / 65535 * 4.096 * 2;
-  
-  return voltage;
-};
+	ads1115_48 = await ADS1115(bus, ADS1115_ADDR_1);
+	ads1115_48.gain = 2;
 
-const toMeter = voltage => //Convert voltage to m
-{
-  
-  let meter = -0.5033*voltage + 1.2395;
-  return meter*10;
-};
+	ads1115_4B = await ADS1115(bus, ADS1115_ADDR_2);
+	ads1115_4B.gain = 2;
 
-const toLevel = meter => //Convert voltage to m
-{
-  
-  let level = 287.663 - meter;
-  return level;
-};
+	console.log('I2C bus ' + I2C_BUS_NUM + ' ready (0x48, 0x4B)');
+}).catch((err) => {
+	console.log('Failed to open I2C bus ' + I2C_BUS_NUM + ': ' + err.message);
+});
+
+function int16ToDecimal(val) {
+    return (val << 16) >> 16;
+}
+
+function toVoltage(val) {
+    return int16ToDecimal(val)*2*2.048/65535 ;
+}
+
+function toGateOpening(val) {
+        return toVoltage(val)*5*10*1.25;
+}
 /**end Startup I2C **/
 
 /** Setup Websocket client*/
@@ -217,28 +200,29 @@ setInterval(function(){
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 //Read Data ADC data
-setInterval(function()
+setInterval(async function()
 {
-  const mux = [0xC2, 0xD2, 0xE2];
-  let voltage = [0, 0, 0];
-  for(int i=0;i<3;i++)
-  {
-    setTimeout(function()	
-    {
-      const i2c1 = i2c.openSync(1);
-      /*Set to continuous conversion mode[bit8=0b0],
-    	 * FSR +-4.096V[bit11:9=0b001], 
-    	 * AINx&GND[bit14:12=0b1xx], x=0b00,0b01,0b10,0b11;
-    	 * 250SPS[bit7:5=0b101]
-  	  */
-  	  i2c1.i2cWriteSync(DS1115_ADDR,3,Buffer.from([CONFIG_REG, mux[i], 0xA3])); 
-      rawdata[i] = i2c1.readWordSync(DS1115_ADDR, CONVERSION_REG);
-      voltage[i] = toVoltage(rawdata[i]);
-	  opening[i] = voltage[i]*10; //percent opening
-      console.log(voltage[i] + 'V');
-      i2c1.closeSync();
-    },500);
-  }
-	flag = 1;
+	if (!ads1115_48 || !ads1115_4B) {
+		return; // I2C bus/devices not ready yet
+	}
+
+	try {
+		// 0x48, ch 0+1 (differential) -> gate 1
+		rawdata[0] = await ads1115_48.measure(adc_pin[0]);
+		opening[0] = toGateOpening(rawdata[0]);
+
+		// 0x48, ch 2+3 (differential) -> gate 2
+		rawdata[1] = await ads1115_48.measure(adc_pin[1]);
+		opening[1] = toGateOpening(rawdata[1]);
+
+		// 0x4B, ch 0+1 (differential) -> gate 3
+		rawdata[2] = await ads1115_4B.measure(adc_pin[0]);
+		opening[2] = toGateOpening(rawdata[2]);
+
+		console.log(opening);
+		flag = 1;
+	} catch (err) {
+		console.log('I2C read error: ' + err.message);
+	}
 }, 2000);
 clientWebSocket.connect('ws://5.0.0.121:8000/','echo-protocol');
