@@ -384,13 +384,22 @@
 	};
 
 	webSocket.onmessage = (event) => {
-		  // Ignore the continuous live-telemetry broadcast the server sends to
-		  // every connected client - only act once an export was actually
-		  // requested via the Export Data button above.
+		  var data = JSON.parse(event.data);
+
+		  // The server broadcasts live per-unit telemetry to every connected
+		  // client every second, on the same socket used for the export
+		  // reply - those readings are shaped like {unitnum, mw, mvar, ...}.
+		  // Skip them outright so they can never be mistaken for the export
+		  // query's answer (rows from the `pulangi` table), even if one
+		  // lands while an export is in flight.
+		  if (Array.isArray(data) && data.length && Object.prototype.hasOwnProperty.call(data[0], 'unitnum')) {
+			  return;
+		  }
+
+		  // Ignore anything else unless an export was actually requested via
+		  // the Export Data button above.
 		  if (!exportRequested) { return; }
 		  exportRequested = false;
-
-		  var data = JSON.parse(event.data);
 
 		  	  try{
 				  // Live per-unit telemetry has no matching display on this page -
@@ -398,6 +407,12 @@
 				  // date-range CSV export.
 				  throw new Error('no live-telemetry display on this page');
 				}catch{
+					if (!data.length){
+						alert('No data found for the selected date/time range.');
+						displayloading();
+						return;
+					}
+
 					var start_hh = document.getElementById("start_hh").value;
 					if (start_hh<10){ start_hh = '0'+start_hh.toString(); }
 					var end_hh = document.getElementById("end_hh").value;

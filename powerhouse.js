@@ -360,30 +360,26 @@ wsServer.on('request', function(request) {
     //console.log(clientsIP);
     //console.log((new Date()) + ' Connection accepted.');
     connection.on('message', function(message) {
-		/*
-        if (message.type === 'utf8') {
-            //console.log('Received Message: ' + message.utf8Data);
-            connection.sendUTF(message.utf8Data);
-	    var data = JSON.parse(message.utf8Data);
-	    const sql = 'SELECT * from pulangi WHERE date BETWEEN\''+ data[0].startdate+ '\'' + ' AND \''+data[0].enddate+ '\''+' ORDER by date ASC';
-       	try {
-                  pool.query({sql},(err, result, fields) => {
-                  if (err instanceof Error) {
-                    console.log(err);
+        if (message.type !== 'utf8') { return; }
+
+        // Export Data request from reports.html: [{startdate, enddate}].
+        // Runs the actual date-range query and sends the real rows back -
+        // without this, reports.html has nothing to receive except the
+        // continuous live-telemetry broadcast below, which it would
+        // otherwise mistake for the query result.
+        try {
+            var data = JSON.parse(message.utf8Data);
+            const sql = 'SELECT * FROM `pulangi` WHERE `date` BETWEEN ? AND ? ORDER BY `date` ASC';
+            pool.query(sql, [data[0].startdate, data[0].enddate], (err, result) => {
+                if (err) {
+                    console.log((new Date()) + ' export query error: ' + err);
                     return;
-                  }
-                  //console.log(result); // results contains rows returned by server
-                  connection.send(JSON.stringify(result));
-                  });
-            }catch (err) {
-                  console.log(err);
-            }
-	 	}
-        else if (message.type === 'binary') {
-            //console.log('Received Binary Message of ' + message.binaryData.length + ' bytes');
-            connection.sendBytes(message.binaryData);
+                }
+                connection.send(JSON.stringify(result));
+            });
+        } catch (err) {
+            console.log((new Date()) + ' export request error: ' + err);
         }
-		*/
     });
     connection.on('close', function(reasonCode, description) {
         //console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
