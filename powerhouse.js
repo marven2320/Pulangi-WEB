@@ -117,6 +117,7 @@ var wsdata = [
         pfa: 0,
         pfb: 0,
         pfc: 0,
+        opening: 0,
         time: d.toTimeString().split(' ')[0],
         date: d.toISOString().split('T')[0]
     },
@@ -135,6 +136,7 @@ var wsdata = [
         pfa: 0,
         pfb: 0,
         pfc: 0,
+        opening: 0,
         time: d.toTimeString().split(' ')[0],
         date: d.toISOString().split('T')[0]
     },
@@ -153,10 +155,36 @@ var wsdata = [
         pfa: 0,
         pfb: 0,
         pfc: 0,
+        opening: 0,
         time: d.toTimeString().split(' ')[0],
         date: d.toISOString().split('T')[0]
     }
 ]
+
+// Gate-opening telemetry handlers -----------------------------------------
+// powerhouse_gateopening.js (a Raspberry Pi reading two ADS1115 ADCs over
+// I2C) connects to this server as a plain WebSocket client and pushes one
+// unit's opening reading roughly every 5 seconds as a bare JSON object:
+//   { id, unitnum, tag, mw:null, mvar:null, energy:null, freq:null,
+//     opening, temp, actTime, mydate }
+// isGateOpeningMessage() tells that shape apart from the Export Data
+// request ([{startdate, enddate}]) that shares the same socket, and
+// handleGateOpeningTelemetry() merges the reading into wsdata so it rides
+// along on the existing 1-second broadcast to every connected browser
+// (pulangi.html's gate-opening sliders) and gets picked up by the
+// once-a-second table.push()/savetoDatabase() routine below.
+function isGateOpeningMessage(data) {
+    return !!data && !Array.isArray(data) &&
+        typeof data.unitnum === 'number' &&
+        typeof data.opening !== 'undefined';
+}
+
+function handleGateOpeningTelemetry(data) {
+    var idx = data.unitnum - 1;
+    if (idx >= 0 && idx < wsdata.length) {
+        wsdata[idx].opening = data.opening;
+    }
+}
 
 //MODBUSRTU
 const ModbusRTU = require("modbus-serial");
@@ -191,7 +219,7 @@ var E = ["","",""];
 var datacomplete = [0,0,0];
 //FOR DATABASE TABLE, 42 columns
 var table = [
-    ['"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"']
+    ['"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"']
 ];
 
 for (let i = 0;i < ipcon.length; i++)
@@ -299,6 +327,11 @@ const getMeterValue = async (clientn) => {
             pfa: PFA[clientn],
             pfb: PFB[clientn],
             pfc: PFC[clientn],
+            // Carry the last known gate-opening reading forward - this object
+            // is fully replaced every Modbus read cycle, and opening comes
+            // from a separate process (powerhouse_gateopening.js) on its own
+            // 5s cadence, so it must not get reset to nothing in between.
+            opening: wsdata[clientn].opening,
             time: d.toTimeString().split(' ')[0],
             date: d.toISOString().split('T')[0]
         }
@@ -361,10 +394,18 @@ setInterval(function(){
 		var day = d.toLocaleString("default", { day: "2-digit" });
 		servdate = year + "-" + month + "-" + day;
 
+        // Gate opening per unit: kept live-updated on wsdata by the WebSocket
+        // handler below whenever powerhouse_gateopening.js pushes a reading;
+        // default to 0 if nothing has arrived yet.
+        var opening1 = (wsdata[0] && wsdata[0].opening) || 0;
+        var opening2 = (wsdata[1] && wsdata[1].opening) || 0;
+        var opening3 = (wsdata[2] && wsdata[2].opening) || 0;
+
         table.push(['"'+P[0]+'"','"'+P[1]+'"','"'+P[2]+'"','"'+Ptotal+'"','"'+Q[0]+'"','"'+Q[1]+'"','"'+Q[2]+'"','"'+Qtotal+'"','"'+E[0]+'"','"'+E[1]+'"','"'+E[2]+'"',
             '"'+VAB[0]+'"','"'+VAB[1]+'"','"'+VAB[2]+'"','"'+VBC[0]+'"','"'+VBC[1]+'"','"'+VBC[2]+'"','"'+VCA[0]+'"','"'+VCA[1]+'"','"'+VCA[2]+'"',
             '"'+IA[0]+'"','"'+IA[1]+'"','"'+IA[2]+'"','"'+IB[0]+'"','"'+IB[1]+'"','"'+IB[2]+'"','"'+IC[0]+'"','"'+IC[1]+'"','"'+IC[2]+'"',
-            '"'+PFA[0]+'"','"'+PFA[1]+'"','"'+PFA[2]+'"','"'+PFB[0]+'"','"'+PFB[1]+'"','"'+PFB[2]+'"','"'+PFC[0]+'"','"'+PFC[1]+'"','"'+PFC[2]+'"','"'+F[0]+'"','"'+F[1]+'"','"'+F[2]+'"','"'+servtime+'"','"'+servdate+'"']);
+            '"'+PFA[0]+'"','"'+PFA[1]+'"','"'+PFA[2]+'"','"'+PFB[0]+'"','"'+PFB[1]+'"','"'+PFB[2]+'"','"'+PFC[0]+'"','"'+PFC[1]+'"','"'+PFC[2]+'"','"'+F[0]+'"','"'+F[1]+'"','"'+F[2]+'"',
+            '"'+opening1+'"','"'+opening2+'"','"'+opening3+'"','"'+servtime+'"','"'+servdate+'"']);
         if (table[0][table.length-1] == '"0"'){
             table.shift();
         }
@@ -377,7 +418,7 @@ setInterval(function(){
 
     savetoDatabase();
     table = [
-        ['"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"']
+        ['"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"']
     ];
     //console.log("Saved to Database!");
 },60000);
@@ -388,7 +429,8 @@ function savetoDatabase(){
         // For pool initialization, see above
         const sql = "INSERT INTO `pulangi` (`mw1`,`mw2`,`mw3`,`mw`,`mvar1`,`mvar2`,`mvar3`,`mvar`,`energy1`,`energy2`,`energy3`," +
         "`vab1`,`vab2`,`vab3`,`vbc1`,`vbc2`,`vbc3`,`vca1`,`vca2`,`vca3`,`ia1`,`ia2`,`ia3`,`ib1`,`ib2`,`ib3`,`ic1`,`ic2`,`ic3`,"+
-        "`pfa1`,`pfa2`,`pfa3`,`pfb1`,`pfb2`,`pfb3`,`pfc1`,`pfc2`,`pfc3`,`freq1`,`freq2`,`freq3`,`time`,`date`) value ("+table[i].toString()+")";
+        "`pfa1`,`pfa2`,`pfa3`,`pfb1`,`pfb2`,`pfb3`,`pfc1`,`pfc2`,`pfc3`,`freq1`,`freq2`,`freq3`,"+
+        "`opening1`,`opening2`,`opening3`,`time`,`date`) value ("+table[i].toString()+")";
         pool.query(
             {
               sql,
@@ -438,19 +480,29 @@ wsServer.on('request', function(request) {
     //console.log(clientsIP);
     //console.log((new Date()) + ' Connection accepted.');
     connection.on('message', function(message) {
-        // Handles reports.html's "Export Data" date-range request: client
-        // sends [{startdate, enddate}] and expects back every `pulangi` row
-        // in that date range (used to build the downloaded CSV). This was
-        // previously commented out, so Export Data never got a real
-        // response here - only the live-telemetry broadcast below ever
-        // reached the client.
+        // This one socket handles two very different kinds of incoming
+        // messages:
+        //   1. Gate-opening telemetry pushed by powerhouse_gateopening.js -
+        //      a single object {unitnum, opening, ...}, sent once per unit
+        //      every ~5s. Merged into wsdata so it rides along on the same
+        //      1s broadcast every browser already listens to.
+        //   2. reports.html's "Export Data" date-range request - client
+        //      sends [{startdate, enddate}] and expects back every `pulangi`
+        //      row in that date range (used to build the downloaded CSV).
         if (message.type !== 'utf8') { return; }
 
         var data;
         try {
             data = JSON.parse(message.utf8Data);
         } catch (e) {
-            console.log((new Date()) + ' Export data request: invalid JSON - ' + e);
+            console.log((new Date()) + ' WebSocket message: invalid JSON - ' + e);
+            return;
+        }
+
+        // Gate-opening telemetry: a plain object, not an array, identified
+        // by unitnum + opening.
+        if (isGateOpeningMessage(data)) {
+            handleGateOpeningTelemetry(data);
             return;
         }
 

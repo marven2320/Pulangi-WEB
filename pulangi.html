@@ -365,12 +365,33 @@
 				document.getElementById('statusbtn').innerHTML = 'DISCONNECTED';
 			};
 
+			// Gate Opening bars: powerhouse_gateopening.js pushes real sensor
+			// readings (per unit, ~every 5s) into the same wsdata this
+			// WebSocket broadcasts every 1s, as data[i].opening. Whole
+			// integer percent only - no decimals.
+			function updateGateOpening(elId, rawValue){
+				var el = document.getElementById(elId);
+				if (!el || rawValue === null || rawValue === undefined || isNaN(rawValue)){ return; }
+				var pct = Math.round(parseFloat(rawValue));
+				if (pct < 0) { pct = 0; }
+				if (pct > 100) { pct = 100; }
+				el.style.width = pct + '%';
+				el.setAttribute('aria-valuenow', pct);
+				el.innerHTML = pct + '%';
+				// Color ramps from green (closed) to red (100% open), via
+				// HSL hue interpolation: hue 120 (green) at 0% down to
+				// hue 0 (red) at 100%. Inline style wins over the static
+				// .progress-bar-danger background-color rule.
+				var hue = 120 - (pct / 100) * 120;
+				el.style.backgroundColor = 'hsl(' + hue + ', 75%, 45%)';
+			}
+
 			webSocket.onmessage = (event) => {
 				  var data = JSON.parse(event.data);
 
 				  document.getElementById('statusbtn').style.background='#23a35a';
 				  document.getElementById('statusbtn').innerHTML = 'Connected';
-				  
+
 				  	  try{
 					  /*
 					  chart.draw(Math.floor(data[0].mw), options);
@@ -380,6 +401,11 @@
 					  meter_data.p1 = parseFloat(data[0].mw).toFixed(4);
 					  meter_data.p2 = parseFloat(data[1].mw).toFixed(4);
 					  meter_data.p3 = parseFloat(data[2].mw).toFixed(4);
+
+					  updateGateOpening('gateOpening1', data[0].opening);
+					  updateGateOpening('gateOpening2', data[1].opening);
+					  updateGateOpening('gateOpening3', data[2].opening);
+
 					  var d = new Date();
 
 					  if (parseFloat(data[0].vab)<=0){
@@ -768,9 +794,9 @@
 			
 			<div class="progress">
 			
-			  <div class="progress-bar progress-bar-danger progress-bar-striped active" role="progressbar"
-			  aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width:40%;">
-				40%
+			  <div id="gateOpening1" class="progress-bar progress-bar-danger progress-bar-striped active" role="progressbar"
+			  aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width:0%;">
+				0%
 			  </div>
 			</div>
 		
@@ -863,9 +889,9 @@
 			<div style="text-align:center;color:white;margin-top: 12px;"><b>GATE OPENING</b></div>
 				
 			<div class="progress">
-			  <div class="progress-bar progress-bar-danger progress-bar-striped active" role="progressbar"
-			  aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" style="width:50%">
-				50%
+			  <div id="gateOpening2" class="progress-bar progress-bar-danger progress-bar-striped active" role="progressbar"
+			  aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width:0%">
+				0%
 			  </div>
 			</div>
 		
@@ -957,9 +983,9 @@
 				</div>
 			<div style="text-align:center;color:white;margin-top: 12px;"><b>GATE OPENING</b></div>
 			<div class="progress">
-			  <div class="progress-bar progress-bar-danger progress-bar-striped active" role="progressbar"
-			  aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width:60%">
-				60%
+			  <div id="gateOpening3" class="progress-bar progress-bar-danger progress-bar-striped active" role="progressbar"
+			  aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width:0%">
+				0%
 			  </div>
 			</div>
 		
