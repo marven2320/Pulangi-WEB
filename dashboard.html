@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Pulangi HPP Job Dashboard</title>
+
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="/bootstrap/bootstrap.min.css">
+	<script src="/bootstrap/chart.umd.min.js"></script>
+
+	<style>
+
+	:root {
+		--color-bg: #eef1f6;
+		--color-surface: #ffffff;
+		--color-primary: #0d2547;
+		--color-primary-soft: #4c6690;
+		--color-primary-softer: #6b84ab;
+		--color-accent: #2f6fed;
+		--color-border: #d7deea;
+		--color-text: #1b2430;
+		--color-text-muted: #6b7684;
+		--color-success: #23a35a;
+		--color-success-glow: #7be3a0;
+		--color-danger: #d64545;
+		--color-warning: #e0a721;
+		--color-idle: #9aa7b8;
+		--color-running: #2f6fed;
+		--radius-sm: 4px;
+		--radius-md: 8px;
+		--shadow-sm: 0 1px 3px rgba(13,37,71,0.12);
+		--shadow-md: 0 6px 20px rgba(13,37,71,0.18);
+		--font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+	}
+
+	body {
+		font-family: var(--font-sans);
+		background: var(--color-bg);
+		color: var(--color-text);
+	}
+
+	.nav-pills > li > a {
+		border-radius: var(--radius-sm);
+		font-weight: 600;
+		color: var(--color-primary-soft);
+		transition: background-color 0.15s ease, color 0.15s ease;
+	}
+	.nav-pills > li.active > a,
+	.nav-pills > li.active > a:hover,
+	.nav-pills > li.active > a:focus {
+		background-color: var(--color-primary);
+		color: white;
+	}
+	.nav-pills > li > a:hover {
+		background-color: var(--color-border);
+	}
+
+	.panel.panel-default {
+		border: none;
+		border-radius: var(--radius-md);
+		box-shadow: var(--shadow-md);
+		overflow: hidden;
+	}
+	.panel-heading {
+		background-color: var(--color-surface) !important;
+		border-bottom: 1px solid var(--color-border) !important;
+		font-weight: 700;
+		letter-spacing: 0.02em;
+	}
+
+	.dash-wrap {
+		background-color: var(--color-primary-soft);
+		padding: 32px 20px 48px;
+	}
+
+	.dash-section {
+		background-color: var(--color-surface);
+		border-radius: var(--radius-md);
+		box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+		padding: 24px 26px;
+		box-sizing: border-box;
+		margin: 0 auto 24px;
+		max-width: 1180px;
+	}
+	.dash-section h2 {
+		margin-top: 0;
+		font-size: 19px;
+		color: var(--color-primary);
+	}
+	.dash-section p.lead-sub {
+		color: var(--color-text-muted);
+		font-size: 14px;
+		margin-top: -8px;
+	}
+
+	.refresh-note {
+		font-size: 12px;
+		color: var(--color-text-muted);
+		display: flex;
+		align-items: center;
+		gap: 6px;
+	}
+	.refresh-dot {
+		width: 8px; height: 8px; border-radius: 50%;
+		background: var(--color-success);
+		display: inline-block;
+		box-shadow: 0 0 0 0 rgba(35,163,90,0.6);
+		animation: pulse 2s infinite;
+	}
+	@keyframes pulse {
+		0% { box-shadow: 0 0 0 0 rgba(35,163,90,0.5); }
+		70% { box-shadow: 0 0 0 6px rgba(35,163,90,0); }
+		100% { box-shadow: 0 0 0 0 rgba(35,163,90,0); }
+	}
+	.refresh-dot.offline { background: var(--color-danger); animation: none; }
+
+	/* ---- Pipeline diagram ---- */
+	.pipeline {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: stretch;
+		gap: 6px;
+		overflow-x: auto;
+		padding: 8px 2px 16px;
+	}
+	.pipe-col {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		justify-content: center;
+		min-width: 168px;
+	}
+	.pipe-arrow {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: var(--color-primary-softer);
+		font-size: 22px;
+		min-width: 26px;
+	}
+	.pipe-node {
+		position: relative;
+		border-radius: var(--radius-sm);
+		border: 1px solid var(--color-border);
+		background: #f8fafc;
+		padding: 10px 12px 10px 14px;
+		font-size: 12.5px;
+		line-height: 1.35;
+	}
+	.pipe-node.job {
+		cursor: default;
+		border-left: 4px solid var(--color-idle);
+	}
+	.pipe-node.job.status-success { border-left-color: var(--color-success); }
+	.pipe-node.job.status-running { border-left-color: var(--color-running); }
+	.pipe-node.job.status-skip-locked { border-left-color: var(--color-warning); }
+	.pipe-node.job.status-error { border-left-color: var(--color-danger); }
+	.pipe-node.job.status-idle { border-left-color: var(--color-idle); }
+	.pipe-node.store {
+		background: #eef3fb;
+		border-style: dashed;
+		text-align: center;
+		font-weight: 600;
+		color: var(--color-primary-soft);
+	}
+	.pipe-node .node-title { font-weight: 700; color: var(--color-primary); }
+	.pipe-node .node-sub { color: var(--color-text-muted); font-size: 11.5px; }
+	.pipe-dot {
+		position: absolute;
+		top: 8px;
+		right: 8px;
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		background: var(--color-idle);
+	}
+	.status-success .pipe-dot { background: var(--color-success); }
+	.status-running .pipe-dot { background: var(--color-running); animation: pulse 1.5s infinite; }
+	.status-skip-locked .pipe-dot { background: var(--color-warning); }
+	.status-error .pipe-dot { background: var(--color-danger); }
+	.status-idle .pipe-dot { background: var(--color-idle); }
+
+	/* ---- Status cards ---- */
+	.job-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+		gap: 16px;
+	}
+	.job-card {
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		padding: 16px 18px;
+		background: #fbfcfe;
+		border-top: 4px solid var(--color-idle);
+	}
+	.job-card.status-success { border-top-color: var(--color-success); }
+	.job-card.status-running { border-top-color: var(--color-running); }
+	.job-card.status-skip-locked { border-top-color: var(--color-warning); }
+	.job-card.status-error { border-top-color: var(--color-danger); }
+	.job-card.status-idle { border-top-color: var(--color-idle); }
+
+	.job-card-head {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		gap: 10px;
+	}
+	.job-card-head h3 {
+		font-size: 15.5px;
+		margin: 0 0 4px;
+		color: var(--color-primary);
+	}
+	.job-card-head .job-name {
+		font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+		font-size: 11px;
+		color: var(--color-text-muted);
+	}
+	.badge-status {
+		font-size: 11px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		padding: 3px 9px;
+		border-radius: 999px;
+		color: white;
+		white-space: nowrap;
+	}
+	.badge-status.status-success { background: var(--color-success); }
+	.badge-status.status-running { background: var(--color-running); }
+	.badge-status.status-skip-locked { background: var(--color-warning); color:#4a3600; }
+	.badge-status.status-error { background: var(--color-danger); }
+	.badge-status.status-idle { background: var(--color-idle); }
+
+	.job-card .desc {
+		font-size: 12.5px;
+		color: var(--color-text-muted);
+		margin: 8px 0 10px;
+	}
+	.job-card .msg {
+		font-size: 12.5px;
+		background: white;
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-sm);
+		padding: 8px 10px;
+		margin-bottom: 10px;
+		word-break: break-word;
+	}
+	.job-card dl {
+		display: grid;
+		grid-template-columns: auto 1fr;
+		gap: 3px 10px;
+		font-size: 12px;
+		margin: 0;
+	}
+	.job-card dt { color: var(--color-text-muted); }
+	.job-card dd { margin: 0; font-weight: 600; }
+	.meta-chips { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+	.meta-chip {
+		font-size: 11px;
+		background: var(--color-border);
+		color: var(--color-primary-soft);
+		border-radius: 999px;
+		padding: 2px 9px;
+		font-weight: 600;
+	}
+
+	/* ---- Charts ---- */
+	.chart-row {
+		display: grid;
+		grid-template-columns: 1.3fr 1fr;
+		gap: 24px;
+	}
+	@media (max-width: 900px) {
+		.chart-row { grid-template-columns: 1fr; }
+	}
+	.chart-box { position: relative; height: 260px; }
+	.chart-box.tall { height: 320px; }
+
+	/* ---- Timeline ---- */
+	.timeline-wrap {
+		overflow-x: auto;
+	}
+	.timeline-row {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		padding: 5px 0;
+		border-bottom: 1px dashed var(--color-border);
+		font-size: 12.5px;
+	}
+	.timeline-row:last-child { border-bottom: none; }
+	.timeline-time { color: var(--color-text-muted); min-width: 132px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; }
+	.timeline-job { min-width: 190px; font-weight: 600; color: var(--color-primary); }
+	.timeline-dot { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; }
+	.timeline-dot.success { background: var(--color-success); }
+	.timeline-dot.run-start { background: var(--color-running); }
+	.timeline-dot.skip-locked { background: var(--color-warning); }
+	.timeline-dot.error { background: var(--color-danger); }
+	.timeline-dot.info { background: var(--color-idle); }
+	.timeline-msg { color: var(--color-text); }
+	.empty-note { color: var(--color-text-muted); font-size: 13px; padding: 10px 2px; }
+
+	/* ---- Explainer ---- */
+	.algo-steps {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+		gap: 14px;
+	}
+	.algo-steps li {
+		background: #f8fafc;
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-sm);
+		padding: 12px 14px;
+		font-size: 12.5px;
+	}
+	.algo-steps li .step-num {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 20px; height: 20px;
+		border-radius: 50%;
+		background: var(--color-accent);
+		color: white;
+		font-size: 11px;
+		font-weight: 700;
+		margin-right: 6px;
+	}
+
+	</style>
+</head>
+<body>
+
+<div class="container-fluid" style="background-color:white">
+
+	<div class="panel panel-default">
+		<div class="panel-heading">
+
+		<ul class="nav nav-pills">
+			<li><a href="https://5.0.0.121:8000/pulangi.html">Real-Time Data</a></li>
+			<li><a href="https://5.0.0.121:8000/reports.html">Reports</a></li>
+			<li><a href="https://5.0.0.121:8000/viewdata.html">Unit Visualization</a></li>
+			<li class="active"><a href="https://5.0.0.121:8000/dashboard.html">Job Dashboard</a></li>
+			<li><a href="https://5.0.0.121:8000/pulangi.html"><strike>Connection Status</strike></a></li>
+		</ul>
+		</div>
+
+		<div class="container-fluid">
+			<div class="dash-wrap">
+
+				<div class="dash-section">
+					<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+						<div>
+							<h2>Backend Job Dashboard</h2>
+							<p class="lead-sub">Live status for the 6 scripts that log, merge, and generate the Excel reports.</p>
+						</div>
+						<div class="refresh-note"><span id="refreshDot" class="refresh-dot"></span><span id="refreshLabel">Auto-refreshing every 10s</span></div>
+					</div>
+				</div>
+
+				<div class="dash-section">
+					<h2>Data pipeline</h2>
+					<p class="lead-sub">MySQL &rarr; loggers buffer readings &rarr; mergers write the RAW workbooks &rarr; report generators build the Daily/Monthly reports. The dot on each box reflects that job's current status.</p>
+					<div class="pipeline" id="pipeline"></div>
+				</div>
+
+				<div class="dash-section">
+					<h2>Job status</h2>
+					<div class="job-grid" id="jobGrid"></div>
+				</div>
+
+				<div class="dash-section">
+					<h2>Run outcomes</h2>
+					<p class="lead-sub">Count of recorded events per job, most recent history window.</p>
+					<div class="chart-row">
+						<div class="chart-box tall"><canvas id="outcomeChart"></canvas></div>
+						<div class="chart-box tall"><canvas id="bufferChart"></canvas></div>
+					</div>
+				</div>
+
+				<div class="dash-section">
+					<h2>Recent activity</h2>
+					<div class="timeline-wrap">
+						<div id="timeline"></div>
+					</div>
+				</div>
+
+				<div class="dash-section">
+					<h2>How updates keep flowing when a report is open in Excel</h2>
+					<p class="lead-sub">Every job that writes into a workbook follows the same safe-write algorithm, so an analyst having the file open never blocks new data.</p>
+					<ol class="algo-steps">
+						<li><span class="step-num">1</span><strong>Compute &amp; queue.</strong> Loggers (<code>dgr_update</code>, <code>dor_update</code>) read fresh readings from MySQL and stage them in a JSON buffer instead of writing straight to the workbook.</li>
+						<li><span class="step-num">2</span><strong>Check the lock.</strong> Before opening a workbook, the writer (<code>dgr_merger</code>, <code>dor_merger</code>, <code>dor_generate</code>, <code>mor_generate</code>) asks the OS whether the file handle is already held open.</li>
+						<li><span class="step-num">3</span><strong>Open &rarr; skip.</strong> If it's locked, the write is skipped for that pass and the data stays queued (loggers) or a regeneration flag is set (report generators) - nothing is lost.</li>
+						<li><span class="step-num">4</span><strong>Retry every 2 minutes.</strong> A short-interval cron re-checks the lock and writes as soon as the file is closed, so the workbook catches up automatically without manual re-runs.</li>
+					</ol>
+				</div>
+
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+(function () {
+	'use strict';
+
+	var STATUS_URL = '/api/jobs/status';
+	var HISTORY_URL = '/api/jobs/history?limit=250';
+	var REFRESH_MS = 10000;
+
+	var STATUS_COLORS = {
+		success: '#23a35a',
+		running: '#2f6fed',
+		'skip-locked': '#e0a721',
+		error: '#d64545',
+		idle: '#9aa7b8',
+		'run-start': '#2f6fed',
+		info: '#9aa7b8'
+	};
+
+	var STATUS_LABELS = {
+		success: 'OK',
+		running: 'Running',
+		'skip-locked': 'File open',
+		error: 'Error',
+		idle: 'Idle',
+		'run-start': 'Started',
+		info: 'Info'
+	};
+
+	// Pipeline layout: which jobs feed which output, purely for the diagram.
+	var PIPELINE = [
+		{ type: 'store', title: 'MySQL', sub: 'pulangi_data' },
+		{ type: 'arrow' },
+		{ type: 'col', jobs: ['dgr_update', 'dor_update'] },
+		{ type: 'arrow' },
+		{ type: 'store', title: 'JSON buffers', sub: 'data_buffer*.json' },
+		{ type: 'arrow' },
+		{ type: 'col', jobs: ['dgr_merger', 'dor_merger'] },
+		{ type: 'arrow' },
+		{ type: 'store', title: 'RAW workbooks', sub: 'rawdata/*.xlsx' },
+		{ type: 'arrow' },
+		{ type: 'col', jobs: ['dor_generate', 'mor_generate'] },
+		{ type: 'arrow' },
+		{ type: 'store', title: 'Reports', sub: 'reports/*.xlsx' }
+	];
+
+	function el(tag, cls, html) {
+		var e = document.createElement(tag);
+		if (cls) e.className = cls;
+		if (html !== undefined) e.innerHTML = html;
+		return e;
+	}
+
+	function timeAgo(iso) {
+		if (!iso) return 'never';
+		var diffMs = Date.now() - new Date(iso).getTime();
+		if (diffMs < 0) diffMs = 0;
+		var s = Math.floor(diffMs / 1000);
+		if (s < 5) return 'just now';
+		if (s < 60) return s + 's ago';
+		var m = Math.floor(s / 60);
+		if (m < 60) return m + 'm ago';
+		var h = Math.floor(m / 60);
+		if (h < 24) return h + 'h ' + (m % 60) + 'm ago';
+		var d = Math.floor(h / 24);
+		return d + 'd ago';
+	}
+
+	function fmtTime(iso) {
+		if (!iso) return '—';
+		var d = new Date(iso);
+		return d.toLocaleString();
+	}
+
+	function statusClass(status) {
+		return 'status-' + (status || 'idle');
+	}
+
+	function metaChips(meta) {
+		if (!meta) return '';
+		var chips = [];
+		var order = ['bufferedEntries', 'backfilledRows', 'written', 'bufferRemaining', 'targetRow', 'fileName', 'outputFilename', 'summaryFilename'];
+		order.forEach(function (key) {
+			if (meta[key] === undefined || meta[key] === null || meta[key] === '') return;
+			var label = key.replace(/([A-Z])/g, ' $1').replace(/^./, function (c) { return c.toUpperCase(); });
+			var val = meta[key];
+			if (typeof val === 'string' && val.length > 34) val = val.slice(0, 31) + '...';
+			chips.push('<span class="meta-chip">' + label + ': ' + val + '</span>');
+		});
+		if (Array.isArray(meta.lockedFiles) && meta.lockedFiles.length) {
+			chips.push('<span class="meta-chip">Locked: ' + meta.lockedFiles.join(', ') + '</span>');
+		}
+		return chips.join('');
+	}
+
+	function renderPipeline(jobs) {
+		var wrap = document.getElementById('pipeline');
+		wrap.innerHTML = '';
+
+		PIPELINE.forEach(function (item) {
+			if (item.type === 'arrow') {
+				wrap.appendChild(el('div', 'pipe-arrow', '&rarr;'));
+				return;
+			}
+			if (item.type === 'store') {
+				var node = el('div', 'pipe-node store');
+				node.innerHTML = '<div class="node-title">' + item.title + '</div><div class="node-sub">' + item.sub + '</div>';
+				var col = el('div', 'pipe-col');
+				col.appendChild(node);
+				wrap.appendChild(col);
+				return;
+			}
+			if (item.type === 'col') {
+				var col2 = el('div', 'pipe-col');
+				item.jobs.forEach(function (jobName) {
+					var j = jobs[jobName] || {};
+					var node2 = el('div', 'pipe-node job ' + statusClass(j.status));
+					node2.innerHTML =
+						'<span class="pipe-dot"></span>' +
+						'<div class="node-title">' + (j.label || jobName) + '</div>' +
+						'<div class="node-sub">' + jobName + ' &middot; ' + (j.schedule || '') + '</div>';
+					col2.appendChild(node2);
+				});
+				wrap.appendChild(col2);
+				return;
+			}
+		});
+	}
+
+	function renderJobCards(jobs) {
+		var grid = document.getElementById('jobGrid');
+		grid.innerHTML = '';
+
+		var order = ['dgr_update', 'dgr_merger', 'dor_update', 'dor_merger', 'dor_generate', 'mor_generate'];
+		order.forEach(function (jobName) {
+			var j = jobs[jobName];
+			if (!j) return;
+
+			var card = el('div', 'job-card ' + statusClass(j.status));
+			card.innerHTML =
+				'<div class="job-card-head">' +
+					'<div><h3>' + j.label + '</h3><div class="job-name">' + j.job + '</div></div>' +
+					'<span class="badge-status ' + statusClass(j.status) + '">' + (STATUS_LABELS[j.status] || j.status) + '</span>' +
+				'</div>' +
+				'<div class="desc">' + (j.description || '') + '</div>' +
+				'<div class="msg">' + (j.message || 'No message yet') + '</div>' +
+				'<dl>' +
+					'<dt>Schedule</dt><dd><code>' + (j.schedule || '—') + '</code></dd>' +
+					'<dt>Last run</dt><dd title="' + fmtTime(j.lastRunAt) + '">' + timeAgo(j.lastRunAt) + '</dd>' +
+					'<dt>Last success</dt><dd title="' + fmtTime(j.lastSuccessAt) + '">' + timeAgo(j.lastSuccessAt) + '</dd>' +
+					'<dt>Last error</dt><dd title="' + fmtTime(j.lastErrorAt) + '">' + timeAgo(j.lastErrorAt) + '</dd>' +
+				'</dl>' +
+				'<div class="meta-chips">' + metaChips(j.meta) + '</div>';
+			grid.appendChild(card);
+		});
+	}
+
+	function renderTimeline(events) {
+		var wrap = document.getElementById('timeline');
+		wrap.innerHTML = '';
+
+		if (!events.length) {
+			wrap.appendChild(el('div', 'empty-note', 'No events recorded yet - this fills in as the 6 jobs run.'));
+			return;
+		}
+
+		var recent = events.slice(-40).reverse();
+		recent.forEach(function (ev) {
+			var row = el('div', 'timeline-row');
+			row.innerHTML =
+				'<span class="timeline-time">' + fmtTime(ev.ts) + '</span>' +
+				'<span class="timeline-dot ' + ev.type + '"></span>' +
+				'<span class="timeline-job">' + ev.job + '</span>' +
+				'<span class="timeline-msg">' + (ev.message || '') + '</span>';
+			wrap.appendChild(row);
+		});
+	}
+
+	var outcomeChart, bufferChart;
+
+	function renderOutcomeChart(events) {
+		var order = ['dgr_update', 'dgr_merger', 'dor_update', 'dor_merger', 'dor_generate', 'mor_generate'];
+		var types = ['success', 'skip-locked', 'error'];
+		var counts = {};
+		order.forEach(function (j) { counts[j] = { success: 0, 'skip-locked': 0, error: 0 }; });
+
+		events.forEach(function (ev) {
+			if (counts[ev.job] && counts[ev.job][ev.type] !== undefined) {
+				counts[ev.job][ev.type]++;
+			}
+		});
+
+		var datasets = types.map(function (type) {
+			return {
+				label: STATUS_LABELS[type],
+				backgroundColor: STATUS_COLORS[type],
+				data: order.map(function (j) { return counts[j][type]; })
+			};
+		});
+
+		var ctx = document.getElementById('outcomeChart').getContext('2d');
+		var cfg = {
+			type: 'bar',
+			data: { labels: order, datasets: datasets },
+			options: {
+				responsive: true,
+				maintainAspectRatio: false,
+				scales: {
+					x: { stacked: true, ticks: { font: { size: 10 } } },
+					y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } }
+				},
+				plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }, title: { display: true, text: 'Events by job (recent history)', font: { size: 12 } } }
+			}
+		};
+
+		if (outcomeChart) {
+			outcomeChart.data = cfg.data;
+			outcomeChart.update();
+		} else {
+			outcomeChart = new Chart(ctx, cfg);
+		}
+	}
+
+	// No Chart.js time-scale adapter is vendored, so this plots buffer size
+	// against a plain category axis of formatted timestamps (index order)
+	// rather than a true time scale - still shows the trend fine at this
+	// event volume.
+	function renderBufferChart(events) {
+		var series = { dgr_update: [], dor_update: [] };
+
+		events.forEach(function (ev) {
+			if (series[ev.job] && ev.meta && typeof ev.meta.bufferedEntries === 'number') {
+				series[ev.job].push({
+					label: new Date(ev.ts).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+					value: ev.meta.bufferedEntries
+				});
+			}
+		});
+
+		var longer = series.dgr_update.length >= series.dor_update.length ? series.dgr_update : series.dor_update;
+		var labels = longer.map(function (p) { return p.label; });
+
+		var ctx = document.getElementById('bufferChart').getContext('2d');
+		var cfg = {
+			type: 'line',
+			data: {
+				labels: labels,
+				datasets: [
+					{ label: 'Shift buffer (dgr_update)', data: series.dgr_update.map(function (p) { return p.value; }), borderColor: '#2f6fed', backgroundColor: 'rgba(47,111,237,0.15)', tension: 0.25, pointRadius: 2 },
+					{ label: 'Hourly buffer (dor_update)', data: series.dor_update.map(function (p) { return p.value; }), borderColor: '#e0a721', backgroundColor: 'rgba(224,167,33,0.15)', tension: 0.25, pointRadius: 2 }
+				]
+			},
+			options: {
+				responsive: true,
+				maintainAspectRatio: false,
+				scales: {
+					x: { ticks: { font: { size: 9 }, maxRotation: 60, minRotation: 40 } },
+					y: { beginAtZero: true, ticks: { precision: 0 } }
+				},
+				plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }, title: { display: true, text: 'Pending entries waiting to be merged', font: { size: 12 } } }
+			}
+		};
+
+		if (bufferChart) {
+			bufferChart.data = cfg.data;
+			bufferChart.options = cfg.options;
+			bufferChart.update();
+		} else {
+			bufferChart = new Chart(ctx, cfg);
+		}
+	}
+
+	function setOffline(isOffline) {
+		var dot = document.getElementById('refreshDot');
+		var label = document.getElementById('refreshLabel');
+		if (isOffline) {
+			dot.classList.add('offline');
+			label.textContent = 'Server unreachable - retrying...';
+		} else {
+			dot.classList.remove('offline');
+			label.textContent = 'Auto-refreshing every 10s';
+		}
+	}
+
+	function refresh() {
+		Promise.all([
+			fetch(STATUS_URL).then(function (r) { return r.json(); }),
+			fetch(HISTORY_URL).then(function (r) { return r.json(); })
+		]).then(function (results) {
+			setOffline(false);
+			var jobs = results[0].jobs || {};
+			var events = results[1].events || [];
+
+			renderPipeline(jobs);
+			renderJobCards(jobs);
+			renderTimeline(events);
+			renderOutcomeChart(events);
+			renderBufferChart(events);
+		}).catch(function (err) {
+			console.error('[Dashboard] refresh failed:', err);
+			setOffline(true);
+		});
+	}
+
+	refresh();
+	setInterval(refresh, REFRESH_MS);
+})();
+</script>
+
+</body>
+</html>

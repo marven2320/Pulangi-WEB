@@ -2,7 +2,10 @@ const XlsxPopulate = require('xlsx-populate');
 const cron = require('node-cron');
 const path = require('path');
 const fs = require('fs');
-const opened = require('@ronomon/opened');
+const { checkIfFileIsOpen } = require('./lib/file-lock');
+const jobStatus = require('./lib/job-status');
+
+const JOB = 'dor_merger';
 
 const OUTPUT_DIR = path.join(__dirname, 'rawdata');
 const TEMPLATE_PATH = path.join(__dirname, '/templates/Pulangi IV HEP - Operational Highlights - RAW Template.xlsx');
@@ -25,22 +28,6 @@ function saveBuffer(data) {
     fs.writeFileSync(BUFFER_FILE, JSON.stringify(data, null, 2));
 }
 
-// Promise wrapper for @ronomon/opened
-function checkIfFileIsOpen(filePath) {
-    return new Promise((resolve, reject) => {
-        // If file doesn't exist, it cannot be open/locked by user
-        if (!fs.existsSync(filePath)) return resolve(false);
-
-        opened.files([filePath], (error, hashTable) => {
-            if (error) {
-                console.error("[CheckOpen] Error:", error);
-                return resolve(true); // Assume locked on error
-            }
-            resolve(hashTable[filePath] === true);
-        });
-    });
-}
-
 // --- THE MERGE TASK ---
 
 async function processBuffer() {
@@ -51,6 +38,7 @@ async function processBuffer() {
     }
 
     console.log(`\n[Merger] Found ${buffer.length} pending entries.`);
+    jobStatus.recordEvent(JOB, 'run-start', `${buffer.length} pending entries`, { pending: buffer.length });
 
     // Group entries by File Path to process one file at a time
     const filesToProcess = {};
@@ -60,6 +48,8 @@ async function processBuffer() {
     });
 
     const successfulEntryIds = [];
+    const lockedFiles = [];
+    const failedFiles = [];
 
     for (const [fPath, entries] of Object.entries(filesToProcess)) {
 
@@ -68,6 +58,7 @@ async function processBuffer() {
 
         if (isLocked) {
             console.warn(`[Skip] ${path.basename(fPath)} is OPEN by user. Keeping data in buffer.`);
+            lockedFiles.push(path.basename(fPath));
             continue; // Skip this file, try others
         }
 
@@ -131,6 +122,7 @@ async function processBuffer() {
         } catch (err) {
             console.error(`[Error] Failed writing to ${path.basename(fPath)}:`, err.message);
             // Do NOT mark as successful, so they stay in buffer
+            failedFiles.push(path.basename(fPath));
         }
     }
 
@@ -144,6 +136,21 @@ async function processBuffer() {
     if (remainingBuffer.length !== currentBuffer.length) {
         saveBuffer(remainingBuffer);
         console.log(`[Clean] Buffer updated. Remaining entries: ${remainingBuffer.length}`);
+    }
+
+    const summary = {
+        written: successfulEntryIds.length,
+        bufferRemaining: remainingBuffer.length,
+        lockedFiles,
+        failedFiles
+    };
+
+    if (failedFiles.length > 0) {
+        jobStatus.recordEvent(JOB, 'error', `Failed writing ${failedFiles.join(', ')}`, summary);
+    } else if (lockedFiles.length > 0) {
+        jobStatus.recordEvent(JOB, 'skip-locked', `${lockedFiles.join(', ')} open - kept ${remainingBuffer.length} entries buffered`, summary);
+    } else {
+        jobStatus.recordEvent(JOB, 'success', `Wrote ${successfulEntryIds.length} rows`, summary);
     }
 }
 

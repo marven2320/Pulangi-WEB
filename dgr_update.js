@@ -2,6 +2,9 @@ const mysql = require('mysql2/promise');
 const cron = require('node-cron');
 const path = require('path');
 const fs = require('fs');
+const jobStatus = require('./lib/job-status');
+
+const JOB = 'dgr_update';
 
 const dbConfig = {
     host: 'localhost',
@@ -79,6 +82,7 @@ async function logShiftData() {
     const sqlTimeStr = formatSQLTime(now);
 
     console.log(`\n[Shift Logger] Fetching DB Data for: ${sqlDateStr} ${sqlTimeStr}`);
+    jobStatus.recordEvent(JOB, 'run-start', `Fetching ${sqlDateStr} ${sqlTimeStr}`, {});
 
     let connection;
 
@@ -113,6 +117,7 @@ async function logShiftData() {
 
         if (diffShifts < 0) {
             console.warn("[Shift Logger] Time is before cycle start. Skipping.");
+            jobStatus.recordEvent(JOB, 'info', 'Time is before cycle start, skipped', { sqlDateStr, sqlTimeStr });
             return;
         }
 
@@ -141,9 +146,15 @@ async function logShiftData() {
         saveBuffer(uniqueBuffer);
 
         console.log(`[Shift Logger] Data buffered. Total pending entries: ${uniqueBuffer.length}`);
+        jobStatus.recordEvent(JOB, 'success', `Buffered row for ${sqlDateStr} ${sqlTimeStr}`, {
+            bufferedEntries: uniqueBuffer.length,
+            targetRow,
+            fileName
+        });
 
     } catch (error) {
         console.error('[Shift Logger] Error:', error);
+        jobStatus.recordEvent(JOB, 'error', error.message, { sqlDateStr, sqlTimeStr });
     } finally {
         if (connection) await connection.end();
     }

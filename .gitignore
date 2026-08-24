@@ -1,0 +1,6 @@
+# Runtime-generated output: RAW workbooks, buffers, job status, and
+# generated reports. These are produced on the server at runtime by
+# dgr_update/dgr_merger/dor_update/dor_merger/dor_generate/mor_generate
+# and shouldn't be committed (large binary .xlsx files, live plant data).
+/rawdata/
+/reports/

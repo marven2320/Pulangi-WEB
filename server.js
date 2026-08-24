@@ -28,6 +28,10 @@ const pool = mysql.createPool({
 // and the CLI tool both see.
 const { getGenerationData, isValidParams } = require('./generation-data-query');
 
+// Status/history recorded by the 6 backend jobs (dgr_update, dgr_merger,
+// dor_update, dor_merger, dor_generate, mor_generate) - powers dashboard.html.
+const jobStatus = require('./lib/job-status');
+
 // GET /api/generation-data?date=YYYY-MM-DD&start=HH:MM:SS&end=HH:MM:SS
 // Returns per-timestamp power (mw1/mw2/mw3) and frequency (freq1/freq2/freq3)
 // readings for all 3 units, straight from the `pulangi` table - used by
@@ -75,6 +79,48 @@ app.get('/api/generation-data-file', (req, res) => {
             console.log((new Date()) + ' /api/generation-data-file download error: ' + err);
         }
     });
+});
+
+// GET /api/jobs/status
+// Current/last-known state of all 6 backend jobs, keyed by job name. Jobs
+// that haven't reported in yet (e.g. right after a fresh deploy, before
+// their first cron tick) are filled in from JOB_META so the dashboard can
+// still render a card for them with status "idle".
+// Used by dashboard.html's status cards and pipeline diagram.
+app.get('/api/jobs/status', (req, res) => {
+    const status = jobStatus.getStatus();
+
+    Object.keys(jobStatus.JOB_META).forEach((job) => {
+        if (!status[job]) {
+            const meta = jobStatus.JOB_META[job];
+            status[job] = {
+                job,
+                label: meta.label,
+                description: meta.description,
+                schedule: meta.schedule,
+                group: meta.group,
+                status: 'idle',
+                lastEventAt: null,
+                lastRunAt: null,
+                lastSuccessAt: null,
+                lastErrorAt: null,
+                message: 'No runs recorded yet',
+                meta: {},
+                pid: null
+            };
+        }
+    });
+
+    res.json({ jobs: status });
+});
+
+// GET /api/jobs/history?limit=200
+// Rolling event log (run-start/success/skip-locked/error/info) across all
+// 6 jobs, oldest first. Used by dashboard.html's timeline/trend charts.
+app.get('/api/jobs/history', (req, res) => {
+    const history = jobStatus.getHistory();
+    const limit = Math.min(parseInt(req.query.limit, 10) || history.length, history.length);
+    res.json({ events: history.slice(history.length - limit) });
 });
 
 app.use(serve(__dirname + '/'));

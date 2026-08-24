@@ -2,7 +2,10 @@ const mysql = require('mysql2/promise');
 const cron = require('node-cron');
 const path = require('path');
 const fs = require('fs');
-const XlsxPopulate = require('xlsx-populate'); 
+const XlsxPopulate = require('xlsx-populate');
+const jobStatus = require('./lib/job-status');
+
+const JOB = 'dor_update';
 
 const dbConfig = {
     host: 'localhost',
@@ -124,8 +127,10 @@ async function logToBuffer() {
     const displayTime = formatTimeWithSeconds(now, 0); 
 
     console.log(`\n[Logger] Started. Current Target: ${currentDateStr} ${displayTime}`);
+    jobStatus.recordEvent(JOB, 'run-start', `Target ${currentDateStr} ${displayTime}`, {});
 
     let connection;
+    let backfilledRows = 0;
 
     try {
         connection = await mysql.createConnection(dbConfig);
@@ -240,6 +245,7 @@ async function logToBuffer() {
                                         timestamp: new Date().toISOString()
                                     };
                                     buffer.push(backfillEntry);
+                                    backfilledRows++;
                                     console.log(`[Backfill] Recovered data for Row ${r}.`);
                                 }
                             }
@@ -258,9 +264,15 @@ async function logToBuffer() {
         // --- SAVE BUFFER ---
         saveBuffer(buffer);
         console.log(`[Logger] Complete. Buffer size: ${buffer.length}`);
+        jobStatus.recordEvent(JOB, 'success', `Buffer size ${buffer.length}${backfilledRows ? `, backfilled ${backfilledRows} row(s)` : ''}`, {
+            bufferedEntries: buffer.length,
+            backfilledRows,
+            fileName
+        });
 
     } catch (error) {
         console.error('[Logger] Critical Error:', error);
+        jobStatus.recordEvent(JOB, 'error', error.message, {});
     } finally {
         if (connection) await connection.end();
     }

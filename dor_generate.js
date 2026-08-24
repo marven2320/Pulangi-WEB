@@ -2,6 +2,17 @@ const XlsxPopulate = require('xlsx-populate');
 const path = require('path');
 const fs = require('fs');
 const cron = require('node-cron');
+const { checkIfFileIsOpen, isFileLockError } = require('./lib/file-lock');
+const jobStatus = require('./lib/job-status');
+
+const JOB = 'dor_generate';
+
+// Set while a freshly-built report couldn't be saved because the previous
+// version of the file is open in Excel. The retry cron below keeps
+// re-running the full generation (cheap - it's all formulas, no manual
+// edits to lose) until the file is free, so the report still updates
+// instead of silently going stale.
+let pendingRegeneration = false;
 
 // --- CONFIGURATION ---
 const REPORTS_DIR = path.join(__dirname, 'reports');
@@ -92,6 +103,7 @@ function getLatestOutageTimes(targetDateStr) {
 
 async function generateDailyReport() {
     console.log(`[Daily Report] Starting generation...`);
+    jobStatus.recordEvent(JOB, 'run-start', 'Building daily report', {});
 
     const today = new Date();
     const targetDate = new Date(today);
@@ -321,17 +333,55 @@ async function generateDailyReport() {
         //  END NEW SECTION
         // ============================================================
 
-        await destWorkbook.toFileAsync(outputPath);
+        // --- SAVE (won't clobber a copy the user has open) ---
+        // Check the lock first so we don't even attempt the write while
+        // someone has the report open; also catch EBUSY/EPERM/EACCES from
+        // toFileAsync itself in case it got opened in the gap between the
+        // check and the write. Either way we don't lose the freshly built
+        // report - we just flag it for the retry cron to try again once
+        // the file is free.
+        const isLocked = await checkIfFileIsOpen(outputPath);
+
+        if (isLocked) {
+            pendingRegeneration = true;
+            console.warn(`[Skip] ${outputFilename} is OPEN by user. Will retry.`);
+            jobStatus.recordEvent(JOB, 'skip-locked', `${outputFilename} is open - retry queued`, { outputFilename });
+            return;
+        }
+
+        try {
+            await destWorkbook.toFileAsync(outputPath);
+        } catch (writeErr) {
+            if (isFileLockError(writeErr)) {
+                pendingRegeneration = true;
+                console.warn(`[Skip] ${outputFilename} became locked mid-write. Will retry.`);
+                jobStatus.recordEvent(JOB, 'skip-locked', `${outputFilename} locked mid-write - retry queued`, { outputFilename });
+                return;
+            }
+            throw writeErr;
+        }
+
+        pendingRegeneration = false;
         console.log(`[Success] Generated with Formulas: ${outputFilename}`);
+        jobStatus.recordEvent(JOB, 'success', `Generated ${outputFilename}`, { outputFilename, targetDate: dateStr });
 
     } catch (error) {
         console.error('[Error] Daily Report failed:', error);
+        jobStatus.recordEvent(JOB, 'error', error.message, {});
     }
 }
 
 // --- SCHEDULE ---
 cron.schedule('1 0,7 * * *', () => {
     generateDailyReport();
+});
+
+// Retry loop: as long as the last attempt was blocked by the report being
+// open, keep re-generating every 2 minutes so the report catches up the
+// moment the user closes it, instead of waiting for the next 00:01/07:01
+// run.
+cron.schedule('*/2 * * * *', () => {
+    if (pendingRegeneration) generateDailyReport();
 });
 
 generateDailyReport();
