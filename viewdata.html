@@ -270,11 +270,7 @@
     line.style.left = chartArea.left + 'px';
     line.style.top = (y - 1) + 'px';
     line.style.width = chartArea.width + 'px';
-    // A neutral dark tone (rather than a data-series color like red) reads
-    // clearly as a reference annotation, not another data line - important
-    // since Google Charts' default Frequency series color is itself red/
-    // orange and would otherwise blend with the line when at/near 60 Hz.
-    line.style.borderTop = '3px dashed #333d4d';
+    line.style.borderTop = '3px dashed var(--color-accent)';
     line.style.pointerEvents = 'none';
     container.appendChild(line);
   }
