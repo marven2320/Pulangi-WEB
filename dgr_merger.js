@@ -2,8 +2,8 @@ const XlsxPopulate = require('xlsx-populate');
 const cron = require('node-cron');
 const path = require('path');
 const fs = require('fs');
-const { checkIfFileIsOpen } = require('./lib/file-lock');
-const jobStatus = require('./lib/job-status');
+const { checkIfFileIsOpen } = require('./Report for NGCP Dashboard/lib/file-lock');
+const jobStatus = require('./Report for NGCP Dashboard/lib/job-status');
 
 const JOB = 'dgr_merger';
 

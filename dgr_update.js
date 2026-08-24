@@ -2,7 +2,7 @@ const mysql = require('mysql2/promise');
 const cron = require('node-cron');
 const path = require('path');
 const fs = require('fs');
-const jobStatus = require('./lib/job-status');
+const jobStatus = require('./Report for NGCP Dashboard/lib/job-status');
 
 const JOB = 'dgr_update';
 

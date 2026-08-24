@@ -3,7 +3,7 @@ const cron = require('node-cron');
 const path = require('path');
 const fs = require('fs');
 const XlsxPopulate = require('xlsx-populate');
-const jobStatus = require('./lib/job-status');
+const jobStatus = require('./Report for NGCP Dashboard/lib/job-status');
 
 const JOB = 'dor_update';
 

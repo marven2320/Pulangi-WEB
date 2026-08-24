@@ -2,8 +2,8 @@ const XlsxPopulate = require('xlsx-populate');
 const path = require('path');
 const fs = require('fs');
 const cron = require('node-cron');
-const { checkIfFileIsOpen, isFileLockError } = require('./lib/file-lock');
-const jobStatus = require('./lib/job-status');
+const { checkIfFileIsOpen, isFileLockError } = require('./Report for NGCP Dashboard/lib/file-lock');
+const jobStatus = require('./Report for NGCP Dashboard/lib/job-status');
 
 const JOB = 'dor_generate';
 

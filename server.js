@@ -30,7 +30,7 @@ const { getGenerationData, isValidParams } = require('./generation-data-query');
 
 // Status/history recorded by the 6 backend jobs (dgr_update, dgr_merger,
 // dor_update, dor_merger, dor_generate, mor_generate) - powers dashboard.html.
-const jobStatus = require('./lib/job-status');
+const jobStatus = require('./Report for NGCP Dashboard/lib/job-status');
 
 // GET /api/generation-data?date=YYYY-MM-DD&start=HH:MM:SS&end=HH:MM:SS
 // Returns per-timestamp power (mw1/mw2/mw3) and frequency (freq1/freq2/freq3)
@@ -122,6 +122,18 @@ app.get('/api/jobs/history', (req, res) => {
     const limit = Math.min(parseInt(req.query.limit, 10) || history.length, history.length);
     res.json({ events: history.slice(history.length - limit) });
 });
+
+// The 'express-static' package used below for the rest of the site does not
+// decode the URL before doing its filesystem lookup (it hands req.url's raw
+// pathname straight to fs.stat) - fine for the plain filenames elsewhere in
+// this repo, but "Report for NGCP Dashboard" has spaces, which browsers
+// always send percent-encoded ("%20") on the wire. So this folder is served
+// separately with Express's own express.static, which does decode the
+// remainder of the path (e.g. "/dashboard.html") once it's mounted.
+// The mount path itself must still be given already-encoded ("%20") -
+// Express matches a app.use() mount path against the raw incoming URL
+// without decoding it first, so a literal space here would never match.
+app.use('/Report%20for%20NGCP%20Dashboard', express.static(path.join(__dirname, 'Report for NGCP Dashboard')));
 
 app.use(serve(__dirname + '/'));
 

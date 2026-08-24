@@ -18,7 +18,11 @@
 const fs = require('fs');
 const path = require('path');
 
-const OUTPUT_DIR = path.join(__dirname, '..', 'rawdata');
+// __dirname is <repo root>/Report for NGCP Dashboard/lib - go up two levels
+// to land back on the repo-root rawdata/ folder the other 5 scripts already
+// read/write from (their own OUTPUT_DIR is path.join(__dirname, 'rawdata')
+// relative to the repo root).
+const OUTPUT_DIR = path.join(__dirname, '..', '..', 'rawdata');
 const STATUS_FILE = path.join(OUTPUT_DIR, 'job_status.json');
 const HISTORY_FILE = path.join(OUTPUT_DIR, 'job_history.json');
 const MAX_HISTORY = 500;
