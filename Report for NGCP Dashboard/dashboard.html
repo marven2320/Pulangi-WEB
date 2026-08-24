@@ -10,26 +10,36 @@
 
 	<style>
 
+	/* Palette follows the reference design: a warm brand green for accents/CTAs,
+	   a deep navy for headings and the high-contrast "result" card, and soft
+	   cream/sky blobs as background decoration. Status colors (success/warning/
+	   danger/idle/running) stay a separate, semantic set so a job's health is
+	   never confused with page chrome. */
 	:root {
-		--color-bg: #eef1f6;
+		--color-bg: #f5f9f2;
 		--color-surface: #ffffff;
-		--color-primary: #0d2547;
-		--color-primary-soft: #4c6690;
-		--color-primary-softer: #6b84ab;
-		--color-accent: #2f6fed;
-		--color-border: #d7deea;
-		--color-text: #1b2430;
-		--color-text-muted: #6b7684;
+		--color-navy: #16233d;
+		--color-navy-soft: #33496b;
+		--color-navy-softer: #6b7fa0;
+		--color-accent: #6fae2e;
+		--color-accent-dark: #4f8c1a;
+		--color-accent-soft: #e7f3db;
+		--color-border: #dee6d8;
+		--color-text: #182018;
+		--color-text-muted: #667569;
 		--color-success: #23a35a;
 		--color-success-glow: #7be3a0;
 		--color-danger: #d64545;
 		--color-warning: #e0a721;
 		--color-idle: #9aa7b8;
 		--color-running: #2f6fed;
-		--radius-sm: 4px;
-		--radius-md: 8px;
-		--shadow-sm: 0 1px 3px rgba(13,37,71,0.12);
-		--shadow-md: 0 6px 20px rgba(13,37,71,0.18);
+		--color-blob-cream: #fdf1cf;
+		--color-blob-blue: #e1f1fb;
+		--radius-sm: 6px;
+		--radius-md: 14px;
+		--radius-pill: 999px;
+		--shadow-sm: 0 1px 3px rgba(22,35,61,0.10);
+		--shadow-md: 0 10px 28px rgba(22,35,61,0.14);
 		--font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 	}
 
@@ -40,19 +50,19 @@
 	}
 
 	.nav-pills > li > a {
-		border-radius: var(--radius-sm);
+		border-radius: var(--radius-pill);
 		font-weight: 600;
-		color: var(--color-primary-soft);
+		color: var(--color-navy-soft);
 		transition: background-color 0.15s ease, color 0.15s ease;
 	}
 	.nav-pills > li.active > a,
 	.nav-pills > li.active > a:hover,
 	.nav-pills > li.active > a:focus {
-		background-color: var(--color-primary);
+		background-color: var(--color-accent);
 		color: white;
 	}
 	.nav-pills > li > a:hover {
-		background-color: var(--color-border);
+		background-color: var(--color-accent-soft);
 	}
 
 	.panel.panel-default {
@@ -68,30 +78,88 @@
 		letter-spacing: 0.02em;
 	}
 
-	.dash-wrap {
-		background-color: var(--color-primary-soft);
-		padding: 32px 20px 48px;
+	.page-shell {
+		background-color: var(--color-bg);
+		padding: 0 0 48px;
 	}
 
-	.dash-section {
-		background-color: var(--color-surface);
-		border-radius: var(--radius-md);
-		box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-		padding: 24px 26px;
-		box-sizing: border-box;
-		margin: 0 auto 24px;
-		max-width: 1180px;
-	}
-	.dash-section h2 {
-		margin-top: 0;
-		font-size: 19px;
-		color: var(--color-primary);
-	}
-	.dash-section p.lead-sub {
-		color: var(--color-text-muted);
+	.accent { color: var(--color-accent); }
+
+	/* ---- Pill buttons ---- */
+	.btn-pill {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		border-radius: var(--radius-pill);
+		padding: 12px 26px;
+		font-weight: 700;
 		font-size: 14px;
-		margin-top: -8px;
+		text-decoration: none;
+		border: 2px solid transparent;
+		transition: filter 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+		cursor: pointer;
 	}
+	.btn-pill.primary { background: var(--color-accent); color: white; }
+	.btn-pill.primary:hover { filter: brightness(0.94); color: white; }
+	.btn-pill.ghost { background: transparent; border-color: var(--color-navy); color: var(--color-navy); }
+	.btn-pill.ghost:hover { background: var(--color-navy); color: white; }
+
+	/* ---- Hero ---- */
+	.hero {
+		position: relative;
+		overflow: hidden;
+		padding: 44px 28px 36px;
+	}
+	.hero-blob {
+		position: absolute;
+		border-radius: 50%;
+		z-index: 0;
+	}
+	.hero-blob.cream { width: 320px; height: 320px; background: var(--color-blob-cream); left: -120px; bottom: -140px; }
+	.hero-blob.blue { width: 420px; height: 420px; background: var(--color-blob-blue); right: -160px; top: -180px; }
+	.hero-inner {
+		position: relative;
+		z-index: 1;
+		max-width: 1180px;
+		margin: 0 auto;
+		display: grid;
+		grid-template-columns: 1.05fr 0.95fr;
+		gap: 28px;
+		align-items: center;
+	}
+	@media (max-width: 860px) {
+		.hero-inner { grid-template-columns: 1fr; }
+	}
+	.eyebrow {
+		display: inline-block;
+		font-size: 12px;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--color-accent-dark);
+		background: var(--color-accent-soft);
+		border-radius: var(--radius-pill);
+		padding: 5px 12px;
+		margin-bottom: 14px;
+	}
+	.hero-copy h1 {
+		font-size: 40px;
+		font-weight: 800;
+		line-height: 1.12;
+		color: var(--color-navy);
+		margin: 0 0 14px;
+		letter-spacing: -0.01em;
+	}
+	.hero-copy p.hero-sub {
+		font-size: 15.5px;
+		color: var(--color-text-muted);
+		max-width: 46ch;
+		margin: 0 0 22px;
+		line-height: 1.55;
+	}
+	.hero-ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
+	.hero-art { display: flex; justify-content: center; }
+	.hero-art svg { width: 100%; max-width: 420px; height: auto; }
 
 	.refresh-note {
 		font-size: 12px;
@@ -114,6 +182,125 @@
 	}
 	.refresh-dot.offline { background: var(--color-danger); animation: none; }
 
+	/* ---- Generic section card ---- */
+	.dash-section {
+		background-color: var(--color-surface);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		box-shadow: var(--shadow-sm);
+		padding: 26px 28px;
+		box-sizing: border-box;
+		margin: 0 auto 22px;
+		max-width: 1180px;
+	}
+	.dash-section.no-card {
+		background: none;
+		border: none;
+		box-shadow: none;
+		padding: 8px 28px 0;
+	}
+	.dash-section h2 {
+		margin-top: 0;
+		font-size: 19px;
+		font-weight: 800;
+		color: var(--color-navy);
+	}
+	.dash-section h2.centered { text-align: center; }
+	.dash-section p.lead-sub {
+		color: var(--color-text-muted);
+		font-size: 14px;
+		margin-top: -6px;
+	}
+	.dash-section p.lead-sub.centered { text-align: center; max-width: 62ch; margin-left: auto; margin-right: auto; }
+
+	/* ---- Overview widget (tabs + result card) ---- */
+	.tabs {
+		display: flex;
+		justify-content: center;
+		gap: 32px;
+		border-bottom: 1px solid var(--color-border);
+		margin: 4px 0 24px;
+	}
+	.tab {
+		background: none;
+		border: none;
+		padding: 10px 2px 12px;
+		font-weight: 700;
+		font-size: 14px;
+		color: var(--color-text-muted);
+		border-bottom: 3px solid transparent;
+		cursor: pointer;
+		margin-bottom: -1px;
+	}
+	.tab.active { color: var(--color-accent-dark); border-bottom-color: var(--color-accent); }
+
+	.overview-card {
+		max-width: 880px;
+		margin: 0 auto;
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		border-radius: var(--radius-md);
+		overflow: hidden;
+		box-shadow: var(--shadow-md);
+		border: 1px solid var(--color-border);
+	}
+	@media (max-width: 720px) {
+		.overview-card { grid-template-columns: 1fr; }
+	}
+	.overview-inputs {
+		background: var(--color-surface);
+		padding: 26px;
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 16px;
+		align-content: start;
+	}
+	.overview-field label {
+		display: block;
+		font-size: 10.5px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: var(--color-text-muted);
+		margin-bottom: 6px;
+	}
+	.overview-field .value-box {
+		border: 1.5px solid var(--color-border);
+		border-radius: var(--radius-sm);
+		padding: 11px 12px;
+		font-size: 19px;
+		font-weight: 800;
+		color: var(--color-navy);
+		background: #fbfcfa;
+	}
+	.overview-result {
+		background: linear-gradient(155deg, var(--color-navy), var(--color-navy-soft));
+		color: white;
+		padding: 26px;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+	}
+	.overview-result .cap {
+		font-size: 11.5px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		opacity: 0.72;
+		margin-bottom: 4px;
+	}
+	.overview-result .big-num { font-size: 38px; font-weight: 800; line-height: 1.1; }
+	.overview-stat-row {
+		display: flex;
+		margin-top: 20px;
+		padding-top: 16px;
+		border-top: 1px solid rgba(255,255,255,0.18);
+	}
+	.overview-stat-row > div { flex: 1; text-align: center; }
+	.overview-stat-row > div:first-child { border-right: 1px solid rgba(255,255,255,0.18); }
+	.overview-stat-row .num { font-size: 18px; font-weight: 800; }
+	.overview-stat-row .cap2 { font-size: 10.5px; opacity: 0.72; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px; }
+
 	/* ---- Pipeline diagram ---- */
 	.pipeline {
 		display: flex;
@@ -134,7 +321,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		color: var(--color-primary-softer);
+		color: var(--color-accent);
 		font-size: 22px;
 		min-width: 26px;
 	}
@@ -142,7 +329,7 @@
 		position: relative;
 		border-radius: var(--radius-sm);
 		border: 1px solid var(--color-border);
-		background: #f8fafc;
+		background: #f8faf6;
 		padding: 10px 12px 10px 14px;
 		font-size: 12.5px;
 		line-height: 1.35;
@@ -157,13 +344,14 @@
 	.pipe-node.job.status-error { border-left-color: var(--color-danger); }
 	.pipe-node.job.status-idle { border-left-color: var(--color-idle); }
 	.pipe-node.store {
-		background: #eef3fb;
+		background: var(--color-accent-soft);
 		border-style: dashed;
+		border-color: #c9dfb8;
 		text-align: center;
-		font-weight: 600;
-		color: var(--color-primary-soft);
+		font-weight: 700;
+		color: var(--color-accent-dark);
 	}
-	.pipe-node .node-title { font-weight: 700; color: var(--color-primary); }
+	.pipe-node .node-title { font-weight: 700; color: var(--color-navy); }
 	.pipe-node .node-sub { color: var(--color-text-muted); font-size: 11.5px; }
 	.pipe-dot {
 		position: absolute;
@@ -189,8 +377,8 @@
 	.job-card {
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-md);
-		padding: 16px 18px;
-		background: #fbfcfe;
+		padding: 18px 20px;
+		background: #fbfdf9;
 		border-top: 4px solid var(--color-idle);
 	}
 	.job-card.status-success { border-top-color: var(--color-success); }
@@ -207,8 +395,9 @@
 	}
 	.job-card-head h3 {
 		font-size: 15.5px;
+		font-weight: 800;
 		margin: 0 0 4px;
-		color: var(--color-primary);
+		color: var(--color-navy);
 	}
 	.job-card-head .job-name {
 		font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -220,8 +409,8 @@
 		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: 0.04em;
-		padding: 3px 9px;
-		border-radius: 999px;
+		padding: 3px 10px;
+		border-radius: var(--radius-pill);
 		color: white;
 		white-space: nowrap;
 	}
@@ -253,15 +442,15 @@
 		margin: 0;
 	}
 	.job-card dt { color: var(--color-text-muted); }
-	.job-card dd { margin: 0; font-weight: 600; }
+	.job-card dd { margin: 0; font-weight: 700; }
 	.meta-chips { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
 	.meta-chip {
 		font-size: 11px;
-		background: var(--color-border);
-		color: var(--color-primary-soft);
-		border-radius: 999px;
-		padding: 2px 9px;
-		font-weight: 600;
+		background: var(--color-accent-soft);
+		color: var(--color-accent-dark);
+		border-radius: var(--radius-pill);
+		padding: 2px 10px;
+		font-weight: 700;
 	}
 
 	/* ---- Charts ---- */
@@ -290,7 +479,7 @@
 	}
 	.timeline-row:last-child { border-bottom: none; }
 	.timeline-time { color: var(--color-text-muted); min-width: 132px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; }
-	.timeline-job { min-width: 190px; font-weight: 600; color: var(--color-primary); }
+	.timeline-job { min-width: 190px; font-weight: 700; color: var(--color-navy); }
 	.timeline-dot { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; }
 	.timeline-dot.success { background: var(--color-success); }
 	.timeline-dot.run-start { background: var(--color-running); }
@@ -310,7 +499,7 @@
 		gap: 14px;
 	}
 	.algo-steps li {
-		background: #f8fafc;
+		background: #f8faf6;
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-sm);
 		padding: 12px 14px;
@@ -348,19 +537,109 @@
 		</div>
 
 		<div class="container-fluid">
-			<div class="dash-wrap">
+			<div class="page-shell">
 
-				<div class="dash-section">
-					<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
-						<div>
-							<h2>Backend Job Dashboard</h2>
-							<p class="lead-sub">Live status for the 6 scripts that log, merge, and generate the Excel reports.</p>
+				<!-- HERO -->
+				<section class="hero">
+					<div class="hero-blob cream"></div>
+					<div class="hero-blob blue"></div>
+					<div class="hero-inner">
+						<div class="hero-copy">
+							<span class="eyebrow">Pulangi IV HEP &middot; Backend Jobs</span>
+							<h1>Your reports,<br><span class="accent">always current</span></h1>
+							<p class="hero-sub">Six scripts log readings, merge them into the RAW workbooks, and build the Daily and Monthly reports - automatically retrying if a workbook is open in Excel, so nothing is ever lost. This page watches all six live.</p>
+							<div class="hero-ctas">
+								<a href="#overview" class="btn-pill primary">See system health</a>
+								<a href="#pipeline-section" class="btn-pill ghost">View the pipeline</a>
+							</div>
+							<div class="refresh-note"><span id="refreshDot" class="refresh-dot"></span><span id="refreshLabel">Auto-refreshing every 10s</span></div>
 						</div>
-						<div class="refresh-note"><span id="refreshDot" class="refresh-dot"></span><span id="refreshLabel">Auto-refreshing every 10s</span></div>
-					</div>
-				</div>
+						<div class="hero-art">
+							<svg viewBox="0 0 480 380" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Illustration of a hydro plant sending live readings to an always-current report">
+								<circle cx="330" cy="150" r="150" fill="#eaf5fd"/>
+								<path d="M20 300 Q140 275 260 300 T480 300 V380 H20 Z" fill="#dcf0f9"/>
+								<path d="M0 320 Q120 300 240 322 T480 318 V380 H0 Z" fill="#c7e8f6"/>
 
-				<div class="dash-section">
+								<!-- trees -->
+								<rect x="72" y="252" width="6" height="26" fill="#8a6a46"/>
+								<circle cx="75" cy="242" r="20" fill="#6fae2e"/>
+								<rect x="392" y="238" width="6" height="30" fill="#8a6a46"/>
+								<circle cx="395" cy="226" r="24" fill="#6fae2e"/>
+
+								<!-- birds -->
+								<path d="M120 70 q8 -10 16 0 q8 -10 16 0" stroke="#16233d" stroke-width="3" fill="none" stroke-linecap="round"/>
+								<path d="M300 46 q7 -9 14 0 q7 -9 14 0" stroke="#16233d" stroke-width="3" fill="none" stroke-linecap="round"/>
+								<path d="M180 100 q6 -8 12 0 q6 -8 12 0" stroke="#16233d" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+
+								<!-- dam / powerhouse -->
+								<rect x="150" y="150" width="120" height="130" fill="#16233d"/>
+								<rect x="150" y="150" width="120" height="14" fill="#0e1729"/>
+								<rect x="168" y="176" width="16" height="16" fill="#3c5170"/>
+								<rect x="198" y="176" width="16" height="16" fill="#3c5170"/>
+								<rect x="228" y="176" width="16" height="16" fill="#3c5170"/>
+								<rect x="168" y="206" width="16" height="16" fill="#3c5170"/>
+								<rect x="198" y="206" width="16" height="16" fill="#3c5170"/>
+								<rect x="228" y="206" width="16" height="16" fill="#3c5170"/>
+								<rect x="185" y="240" width="50" height="40" fill="#0e1729"/>
+
+								<!-- turbine hall -->
+								<rect x="255" y="110" width="90" height="170" fill="#6fae2e"/>
+								<rect x="255" y="110" width="90" height="16" fill="#4f8c1a"/>
+								<g fill="#eaf5e0">
+									<rect x="270" y="140" width="14" height="14"/>
+									<rect x="295" y="140" width="14" height="14"/>
+									<rect x="320" y="140" width="14" height="14"/>
+									<rect x="270" y="168" width="14" height="14"/>
+									<rect x="295" y="168" width="14" height="14"/>
+									<rect x="320" y="168" width="14" height="14"/>
+									<rect x="270" y="196" width="14" height="14"/>
+									<rect x="295" y="196" width="14" height="14"/>
+									<rect x="320" y="196" width="14" height="14"/>
+									<rect x="270" y="224" width="14" height="14"/>
+									<rect x="295" y="224" width="14" height="14"/>
+									<rect x="320" y="224" width="14" height="14"/>
+								</g>
+
+								<!-- small house -->
+								<rect x="90" y="240" width="46" height="40" fill="#6fae2e"/>
+								<path d="M86 240 L113 214 L140 240 Z" fill="#16233d"/>
+								<rect x="106" y="258" width="16" height="22" fill="#0e1729"/>
+
+								<!-- data arc from plant to report -->
+								<path d="M300 105 Q360 60 400 110" stroke="#4f8c1a" stroke-width="2.5" fill="none" stroke-dasharray="5 6"/>
+
+								<!-- floating report card -->
+								<g>
+									<rect x="368" y="96" width="86" height="70" rx="10" fill="#ffffff" stroke="#dee6d8"/>
+									<rect x="380" y="110" width="46" height="6" rx="3" fill="#c8d4c1"/>
+									<rect x="380" y="122" width="62" height="6" rx="3" fill="#c8d4c1"/>
+									<rect x="380" y="134" width="38" height="6" rx="3" fill="#c8d4c1"/>
+									<rect x="380" y="146" width="54" height="6" rx="3" fill="#c8d4c1"/>
+									<circle cx="440" cy="100" r="13" fill="#6fae2e"/>
+									<path d="M434 100 l4 4 l8 -9" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+								</g>
+							</svg>
+						</div>
+					</div>
+				</section>
+
+				<!-- OVERVIEW / tabbed stat widget -->
+				<section class="dash-section no-card" id="overview">
+					<h2 class="centered">See your <span class="accent">pipeline health</span></h2>
+					<p class="lead-sub centered">A quick read on the 6 jobs - flip between what's true right now and what happened in the last 24 hours.</p>
+
+					<div class="tabs">
+						<button type="button" class="tab active" data-tab="snapshot">Right now</button>
+						<button type="button" class="tab" data-tab="today">Last 24 hours</button>
+					</div>
+
+					<div class="overview-card">
+						<div class="overview-inputs" id="overviewInputs"></div>
+						<div class="overview-result" id="overviewResult"></div>
+					</div>
+				</section>
+
+				<div class="dash-section" id="pipeline-section">
 					<h2>Data pipeline</h2>
 					<p class="lead-sub">MySQL &rarr; loggers buffer readings &rarr; mergers write the RAW workbooks &rarr; report generators build the Daily/Monthly reports. The dot on each box reflects that job's current status.</p>
 					<div class="pipeline" id="pipeline"></div>
@@ -430,6 +709,8 @@
 		'run-start': 'Started',
 		info: 'Info'
 	};
+
+	var JOB_ORDER = ['dgr_update', 'dgr_merger', 'dor_update', 'dor_merger', 'dor_generate', 'mor_generate'];
 
 	// Pipeline layout: which jobs feed which output, purely for the diagram.
 	var PIPELINE = [
@@ -535,8 +816,7 @@
 		var grid = document.getElementById('jobGrid');
 		grid.innerHTML = '';
 
-		var order = ['dgr_update', 'dgr_merger', 'dor_update', 'dor_merger', 'dor_generate', 'mor_generate'];
-		order.forEach(function (jobName) {
+		JOB_ORDER.forEach(function (jobName) {
 			var j = jobs[jobName];
 			if (!j) return;
 
@@ -583,10 +863,9 @@
 	var outcomeChart, bufferChart;
 
 	function renderOutcomeChart(events) {
-		var order = ['dgr_update', 'dgr_merger', 'dor_update', 'dor_merger', 'dor_generate', 'mor_generate'];
 		var types = ['success', 'skip-locked', 'error'];
 		var counts = {};
-		order.forEach(function (j) { counts[j] = { success: 0, 'skip-locked': 0, error: 0 }; });
+		JOB_ORDER.forEach(function (j) { counts[j] = { success: 0, 'skip-locked': 0, error: 0 }; });
 
 		events.forEach(function (ev) {
 			if (counts[ev.job] && counts[ev.job][ev.type] !== undefined) {
@@ -598,14 +877,14 @@
 			return {
 				label: STATUS_LABELS[type],
 				backgroundColor: STATUS_COLORS[type],
-				data: order.map(function (j) { return counts[j][type]; })
+				data: JOB_ORDER.map(function (j) { return counts[j][type]; })
 			};
 		});
 
 		var ctx = document.getElementById('outcomeChart').getContext('2d');
 		var cfg = {
 			type: 'bar',
-			data: { labels: order, datasets: datasets },
+			data: { labels: JOB_ORDER, datasets: datasets },
 			options: {
 				responsive: true,
 				maintainAspectRatio: false,
@@ -650,8 +929,8 @@
 			data: {
 				labels: labels,
 				datasets: [
-					{ label: 'Shift buffer (dgr_update)', data: series.dgr_update.map(function (p) { return p.value; }), borderColor: '#2f6fed', backgroundColor: 'rgba(47,111,237,0.15)', tension: 0.25, pointRadius: 2 },
-					{ label: 'Hourly buffer (dor_update)', data: series.dor_update.map(function (p) { return p.value; }), borderColor: '#e0a721', backgroundColor: 'rgba(224,167,33,0.15)', tension: 0.25, pointRadius: 2 }
+					{ label: 'Shift buffer (dgr_update)', data: series.dgr_update.map(function (p) { return p.value; }), borderColor: '#6fae2e', backgroundColor: 'rgba(111,174,46,0.15)', tension: 0.25, pointRadius: 2 },
+					{ label: 'Hourly buffer (dor_update)', data: series.dor_update.map(function (p) { return p.value; }), borderColor: '#2f6fed', backgroundColor: 'rgba(47,111,237,0.12)', tension: 0.25, pointRadius: 2 }
 				]
 			},
 			options: {
@@ -674,6 +953,84 @@
 		}
 	}
 
+	// ---- Overview widget: tab-switched stat card in the reference's
+	// light-inputs / dark-result layout. "snapshot" reads the jobs' current
+	// status; "today" aggregates the last 24h of history events.
+	var overviewTab = 'snapshot';
+	var lastJobs = {};
+	var lastEvents = [];
+
+	function overviewField(label, value) {
+		var f = el('div', 'overview-field');
+		f.innerHTML = '<label>' + label + '</label><div class="value-box">' + value + '</div>';
+		return f;
+	}
+
+	function renderOverview(jobs, events) {
+		var inputs = document.getElementById('overviewInputs');
+		var result = document.getElementById('overviewResult');
+		inputs.innerHTML = '';
+
+		if (overviewTab === 'snapshot') {
+			var healthy = 0, open = 0, errored = 0, pending = 0;
+			JOB_ORDER.forEach(function (name) {
+				var j = jobs[name];
+				if (!j) return;
+				if (j.status === 'success') healthy++;
+				if (j.status === 'skip-locked') open++;
+				if (j.status === 'error') errored++;
+				var m = j.meta || {};
+				if (typeof m.bufferedEntries === 'number') pending += m.bufferedEntries;
+				if (typeof m.bufferRemaining === 'number') pending += m.bufferRemaining;
+			});
+
+			inputs.appendChild(overviewField('Jobs healthy', healthy + ' / ' + JOB_ORDER.length));
+			inputs.appendChild(overviewField('Files open', open));
+			inputs.appendChild(overviewField('Entries queued', pending));
+			inputs.appendChild(overviewField('Jobs with errors', errored));
+
+			result.innerHTML =
+				'<div class="cap">System health</div>' +
+				'<div class="big-num">' + healthy + ' / ' + JOB_ORDER.length + ' jobs OK</div>' +
+				'<div class="overview-stat-row">' +
+					'<div><div class="num">' + pending + '</div><div class="cap2">Entries queued</div></div>' +
+					'<div><div class="num">' + open + '</div><div class="cap2">Files open</div></div>' +
+				'</div>';
+		} else {
+			var since = Date.now() - 24 * 60 * 60 * 1000;
+			var successToday = 0, skipToday = 0, errorToday = 0, runsToday = 0;
+			events.forEach(function (ev) {
+				if (new Date(ev.ts).getTime() < since) return;
+				runsToday++;
+				if (ev.type === 'success') successToday++;
+				if (ev.type === 'skip-locked') skipToday++;
+				if (ev.type === 'error') errorToday++;
+			});
+
+			inputs.appendChild(overviewField('Successful runs', successToday));
+			inputs.appendChild(overviewField('Skipped (file open)', skipToday));
+			inputs.appendChild(overviewField('Errors', errorToday));
+			inputs.appendChild(overviewField('Total events', runsToday));
+
+			result.innerHTML =
+				'<div class="cap">Last 24 hours</div>' +
+				'<div class="big-num">' + successToday + ' successful runs</div>' +
+				'<div class="overview-stat-row">' +
+					'<div><div class="num">' + errorToday + '</div><div class="cap2">Errors today</div></div>' +
+					'<div><div class="num">' + runsToday + '</div><div class="cap2">Total events</div></div>' +
+				'</div>';
+		}
+	}
+
+	Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (btn) {
+		btn.addEventListener('click', function () {
+			Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (b) { b.classList.remove('active'); });
+			btn.classList.add('active');
+			overviewTab = btn.getAttribute('data-tab');
+			renderOverview(lastJobs, lastEvents);
+		});
+	});
+
 	function setOffline(isOffline) {
 		var dot = document.getElementById('refreshDot');
 		var label = document.getElementById('refreshLabel');
@@ -694,12 +1051,15 @@
 			setOffline(false);
 			var jobs = results[0].jobs || {};
 			var events = results[1].events || [];
+			lastJobs = jobs;
+			lastEvents = events;
 
 			renderPipeline(jobs);
 			renderJobCards(jobs);
 			renderTimeline(events);
 			renderOutcomeChart(events);
 			renderBufferChart(events);
+			renderOverview(jobs, events);
 		}).catch(function (err) {
 			console.error('[Dashboard] refresh failed:', err);
 			setOffline(true);
