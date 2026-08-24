@@ -397,9 +397,9 @@ setInterval(function(){
         // Gate opening per unit: kept live-updated on wsdata by the WebSocket
         // handler below whenever powerhouse_gateopening.js pushes a reading;
         // default to 0 if nothing has arrived yet.
-        var opening1 = (wsdata[0] && wsdata[0].opening) || 0;
-        var opening2 = (wsdata[1] && wsdata[1].opening) || 0;
-        var opening3 = (wsdata[2] && wsdata[2].opening) || 0;
+        var opening1 = parseFloat((wsdata[0] && wsdata[0].opening)).toFixed(4) || 0;
+        var opening2 = parseFloat((wsdata[1] && wsdata[1].opening)).toFixed(4) || 0;
+        var opening3 = parseFloat((wsdata[2] && wsdata[2].opening)).toFixed(4) || 0;
 
         table.push(['"'+P[0]+'"','"'+P[1]+'"','"'+P[2]+'"','"'+Ptotal+'"','"'+Q[0]+'"','"'+Q[1]+'"','"'+Q[2]+'"','"'+Qtotal+'"','"'+E[0]+'"','"'+E[1]+'"','"'+E[2]+'"',
             '"'+VAB[0]+'"','"'+VAB[1]+'"','"'+VAB[2]+'"','"'+VBC[0]+'"','"'+VBC[1]+'"','"'+VBC[2]+'"','"'+VCA[0]+'"','"'+VCA[1]+'"','"'+VCA[2]+'"',
@@ -442,8 +442,8 @@ function savetoDatabase(){
                 return;
               }
           
-            //   console.log(result);
-            //   console.log(fields);
+               //console.log(result);
+               //console.log(fields);
             }
           );
     }   
