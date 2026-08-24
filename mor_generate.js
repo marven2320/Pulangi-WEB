@@ -2,6 +2,15 @@ const XlsxPopulate = require('xlsx-populate');
 const path = require('path');
 const fs = require('fs');
 const cron = require('node-cron');
+const { checkIfFileIsOpen, isFileLockError } = require('./Report for NGCP Dashboard/lib/file-lock');
+const jobStatus = require('./Report for NGCP Dashboard/lib/job-status');
+
+const JOB = 'mor_generate';
+
+// Set while a freshly-built summary couldn't be saved because the previous
+// version of the file is open in Excel. The retry cron below keeps
+// re-running the full generation until the file is free.
+let pendingRegeneration = false;
 
 // --- CONFIGURATION ---
 const REPORTS_DIR = path.join(__dirname, 'reports');
@@ -144,6 +153,7 @@ function createAbsFormula(directory, filename, sheetName, cellRef) {
 
 async function generateMonthlySummary() {
     console.log(`\n[Monthly Summary] Starting generation for PREVIOUS MONTH...`);
+    jobStatus.recordEvent(JOB, 'run-start', 'Building monthly summary', {});
 
     const today = new Date();
     const {
@@ -297,11 +307,35 @@ async function generateMonthlySummary() {
         destSheet.cell("L41").formula(`VLOOKUP(L40, '${RAW_DATA_DIR}/[FOREBAY.xlsx]ELEV'!$B$7:$C$137,2,FALSE)`);
         destSheet.cell("L44").formula(`VLOOKUP(L43, '${RAW_DATA_DIR}/[FOREBAY.xlsx]ELEV'!$B$7:$C$137,2,FALSE)`);
 
-        await destWb.toFileAsync(summaryPath);
+        // --- SAVE (won't clobber a copy the user has open) ---
+        const isLocked = await checkIfFileIsOpen(summaryPath);
+
+        if (isLocked) {
+            pendingRegeneration = true;
+            console.warn(`   [Skip] ${summaryFilename} is OPEN by user. Will retry.`);
+            jobStatus.recordEvent(JOB, 'skip-locked', `${summaryFilename} is open - retry queued`, { summaryFilename });
+            return;
+        }
+
+        try {
+            await destWb.toFileAsync(summaryPath);
+        } catch (writeErr) {
+            if (isFileLockError(writeErr)) {
+                pendingRegeneration = true;
+                console.warn(`   [Skip] ${summaryFilename} became locked mid-write. Will retry.`);
+                jobStatus.recordEvent(JOB, 'skip-locked', `${summaryFilename} locked mid-write - retry queued`, { summaryFilename });
+                return;
+            }
+            throw writeErr;
+        }
+
+        pendingRegeneration = false;
         console.log(`   [Success] Report saved to ${summaryPath}`);
+        jobStatus.recordEvent(JOB, 'success', `Generated ${summaryFilename}`, { summaryFilename, fileYear });
 
     } catch (error) {
         console.error(`   [Error]`, error);
+        jobStatus.recordEvent(JOB, 'error', error.message, {});
     }
 }
 
@@ -312,6 +346,13 @@ generateMonthlySummary();
 // Schedule: Run on the 26th of every month at 12:01 AM
 cron.schedule('1 0 26 * *', () => {
     generateMonthlySummary();
+});
+
+// Retry loop: as long as the last attempt was blocked by the summary being
+// open, keep re-generating every 2 minutes so it catches up the moment the
+// user closes it, instead of waiting for next month's run.
+cron.schedule('*/2 * * * *', () => {
+    if (pendingRegeneration) generateMonthlySummary();
 });
 
 console.log("Monthly Summary Service Started.");
