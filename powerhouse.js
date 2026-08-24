@@ -1,4 +1,18 @@
 #!/usr/bin/env node
+
+// Safety net: this process controls the web server, the live WebSocket
+// broadcast, and DB logging all at once - none of that should go down just
+// because one Modbus meter times out or an async call somewhere rejects
+// unexpectedly. The specific connectTCP() call sites below are fixed
+// properly with .catch(); this is defense-in-depth for anything else, and
+// only logs - it deliberately does not swallow errors silently.
+process.on('uncaughtException', (err) => {
+    console.log((new Date()) + ' Uncaught exception (process kept alive): ' + (err && err.stack || err));
+});
+process.on('unhandledRejection', (reason) => {
+    console.log((new Date()) + ' Unhandled promise rejection (process kept alive): ' + reason);
+});
+
 var WebSocketServer = require('websocket').server;
 var http = require('https');
 const fs = require('fs');
@@ -15,6 +29,69 @@ const options = {
 };
 
 var app = express();
+
+//MYSQL
+const mysql = require('mysql2');
+const pool = mysql.createPool({
+    host: 'localhost',
+    user: 'root',
+    password: 'KaRMSys2025!',
+    database: 'pulangi_data',
+    connectionLimit: 10
+  });
+
+// Shared with fetch-generation-data.js (the standalone CLI script) and
+// server.js - same validation + SQL, single source of truth for what
+// viewdata.html's charts, the CLI tool, and this server all see.
+const { getGenerationData, isValidParams } = require('./generation-data-query');
+
+// GET /api/generation-data?date=YYYY-MM-DD&start=HH:MM:SS&end=HH:MM:SS
+// Returns per-timestamp power (mw1/mw2/mw3) and frequency (freq1/freq2/freq3)
+// readings for all 3 units, straight from the `pulangi` table - used by
+// viewdata.html's Power/Frequency dual-axis charts.
+// NOTE: this must be registered before app.use(serve(...)) below - the
+// express-static middleware does not call next() on a non-matching path,
+// it errors out instead, which would otherwise shadow this route entirely.
+app.get('/api/generation-data', (req, res) => {
+    const { date, start, end } = req.query;
+
+    if (!isValidParams(date, start, end)) {
+        res.status(400).json({ error: 'date must be YYYY-MM-DD and start/end must be HH:MM:SS' });
+        return;
+    }
+
+    getGenerationData(pool, { date, start, end }, (err, rows) => {
+        if (err) {
+            console.log((new Date()) + ' /api/generation-data query error: ' + err);
+            res.status(500).json({ error: 'database query failed' });
+            return;
+        }
+        res.json({ rows });
+    });
+});
+
+// GET /api/generation-data-file
+// Serves the current year's raw Generation Data workbook as-is for download -
+// this is the file dgr_merger.js maintains at
+// rawdata/Pulangi IV HEP - Generation Data - RAW_<year>.xlsx. Used by the
+// Reports page's "Generation Data" option, which just opens this file
+// rather than querying/filtering anything itself.
+app.get('/api/generation-data-file', (req, res) => {
+    const year = new Date().getFullYear();
+    const fileName = `Pulangi IV HEP - Generation Data - RAW_${year}.xlsx`;
+    const filePath = path.join(__dirname, 'rawdata', fileName);
+
+    if (!fs.existsSync(filePath)) {
+        res.status(404).json({ error: `${fileName} not found` });
+        return;
+    }
+
+    res.download(filePath, fileName, (err) => {
+        if (err) {
+            console.log((new Date()) + ' /api/generation-data-file download error: ' + err);
+        }
+    });
+});
 
 app.use(serve(__dirname + '/'));
 
@@ -40,6 +117,7 @@ var wsdata = [
         pfa: 0,
         pfb: 0,
         pfc: 0,
+        opening: 0,
         time: d.toTimeString().split(' ')[0],
         date: d.toISOString().split('T')[0]
     },
@@ -58,6 +136,7 @@ var wsdata = [
         pfa: 0,
         pfb: 0,
         pfc: 0,
+        opening: 0,
         time: d.toTimeString().split(' ')[0],
         date: d.toISOString().split('T')[0]
     },
@@ -76,20 +155,36 @@ var wsdata = [
         pfa: 0,
         pfb: 0,
         pfc: 0,
+        opening: 0,
         time: d.toTimeString().split(' ')[0],
         date: d.toISOString().split('T')[0]
     }
 ]
 
-//MYSQL
-const mysql = require('mysql2');
-const pool = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: 'KaRMSys2025!',
-    database: 'pulangi_data',
-    connectionLimit: 10
-  });
+// Gate-opening telemetry handlers -----------------------------------------
+// powerhouse_gateopening.js (a Raspberry Pi reading two ADS1115 ADCs over
+// I2C) connects to this server as a plain WebSocket client and pushes one
+// unit's opening reading roughly every 5 seconds as a bare JSON object:
+//   { id, unitnum, tag, mw:null, mvar:null, energy:null, freq:null,
+//     opening, temp, actTime, mydate }
+// isGateOpeningMessage() tells that shape apart from the Export Data
+// request ([{startdate, enddate}]) that shares the same socket, and
+// handleGateOpeningTelemetry() merges the reading into wsdata so it rides
+// along on the existing 1-second broadcast to every connected browser
+// (pulangi.html's gate-opening sliders) and gets picked up by the
+// once-a-second table.push()/savetoDatabase() routine below.
+function isGateOpeningMessage(data) {
+    return !!data && !Array.isArray(data) &&
+        typeof data.unitnum === 'number' &&
+        typeof data.opening !== 'undefined';
+}
+
+function handleGateOpeningTelemetry(data) {
+    var idx = data.unitnum - 1;
+    if (idx >= 0 && idx < wsdata.length) {
+        wsdata[idx].opening = data.opening;
+    }
+}
 
 //MODBUSRTU
 const ModbusRTU = require("modbus-serial");
@@ -124,16 +219,22 @@ var E = ["","",""];
 var datacomplete = [0,0,0];
 //FOR DATABASE TABLE, 42 columns
 var table = [
-    ['"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"']
+    ['"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"']
 ];
 
 for (let i = 0;i < ipcon.length; i++)
 {
     try{
-    client[i].connectTCP(ipcon[i], {port: 502});
+    // connectTCP() called with no callback returns a Promise - without a
+    // .catch() here, a connection timeout becomes an unhandled promise
+    // rejection, which crashes the whole process (web server, WebSocket,
+    // and DB logging included) on every meter that's briefly unreachable.
+    client[i].connectTCP(ipcon[i], {port: 502}).catch((err) => {
+        console.log((new Date()) + ' Modbus connectTCP failed for ' + ipcon[i] + ': ' + err);
+    });
     client[i].setTimeout(5000);
     }catch{
-        
+
     }
 }
 //------start-------- FOR MODBUS COMMUNICATION 
@@ -226,6 +327,11 @@ const getMeterValue = async (clientn) => {
             pfa: PFA[clientn],
             pfb: PFB[clientn],
             pfc: PFC[clientn],
+            // Carry the last known gate-opening reading forward - this object
+            // is fully replaced every Modbus read cycle, and opening comes
+            // from a separate process (powerhouse_gateopening.js) on its own
+            // 5s cadence, so it must not get reset to nothing in between.
+            opening: wsdata[clientn].opening,
             time: d.toTimeString().split(' ')[0],
             date: d.toISOString().split('T')[0]
         }
@@ -259,7 +365,12 @@ const getMeterValue = async (clientn) => {
         //return clientdata[clientn];
     } catch(e){
         // if error return -1
-        client[clientn].connectTCP(ipcon[clientn], {port: 502});
+        // Same unhandled-rejection risk as the initial connect loop above -
+        // this reconnect fires on every read failure, so without .catch()
+        // it's a crash waiting to happen on the very next timeout.
+        client[clientn].connectTCP(ipcon[clientn], {port: 502}).catch((err) => {
+            console.log((new Date()) + ' Modbus reconnect failed for ' + ipcon[clientn] + ': ' + err);
+        });
         client[clientn].setTimeout(5000);
         datacomplete[clientn] = 0;
         //console.log(e);
@@ -283,10 +394,18 @@ setInterval(function(){
 		var day = d.toLocaleString("default", { day: "2-digit" });
 		servdate = year + "-" + month + "-" + day;
 
+        // Gate opening per unit: kept live-updated on wsdata by the WebSocket
+        // handler below whenever powerhouse_gateopening.js pushes a reading;
+        // default to 0 if nothing has arrived yet.
+        var opening1 = parseFloat((wsdata[0] && wsdata[0].opening)).toFixed(4) || 0;
+        var opening2 = parseFloat((wsdata[1] && wsdata[1].opening)).toFixed(4) || 0;
+        var opening3 = parseFloat((wsdata[2] && wsdata[2].opening)).toFixed(4) || 0;
+
         table.push(['"'+P[0]+'"','"'+P[1]+'"','"'+P[2]+'"','"'+Ptotal+'"','"'+Q[0]+'"','"'+Q[1]+'"','"'+Q[2]+'"','"'+Qtotal+'"','"'+E[0]+'"','"'+E[1]+'"','"'+E[2]+'"',
             '"'+VAB[0]+'"','"'+VAB[1]+'"','"'+VAB[2]+'"','"'+VBC[0]+'"','"'+VBC[1]+'"','"'+VBC[2]+'"','"'+VCA[0]+'"','"'+VCA[1]+'"','"'+VCA[2]+'"',
             '"'+IA[0]+'"','"'+IA[1]+'"','"'+IA[2]+'"','"'+IB[0]+'"','"'+IB[1]+'"','"'+IB[2]+'"','"'+IC[0]+'"','"'+IC[1]+'"','"'+IC[2]+'"',
-            '"'+PFA[0]+'"','"'+PFA[1]+'"','"'+PFA[2]+'"','"'+PFB[0]+'"','"'+PFB[1]+'"','"'+PFB[2]+'"','"'+PFC[0]+'"','"'+PFC[1]+'"','"'+PFC[2]+'"','"'+F[0]+'"','"'+F[1]+'"','"'+F[2]+'"','"'+servtime+'"','"'+servdate+'"']);
+            '"'+PFA[0]+'"','"'+PFA[1]+'"','"'+PFA[2]+'"','"'+PFB[0]+'"','"'+PFB[1]+'"','"'+PFB[2]+'"','"'+PFC[0]+'"','"'+PFC[1]+'"','"'+PFC[2]+'"','"'+F[0]+'"','"'+F[1]+'"','"'+F[2]+'"',
+            '"'+opening1+'"','"'+opening2+'"','"'+opening3+'"','"'+servtime+'"','"'+servdate+'"']);
         if (table[0][table.length-1] == '"0"'){
             table.shift();
         }
@@ -299,7 +418,7 @@ setInterval(function(){
 
     savetoDatabase();
     table = [
-        ['"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"']
+        ['"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"','"0"']
     ];
     //console.log("Saved to Database!");
 },60000);
@@ -310,7 +429,8 @@ function savetoDatabase(){
         // For pool initialization, see above
         const sql = "INSERT INTO `pulangi` (`mw1`,`mw2`,`mw3`,`mw`,`mvar1`,`mvar2`,`mvar3`,`mvar`,`energy1`,`energy2`,`energy3`," +
         "`vab1`,`vab2`,`vab3`,`vbc1`,`vbc2`,`vbc3`,`vca1`,`vca2`,`vca3`,`ia1`,`ia2`,`ia3`,`ib1`,`ib2`,`ib3`,`ic1`,`ic2`,`ic3`,"+
-        "`pfa1`,`pfa2`,`pfa3`,`pfb1`,`pfb2`,`pfb3`,`pfc1`,`pfc2`,`pfc3`,`freq1`,`freq2`,`freq3`,`time`,`date`) value ("+table[i].toString()+")";
+        "`pfa1`,`pfa2`,`pfa3`,`pfb1`,`pfb2`,`pfb3`,`pfc1`,`pfc2`,`pfc3`,`freq1`,`freq2`,`freq3`,"+
+        "`opening1`,`opening2`,`opening3`,`time`,`date`) value ("+table[i].toString()+")";
         pool.query(
             {
               sql,
@@ -322,8 +442,8 @@ function savetoDatabase(){
                 return;
               }
           
-            //   console.log(result);
-            //   console.log(fields);
+               //console.log(result);
+               //console.log(fields);
             }
           );
     }   
@@ -360,26 +480,47 @@ wsServer.on('request', function(request) {
     //console.log(clientsIP);
     //console.log((new Date()) + ' Connection accepted.');
     connection.on('message', function(message) {
+        // This one socket handles two very different kinds of incoming
+        // messages:
+        //   1. Gate-opening telemetry pushed by powerhouse_gateopening.js -
+        //      a single object {unitnum, opening, ...}, sent once per unit
+        //      every ~5s. Merged into wsdata so it rides along on the same
+        //      1s broadcast every browser already listens to.
+        //   2. reports.html's "Export Data" date-range request - client
+        //      sends [{startdate, enddate}] and expects back every `pulangi`
+        //      row in that date range (used to build the downloaded CSV).
         if (message.type !== 'utf8') { return; }
 
-        // Export Data request from reports.html: [{startdate, enddate}].
-        // Runs the actual date-range query and sends the real rows back -
-        // without this, reports.html has nothing to receive except the
-        // continuous live-telemetry broadcast below, which it would
-        // otherwise mistake for the query result.
+        var data;
         try {
-            var data = JSON.parse(message.utf8Data);
-            const sql = 'SELECT * FROM `pulangi` WHERE `date` BETWEEN ? AND ? ORDER BY `date` ASC';
-            pool.query(sql, [data[0].startdate, data[0].enddate], (err, result) => {
-                if (err) {
-                    console.log((new Date()) + ' export query error: ' + err);
-                    return;
-                }
-                connection.send(JSON.stringify(result));
-            });
-        } catch (err) {
-            console.log((new Date()) + ' export request error: ' + err);
+            data = JSON.parse(message.utf8Data);
+        } catch (e) {
+            console.log((new Date()) + ' WebSocket message: invalid JSON - ' + e);
+            return;
         }
+
+        // Gate-opening telemetry: a plain object, not an array, identified
+        // by unitnum + opening.
+        if (isGateOpeningMessage(data)) {
+            handleGateOpeningTelemetry(data);
+            return;
+        }
+
+        var startdate = data && data[0] && data[0].startdate;
+        var enddate = data && data[0] && data[0].enddate;
+        if (!startdate || !enddate) {
+            console.log((new Date()) + ' Export data request missing startdate/enddate.');
+            return;
+        }
+
+        var sql = 'SELECT * FROM `pulangi` WHERE `date` BETWEEN ? AND ? ORDER BY `date` ASC';
+        pool.query(sql, [startdate, enddate], (err, result) => {
+            if (err) {
+                console.log((new Date()) + ' Export data query error: ' + err);
+                return;
+            }
+            connection.send(JSON.stringify(result));
+        });
     });
     connection.on('close', function(reasonCode, description) {
         //console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
