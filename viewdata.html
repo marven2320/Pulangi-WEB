@@ -270,7 +270,9 @@
     line.style.left = chartArea.left + 'px';
     line.style.top = (y - 1) + 'px';
     line.style.width = chartArea.width + 'px';
-    line.style.borderTop = '3px dashed var(--color-accent)';
+    // Black avoids clashing with either data series color (blue Power,
+    // red Frequency), reading clearly as a reference annotation.
+    line.style.borderTop = '3px dashed #000000';
     line.style.pointerEvents = 'none';
     container.appendChild(line);
   }
