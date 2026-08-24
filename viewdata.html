@@ -167,6 +167,12 @@
 
 </style>
 
+<!-- Provides the `google` global used below (google.charts.load, etc.) - the
+     page previously never loaded this, so every inline script below threw
+     "google is not defined" on load, which aborted before it ever reached
+     the code registering the Load Data button's click handler. -->
+<script src="https://www.gstatic.com/charts/loader.js"></script>
+
 <script>
   // Time-range dropdown population (same convention used on reports.html):
   // for..in over an Array yields index keys ("0".."23" / "0".."59"), which is
@@ -264,7 +270,11 @@
     line.style.left = chartArea.left + 'px';
     line.style.top = (y - 1) + 'px';
     line.style.width = chartArea.width + 'px';
-    line.style.borderTop = '3px dashed var(--color-danger)';
+    // A neutral dark tone (rather than a data-series color like red) reads
+    // clearly as a reference annotation, not another data line - important
+    // since Google Charts' default Frequency series color is itself red/
+    // orange and would otherwise blend with the line when at/near 60 Hz.
+    line.style.borderTop = '3px dashed #333d4d';
     line.style.pointerEvents = 'none';
     container.appendChild(line);
   }
