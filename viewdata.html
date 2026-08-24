@@ -203,6 +203,13 @@
     return (v < 10 ? '0' : '') + v;
   }
 
+  // Nominal grid frequency - the dual-axis charts clamp the Frequency axis
+  // to a band around this and mark it with a strong reference line so any
+  // deviation is easy to spot at a glance.
+  var NOMINAL_FREQ_HZ = 60;
+  var FREQ_AXIS_MIN = 58.5;
+  var FREQ_AXIS_MAX = 61.5;
+
   function drawGenerationChart(containerId, rows, powerKey, freqKey) {
     var dataArray = [['Time', 'Power (MW)', 'Frequency (Hz)']];
     for (var i = 0; i < rows.length; i++) {
@@ -218,12 +225,48 @@
       series: {0: {targetAxisIndex: 0}, 1: {targetAxisIndex: 1}},
       vAxes: {
         0: {title: 'Power (MW)'},
-        1: {title: 'Frequency (Hz)'}
+        1: {
+          title: 'Frequency (Hz)',
+          viewWindow: {min: FREQ_AXIS_MIN, max: FREQ_AXIS_MAX}
+        }
       },
       legend: {position: 'top'}
     };
-    var chart = new google.visualization.LineChart(document.getElementById(containerId));
+
+    var container = document.getElementById(containerId);
+    container.style.position = 'relative';
+    // Drop any 60 Hz overlay left over from a previous Load Data click
+    // before this chart redraws.
+    var oldLine = container.querySelector('.freq-nominal-line');
+    if (oldLine) { oldLine.remove(); }
+
+    var chart = new google.visualization.LineChart(container);
+    google.visualization.events.addListener(chart, 'ready', function () {
+      drawNominalFrequencyLine(container, chart);
+    });
     chart.draw(data, options);
+  }
+
+  // Overlays a bold, dashed horizontal line across the chart at
+  // NOMINAL_FREQ_HZ on the Frequency axis (axis index 1). Google Charts has
+  // no option for styling a single gridline differently from the rest, so
+  // the line is drawn as a plain positioned element on top of the chart,
+  // placed using the chart's own pixel layout for that axis value.
+  function drawNominalFrequencyLine(container, chart) {
+    var layout = chart.getChartLayoutInterface();
+    var chartArea = layout.getChartAreaBoundingBox();
+    var y = layout.getYLocation(NOMINAL_FREQ_HZ, 1);
+
+    var line = document.createElement('div');
+    line.className = 'freq-nominal-line';
+    line.title = NOMINAL_FREQ_HZ + ' Hz';
+    line.style.position = 'absolute';
+    line.style.left = chartArea.left + 'px';
+    line.style.top = (y - 1) + 'px';
+    line.style.width = chartArea.width + 'px';
+    line.style.borderTop = '3px dashed var(--color-danger)';
+    line.style.pointerEvents = 'none';
+    container.appendChild(line);
   }
 
   function displayloading() {
